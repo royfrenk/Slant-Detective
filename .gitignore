@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+
+# Claude Code per-project runtime
+.claude/
+
+# Internal docs (not for public repo)
+docs/
+
+# Stitch mock downloads (reference material, re-fetchable via MCP)
+stitch_chrome_extension_blueprint/
+
+# Node
+node_modules/
+*.log
+
+# Build output
+dist/
+.vite/
+
+# Generated at build time — not committed
+extension/assets/credits.json

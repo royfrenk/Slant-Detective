@@ -1,0 +1,43 @@
+BABE Bias-Word Lexicon
+======================
+
+Full Citation
+-------------
+Spinde, T., Plank, M., Krieger, J.-D., Ruas, T., Gipp, B., & Aizawa, A. (2021).
+"Neural Media Bias Detection Using Distant Supervision With BABE — Bias Annotations
+By Experts." Findings of EMNLP 2021. Association for Computational Linguistics.
+DOI: https://doi.org/10.18653/v1/2021.findings-emnlp.101
+
+Upstream GitHub URL
+-------------------
+https://github.com/BABE-nlp/babe
+(Mirror maintained by Media-Bias-Group:
+ https://github.com/Media-Bias-Group/Neural-Media-Bias-Detection-Using-Distant-Supervision-With-BABE)
+
+Lexicon File Used
+-----------------
+lexicon_clean/bias_word_lexicon_dict.json
+Retrieved from the GitHub repository at the URL above.
+
+License
+-------
+SPDX-License-Identifier: AGPL-3.0
+
+The BABE dataset and bias-word lexicon are released under the GNU Affero General
+Public License v3.0 (AGPL-3.0). This is the same license as Slant Detective.
+Redistribution as part of this AGPL-3.0 project is permitted and compatible.
+
+The cleaned and processed version of the lexicon is bundled in this project as:
+  extension/public/assets/babe-lexicon.json
+
+Attribution Requirement
+-----------------------
+Per AGPL-3.0 and academic custom, any redistribution or derivative work must:
+  1. Retain this attribution notice.
+  2. Cite the original paper (Spinde et al., 2021) in any publication or
+     derivative product documentation.
+  3. Preserve the AGPL-3.0 license on this file and any derivative.
+
+The Slant Detective Credits screen (SD-014) reads the `attribution` field from
+babe-lexicon.json and displays it to the user — this satisfies requirement (1)
+for end-users of the extension.

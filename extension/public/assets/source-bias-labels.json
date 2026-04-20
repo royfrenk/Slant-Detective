@@ -1,0 +1,75 @@
+{
+  "dataset": "Slant Detective Source-Bias Labels",
+  "version": "0.1.0",
+  "license": "AGPL-3.0-or-later",
+  "authored_by": "Slant Detective project",
+  "compiled": "2026-04-18",
+  "domains": [
+    {
+      "domain": "huffpost.com",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Consistent progressive framing on social, economic, and political stories; strong advocacy tone across multiple issue areas"
+    },
+    {
+      "domain": "theguardian.com",
+      "label": "lean-left",
+      "confidence": "high",
+      "notes": "UK-based but significant US coverage; editorial line favors progressive climate, social, and economic positions; news reporting is generally fair but opinion section pulls left"
+    },
+    {
+      "domain": "nytimes.com",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "News reporting aims for balance but source selection, story framing, and editorial page lean consistently center-left; opinion columnists skew left"
+    },
+    {
+      "domain": "washingtonpost.com",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "News coverage generally professional; editorial and opinion sections lean left-of-center; source emphasis and framing choices reflect a center-left institutional perspective"
+    },
+    {
+      "domain": "bbc.com",
+      "label": "center",
+      "confidence": "high",
+      "notes": "Public broadcaster with editorial standards requiring balance; coverage spans diverse perspectives; occasionally critiqued from both sides — a reliable center signal"
+    },
+    {
+      "domain": "reuters.com",
+      "label": "center",
+      "confidence": "high",
+      "notes": "Wire service with strict factual-reporting standards; minimal editorial voice; consistently cited as a low-bias reference point across media-literacy research"
+    },
+    {
+      "domain": "apnews.com",
+      "label": "center",
+      "confidence": "high",
+      "notes": "Non-profit wire service; fact-checking arm widely respected; coverage is consistently straight-news with very low partisan framing"
+    },
+    {
+      "domain": "wsj.com",
+      "label": "lean-right",
+      "confidence": "high",
+      "notes": "News desk maintains professional standards; opinion and editorial pages are clearly right-of-center with pro-market, conservative-leaning commentary"
+    },
+    {
+      "domain": "foxnews.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Opinion programming dominates primetime; news-side reporting often incorporates conservative framing; editorial line consistently supports Republican policy positions"
+    },
+    {
+      "domain": "breitbart.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Explicitly nationalist-populist editorial line; story selection and framing serve right-wing political agenda; limited news-side / opinion separation"
+    },
+    {
+      "domain": "thehill.com",
+      "label": "mixed",
+      "confidence": "medium",
+      "notes": "DC-focused outlet with both left-leaning and right-leaning opinion columnists; news coverage is relatively balanced; signal depends heavily on section (opinion vs news)"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "slant-detective",
+  "version": "0.1.0",
+  "description": "Slant Detective — Chrome extension for per-article media-bias analysis (AGPL-3.0)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "license-audit": "node scripts/license-audit.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

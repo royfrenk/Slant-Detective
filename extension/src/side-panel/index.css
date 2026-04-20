@@ -1,0 +1,48 @@
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/inter/900.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  @apply bg-background;
+}
+
+/* ── SD-024 Bidirectional Sync Animations ─────────────────────────────────── */
+
+@keyframes panel-row-pulse {
+  0%   { background-color: transparent; }
+  37%  { background-color: rgba(248, 197, 72, 0.18); }
+  62%  { background-color: rgba(248, 197, 72, 0.18); }
+  100% { background-color: transparent; }
+}
+
+.is-pulsing {
+  animation: panel-row-pulse 400ms ease-in-out forwards;
+}
+
+.is-active {
+  background-color: rgba(0, 102, 138, 0.08);
+  transition: background-color 80ms linear;
+}
+
+.is-active .accent-border {
+  width: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-pulsing {
+    animation: none;
+    outline: 2px solid rgba(248, 197, 72, 0.6);
+    outline-offset: 2px;
+  }
+}

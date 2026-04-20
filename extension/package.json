@@ -1,0 +1,43 @@
+{
+  "name": "slant-detective-extension",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Chrome MV3 extension for per-article media-bias analysis",
+  "type": "module",
+  "scripts": {
+    "prebuild": "node ../scripts/build-credits.mjs",
+    "prebuild:alpha": "node ../scripts/build-credits.mjs",
+    "build": "vite build",
+    "build:alpha": "vite build --config vite.config.alpha.ts",
+    "build:zip": "cd dist && zip -r ../dist-alpha.zip . && cd ..",
+    "dev": "vite build --watch",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.2.5",
+    "@mozilla/readability": "^0.6.0",
+    "@xenova/transformers": "^2.17.2",
+    "compromise": "^14.14.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.0.0-beta.28",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/chrome": "^0.0.305",
+    "@types/jsdom": "^28.0.1",
+    "@types/react": "^18.3.20",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^4.1.4",
+    "autoprefixer": "^10.4.21",
+    "jsdom": "^29.0.2",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.3",
+    "vite": "^5.4.19",
+    "vitest": "^4.1.4"
+  }
+}
