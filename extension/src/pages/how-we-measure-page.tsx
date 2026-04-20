@@ -181,14 +181,55 @@ function HowWeMeasurePage(): React.JSX.Element {
             >
               BABE Agreement Metrics
             </h2>
-            {/* TODO: replace with real table after SD-027 baseline completes.
-                Tokens to back-fill: {{BABE_KAPPA}}, {{BABE_F1}}, {{BABE_PRECISION}}, {{BABE_RECALL}} */}
+            <p className="text-sm text-on-surface leading-relaxed mb-3">
+              Slant Detective's rubric (v1.0) was evaluated against the full BABE
+              corpus — 3,656 expert-labeled sentences — using Claude Haiku 4.5. The
+              harness computes Cohen's κ for binary bias classification and
+              precision/recall/F1 for biased-word span detection. Full harness and
+              baseline file are committed in <code>eval/</code>.
+            </p>
             <div className="bg-surface-variant rounded-lg px-4 py-3">
-              <p className="text-sm text-on-surface-variant italic m-0">
-                Evaluation against the BABE held-out set will be published here after
-                SD-027 runs.
-              </p>
+              <table className="w-full text-sm text-on-surface">
+                <thead>
+                  <tr className="text-left border-b border-outline">
+                    <th className="py-1 pr-4 font-semibold">Metric</th>
+                    <th className="py-1 pr-4 font-semibold">Score</th>
+                    <th className="py-1 font-semibold text-on-surface-variant">Floor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="py-1 pr-4">Cohen's κ (classification)</td>
+                    <td className="py-1 pr-4 font-mono">0.57</td>
+                    <td className="py-1 font-mono text-on-surface-variant">≥ 0.35</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1 pr-4">Precision (classification)</td>
+                    <td className="py-1 pr-4 font-mono">0.75</td>
+                    <td className="py-1 font-mono text-on-surface-variant">—</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1 pr-4">Recall (classification)</td>
+                    <td className="py-1 pr-4 font-mono">0.84</td>
+                    <td className="py-1 font-mono text-on-surface-variant">—</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1 pr-4">F1 (classification)</td>
+                    <td className="py-1 pr-4 font-mono">0.79</td>
+                    <td className="py-1 font-mono text-on-surface-variant">≥ 0.50</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1 pr-4">F1 (biased-span detection)</td>
+                    <td className="py-1 pr-4 font-mono">0.65</td>
+                    <td className="py-1 font-mono text-on-surface-variant">—</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
+            <p className="text-xs text-on-surface-variant italic mt-2">
+              Baseline run 2026-04-20, rubric v1.0. Future prompt changes must keep
+              κ within 0.03 of this floor or the regression gate blocks release.
+            </p>
           </section>
 
           {/* Section 5 — Evidence Requirement */}
