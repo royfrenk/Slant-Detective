@@ -31,8 +31,19 @@ const data = creditsData as CreditsData;
 
 // ---------------------------------------------------------------------------
 // Footer nav triad
-// TODO SD-Week4: wire how-we-measure.html, privacy.html, source code links
 // ---------------------------------------------------------------------------
+
+const GITHUB_URL = 'https://github.com/royfrenk/Slant-Detective' as const;
+
+function openPage(pageName: string): void {
+  chrome.tabs.create({ url: chrome.runtime.getURL(`src/pages/${pageName}.html`) }).catch(() => {});
+}
+
+const NAV_LINK_CLASS = [
+  'text-xs text-on-surface-variant font-normal',
+  'no-underline hover:underline',
+  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-sm',
+].join(' ');
 
 function FooterNav(): React.JSX.Element {
   return (
@@ -42,19 +53,23 @@ function FooterNav(): React.JSX.Element {
     >
       <div className="flex flex-wrap items-center gap-0 text-xs text-on-surface-variant">
         <a
-          href="#"
-          onClick={(e) => e.preventDefault()}
+          role="link"
+          tabIndex={0}
           aria-label="How we measure bias"
-          className="text-on-surface-variant no-underline hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-sm"
+          className={NAV_LINK_CLASS}
+          onClick={() => openPage('how-we-measure')}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openPage('how-we-measure'); }}
         >
           How we measure
         </a>
         <span className="mx-2 select-none" aria-hidden="true">·</span>
         <a
-          href="#"
-          onClick={(e) => e.preventDefault()}
+          role="link"
+          tabIndex={0}
           aria-label="Privacy policy"
-          className="text-on-surface-variant no-underline hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-sm"
+          className={NAV_LINK_CLASS}
+          onClick={() => openPage('privacy')}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openPage('privacy'); }}
         >
           Privacy
         </a>
@@ -68,13 +83,13 @@ function FooterNav(): React.JSX.Element {
         </span>
         <span className="mx-2 select-none" aria-hidden="true">·</span>
         <a
-          href="https://github.com/royfrenk/Slant-Detective"
+          href={GITHUB_URL}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Source code on GitHub (opens in new tab)"
-          className="text-on-surface-variant no-underline hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-sm"
+          className={NAV_LINK_CLASS}
         >
-          Source code (GitHub)
+          Source code
         </a>
       </div>
     </nav>

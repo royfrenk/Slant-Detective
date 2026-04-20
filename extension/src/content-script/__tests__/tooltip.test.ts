@@ -525,7 +525,7 @@ describe('destroyTooltip()', () => {
 // ---------------------------------------------------------------------------
 
 describe('"How we measure" link', () => {
-  it('clicking hw-link calls chrome.runtime.getURL with how-we-measure.html', () => {
+  it('clicking hw-link calls chrome.runtime.getURL with src/pages/how-we-measure.html', () => {
     initTooltip({ shadowMode: 'open' })
     const evidence = makeSpan()
     const { anchored, spanEl } = makeAnchoredSpan(evidence)
@@ -539,6 +539,6 @@ describe('"How we measure" link', () => {
 
     hwLink!.click()
 
-    expect(chrome.runtime.getURL).toHaveBeenCalledWith('how-we-measure.html')
+    expect(chrome.runtime.getURL).toHaveBeenCalledWith('src/pages/how-we-measure.html')
   })
 })

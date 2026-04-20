@@ -85,46 +85,50 @@ export default function Welcome(): React.JSX.Element {
         </div>
 
         {/* Footer nav quad */}
-        {/* TODO SD-Week4: wire to how-we-measure.html, privacy.html, credits.html */}
         <nav
           className="mt-8 flex items-center justify-center gap-0 text-xs text-on-surface-variant"
           aria-label="Footer navigation"
         >
           <a
-            href="#"
-            onClick={(e) => e.preventDefault()}
+            role="link"
+            tabIndex={0}
             aria-label="How we measure bias"
-            className="text-on-surface-variant no-underline hover:underline"
+            className="text-on-surface-variant no-underline hover:underline cursor-pointer"
+            onClick={() => { chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/how-we-measure.html') }).catch(() => {}); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/how-we-measure.html') }).catch(() => {}); }}
           >
             How we measure
           </a>
           <span className="mx-2 select-none" aria-hidden="true">·</span>
           <a
-            href="#"
-            onClick={(e) => e.preventDefault()}
+            role="link"
+            tabIndex={0}
             aria-label="Privacy policy"
-            className="text-on-surface-variant no-underline hover:underline"
+            className="text-on-surface-variant no-underline hover:underline cursor-pointer"
+            onClick={() => { chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/privacy.html') }).catch(() => {}); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/privacy.html') }).catch(() => {}); }}
           >
             Privacy
           </a>
           <span className="mx-2 select-none" aria-hidden="true">·</span>
           <a
-            href="#"
-            onClick={(e) => e.preventDefault()}
+            role="link"
+            tabIndex={0}
             aria-label="Credits and attributions"
-            className="text-on-surface-variant no-underline hover:underline"
+            className="text-on-surface-variant no-underline hover:underline cursor-pointer"
+            onClick={() => { chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/credits.html') }).catch(() => {}); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/credits.html') }).catch(() => {}); }}
           >
             Credits
           </a>
           <span className="mx-2 select-none" aria-hidden="true">·</span>
           <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              chrome.tabs.create({ url: FEEDBACK_FORM_URL, active: true }).catch(() => {});
-            }}
+            role="link"
+            tabIndex={0}
             aria-label="Open Slant Detective feedback form in new tab"
-            className="text-on-surface-variant no-underline hover:underline"
+            className="text-on-surface-variant no-underline hover:underline cursor-pointer"
+            onClick={() => { chrome.tabs.create({ url: FEEDBACK_FORM_URL, active: true }).catch(() => {}); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') chrome.tabs.create({ url: FEEDBACK_FORM_URL, active: true }).catch(() => {}); }}
           >
             Feedback
           </a>

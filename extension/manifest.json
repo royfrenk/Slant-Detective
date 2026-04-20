@@ -38,7 +38,12 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["how-we-measure.html"],
+      "resources": [
+        "src/pages/how-we-measure.html",
+        "src/pages/privacy.html",
+        "src/pages/credits.html",
+        "src/pages/how-to-get-a-key.html"
+      ],
       "matches": ["<all_urls>"]
     }
   ],

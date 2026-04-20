@@ -315,7 +315,7 @@ function buildTooltipDOM(shadow: ShadowRoot): {
 
   hwLink.addEventListener('click', () => {
     try {
-      const url = chrome.runtime.getURL('how-we-measure.html')
+      const url = chrome.runtime.getURL('src/pages/how-we-measure.html')
       if (url) {
         window.open(url, '_blank')
       }

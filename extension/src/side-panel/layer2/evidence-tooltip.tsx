@@ -5,7 +5,7 @@ import type { RubricSpan } from '../../shared/types';
 const NARROW_PANEL_BREAKPOINT = 400;
 
 function openHowWeMeasure(): void {
-  chrome.tabs.create({ url: chrome.runtime.getURL('how-we-measure.html') }).catch(() => {});
+  chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/how-we-measure.html') }).catch(() => {});
 }
 
 interface EvidenceTooltipProps {

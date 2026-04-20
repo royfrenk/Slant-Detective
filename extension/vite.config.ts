@@ -71,6 +71,11 @@ export default defineConfig({
         welcome: resolve(__dirname, "welcome.html"),
         credits: resolve(__dirname, "credits.html"),
         options: resolve(__dirname, "options.html"),
+        // SD-028: in-extension reference pages (output to dist/src/pages/*.html)
+        "pages/how-we-measure": resolve(__dirname, "src/pages/how-we-measure.html"),
+        "pages/privacy": resolve(__dirname, "src/pages/privacy.html"),
+        "pages/credits": resolve(__dirname, "src/pages/credits.html"),
+        "pages/how-to-get-a-key": resolve(__dirname, "src/pages/how-to-get-a-key.html"),
       },
     },
   },

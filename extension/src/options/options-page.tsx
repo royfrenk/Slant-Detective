@@ -2,10 +2,7 @@ import React from 'react'
 import ApiKeyCard from './api-key-card'
 import HowToGetAKeyLink from './how-to-get-a-key-link'
 import TelemetryToggle from './telemetry-toggle'
-import FooterNav from '../side-panel/footer-nav'
-
-// TODO: confirm GitHub URL once repo is public
-const GITHUB_URL = 'https://github.com/slant-detective'
+import PageFooterNav from '../pages/page-footer-nav'
 
 export default function OptionsPage(): React.JSX.Element {
   return (
@@ -29,23 +26,7 @@ export default function OptionsPage(): React.JSX.Element {
           <HowToGetAKeyLink />
         </div>
 
-        <div className="mt-2">
-          {/* data-github-url placeholder until repo is public */}
-          <a
-            href={GITHUB_URL}
-            data-github-url={GITHUB_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="View Slant Detective source code on GitHub (opens in new tab)"
-            className="text-[0.625rem] text-on-surface-variant no-underline hover:underline"
-          >
-            View source on GitHub
-          </a>
-        </div>
-
-        <div className="mt-6">
-          <FooterNav />
-        </div>
+        <PageFooterNav showSourceCode={true} />
       </div>
     </div>
   )
