@@ -7,6 +7,7 @@ import * as validateModule from '../validate-api-key'
 const storageMock = {
   get: vi.fn(),
   set: vi.fn(),
+  remove: vi.fn(),
 }
 
 beforeEach(() => {
@@ -15,6 +16,9 @@ beforeEach(() => {
     cb({})
   })
   storageMock.set.mockImplementation((_data: Record<string, unknown>, cb?: () => void) => {
+    if (cb) cb()
+  })
+  storageMock.remove.mockImplementation((_key: string, cb?: () => void) => {
     if (cb) cb()
   })
   globalThis.chrome = {
@@ -208,6 +212,84 @@ describe('ApiKeyCard', () => {
     await waitFor(() => {
       const button = screen.getByRole('button', { name: /test and save/i })
       expect(button).not.toBeDisabled()
+    })
+  })
+
+  describe('Remove key', () => {
+    it('hides the Remove key button when no key is stored', async () => {
+      render(<ApiKeyCard />)
+      await screen.findByRole('button', { name: /test and save/i })
+      expect(screen.queryByRole('button', { name: /remove key/i })).not.toBeInTheDocument()
+    })
+
+    it('shows the Remove key button when a key is stored and input is untouched', async () => {
+      storageMock.get.mockImplementation((_key: string, cb: (result: Record<string, unknown>) => void) => {
+        cb({ anthropicApiKey: 'sk-ant-api03-stored' })
+      })
+
+      render(<ApiKeyCard />)
+
+      await screen.findByRole('button', { name: /remove key/i })
+    })
+
+    it('hides the Remove key button while the input is dirty', async () => {
+      storageMock.get.mockImplementation((_key: string, cb: (result: Record<string, unknown>) => void) => {
+        cb({ anthropicApiKey: 'sk-ant-api03-stored' })
+      })
+
+      render(<ApiKeyCard />)
+      await screen.findByRole('button', { name: /remove key/i })
+
+      const input = screen.getByLabelText(/anthropic api key/i)
+      fireEvent.change(input, { target: { value: 'sk-ant-api03-new' } })
+
+      await waitFor(() => {
+        expect(screen.queryByRole('button', { name: /remove key/i })).not.toBeInTheDocument()
+      })
+    })
+
+    it('does nothing if the user cancels the confirm dialog', async () => {
+      storageMock.get.mockImplementation((_key: string, cb: (result: Record<string, unknown>) => void) => {
+        cb({ anthropicApiKey: 'sk-ant-api03-stored' })
+      })
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+
+      render(<ApiKeyCard />)
+      const removeBtn = await screen.findByRole('button', { name: /remove key/i })
+
+      await act(async () => { fireEvent.click(removeBtn) })
+
+      expect(confirmSpy).toHaveBeenCalledOnce()
+      expect(storageMock.remove).not.toHaveBeenCalled()
+      expect(screen.getByRole('button', { name: /remove key/i })).toBeInTheDocument()
+
+      confirmSpy.mockRestore()
+    })
+
+    it('clears the stored key and resets the UI when confirmed', async () => {
+      storageMock.get.mockImplementation((_key: string, cb: (result: Record<string, unknown>) => void) => {
+        cb({ anthropicApiKey: 'sk-ant-api03-stored' })
+      })
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+      render(<ApiKeyCard />)
+      const removeBtn = await screen.findByRole('button', { name: /remove key/i })
+
+      await act(async () => { fireEvent.click(removeBtn) })
+
+      expect(storageMock.remove).toHaveBeenCalledWith('anthropicApiKey', expect.any(Function))
+
+      await waitFor(() => {
+        expect(screen.queryByRole('button', { name: /remove key/i })).not.toBeInTheDocument()
+      })
+
+      const input = screen.getByLabelText(/anthropic api key/i) as HTMLInputElement
+      expect(input.value).toBe('')
+
+      const saveBtn = screen.getByRole('button', { name: /test and save/i })
+      expect(saveBtn).toBeDisabled()
+
+      confirmSpy.mockRestore()
     })
   })
 })

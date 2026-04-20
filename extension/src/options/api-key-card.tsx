@@ -94,6 +94,20 @@ export default function ApiKeyCard(): React.JSX.Element {
     setIsDirty(true)
   }
 
+  function handleRemove(): void {
+    const confirmed = window.confirm(
+      'Remove your saved API key? The extension will revert to Layer 1 (in-browser) analysis only.',
+    )
+    if (!confirmed) return
+    chrome.storage.local.remove(ANTHROPIC_API_KEY, () => {
+      setInputValue('')
+      setHasStoredKey(false)
+      setIsDirty(false)
+      setFeedbackState('idle')
+      setErrorCode(null)
+    })
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
     if (e.key === 'Enter' && !isButtonDisabled()) {
       void handleSubmit()
@@ -139,6 +153,18 @@ export default function ApiKeyCard(): React.JSX.Element {
         isDisabled={isButtonDisabled()}
         onClick={() => void handleSubmit()}
       />
+
+      {hasStoredKey && !isDirty && (
+        <div className="mt-2 flex justify-end">
+          <button
+            type="button"
+            onClick={handleRemove}
+            className="text-[0.75rem] text-on-surface-variant underline-offset-2 hover:text-primary hover:underline focus:outline-[2px] focus:outline-primary focus:outline-offset-1 rounded"
+          >
+            Remove key
+          </button>
+        </div>
+      )}
 
       <InlineFeedback state={feedbackState} errorCode={errorCode} />
     </div>
