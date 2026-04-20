@@ -1,4 +1,5 @@
 import React from "react";
+import { FEEDBACK_FORM_URL } from "../shared/urls";
 
 interface Bullet {
   title: string;
@@ -83,7 +84,7 @@ export default function Welcome(): React.JSX.Element {
           </button>
         </div>
 
-        {/* Footer nav triad */}
+        {/* Footer nav quad */}
         {/* TODO SD-Week4: wire to how-we-measure.html, privacy.html, credits.html */}
         <nav
           className="mt-8 flex items-center justify-center gap-0 text-xs text-on-surface-variant"
@@ -114,6 +115,18 @@ export default function Welcome(): React.JSX.Element {
             className="text-on-surface-variant no-underline hover:underline"
           >
             Credits
+          </a>
+          <span className="mx-2 select-none" aria-hidden="true">·</span>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              chrome.tabs.create({ url: FEEDBACK_FORM_URL, active: true }).catch(() => {});
+            }}
+            aria-label="Open Slant Detective feedback form in new tab"
+            className="text-on-surface-variant no-underline hover:underline"
+          >
+            Feedback
           </a>
         </nav>
       </div>
