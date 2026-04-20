@@ -93,24 +93,24 @@ export default function EvidenceTooltip({
       ref={tooltipRef}
       id={id}
       role="tooltip"
-      className="bg-surface shadow-ambient p-[10px] z-50 motion-safe:animate-none"
+      className="bg-surface shadow-ambient p-3 z-50 motion-safe:animate-none"
       style={{ ...positionStyle, boxShadow: '0 12px 32px -4px rgba(25, 28, 30, 0.08)', borderRadius: positionStyle.borderRadius ?? '10px' }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <div className="flex flex-col gap-[5px]">
-        <p className="text-[0.6875rem] text-on-surface font-medium leading-[1.4]">
+      <div className="flex flex-col gap-[6px]">
+        <p className="text-[0.875rem] text-on-surface font-medium leading-[1.4]">
           {item.text}
         </p>
-        <p className="text-[0.5625rem] text-on-surface-variant">
+        <p className="text-[0.75rem] text-on-surface-variant">
           <span className="font-semibold">{categoryLabel}</span>
           {' · '}
           <span>{severityLabel}</span>
         </p>
-        <p className="text-[0.5625rem] text-on-surface-variant">
+        <p className="text-[0.75rem] text-on-surface-variant">
           Tilt: <span className="font-medium">{tiltLabel}</span>
         </p>
-        <p className="text-[0.5625rem] text-on-surface-variant leading-[1.5]">
+        <p className="text-[0.75rem] text-on-surface-variant leading-[1.5]">
           {item.reason}
         </p>
         <span
@@ -118,7 +118,7 @@ export default function EvidenceTooltip({
           role="link"
           tabIndex={0}
           aria-label="How we measure — opens in new tab"
-          className="text-[0.5625rem] text-primary-fixed underline-offset-2 hover:underline cursor-pointer focus:outline-[2px] focus:outline-primary focus:outline-offset-1"
+          className="text-[0.75rem] text-primary-fixed underline-offset-2 hover:underline cursor-pointer focus:outline-[2px] focus:outline-primary focus:outline-offset-1"
           onClick={openHowWeMeasure}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
