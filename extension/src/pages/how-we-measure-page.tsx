@@ -11,31 +11,33 @@ interface Dimension {
   label: string;
   glyph: string;
   description: string;
-  note?: string;
+  example?: string;
 }
 
 const DIMENSIONS: readonly Dimension[] = [
   {
     label: 'WORD CHOICE',
     glyph: '⚠',
-    description: 'Detects loaded, emotive, or partisan language that colours how information is delivered.',
-    note: 'Scored against the BABE bias-word lexicon (cleaned and Porter-stemmed).',
+    description: 'Does the writer pick loaded words where neutral ones would do?',
+    example: '"Slammed" vs "criticized." "Regime" vs "government." Small swaps that steer how you feel.',
   },
   {
     label: 'FRAMING',
     glyph: '◈',
-    description: 'Evaluates the reporting-verb ladder and structural choices that shape the reader\'s interpretation.',
-    note: 'Requires ≥ 400-word article body.',
+    description: 'How are people\u2019s statements introduced?',
+    example: '"She said..." lands very differently from "She admitted..." or "She claimed..." We read the verbs.',
   },
   {
     label: 'HEADLINE SLANT',
     glyph: '✎',
-    description: 'Measures drift between the headline and the article body — exaggeration, omission, or spin.',
+    description: 'Does the headline match what the article actually says?',
+    example: 'Or is it pumped up, toned down, or pointing somewhere the story never quite goes?',
   },
   {
     label: 'SOURCE MIX',
     glyph: '\u201c',
-    description: 'Assesses whether the article draws on a diverse range of sources or leans on a narrow set.',
+    description: 'Does the article quote a range of voices, or lean on one side?',
+    example: 'A one-source story reads differently from a five-source one, even when both sound confident.',
   },
 ] as const;
 
@@ -58,18 +60,56 @@ const VERB_RUNGS: readonly VerbRung[] = [
 ] as const;
 
 // ---------------------------------------------------------------------------
+// Accuracy table rows
+// ---------------------------------------------------------------------------
+
+interface AccuracyRow {
+  metric: string;
+  score: string;
+  plainEnglish: string;
+}
+
+const ACCURACY_ROWS: readonly AccuracyRow[] = [
+  {
+    metric: 'Agreement with experts',
+    score: '0.58',
+    plainEnglish: 'We agree with the human labelers about as often as two experts agree with each other.',
+  },
+  {
+    metric: 'Precision',
+    score: '0.76',
+    plainEnglish: 'When we flag a sentence as biased, we\u2019re right about 3 times out of 4.',
+  },
+  {
+    metric: 'Recall',
+    score: '0.84',
+    plainEnglish: 'We catch about 5 out of every 6 sentences the experts flagged.',
+  },
+  {
+    metric: 'Combined accuracy',
+    score: '0.80',
+    plainEnglish: 'A single number that balances precision and recall. In line with published research.',
+  },
+  {
+    metric: 'Highlighted-word accuracy',
+    score: '0.65',
+    plainEnglish: 'When we highlight specific loaded words, about 2 out of 3 match what a human would highlight.',
+  },
+] as const;
+
+// ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function DimensionCard({ label, glyph, description, note }: Dimension): React.JSX.Element {
+function DimensionCard({ label, glyph, description, example }: Dimension): React.JSX.Element {
   return (
     <div className="bg-surface rounded-lg px-4 py-3 mb-2">
       <p className="text-sm font-semibold text-on-surface m-0">
         <span aria-hidden="true">{glyph} </span>{label}
       </p>
       <p className="text-xs text-on-surface-variant mt-1 mb-0">{description}</p>
-      {note !== undefined && (
-        <p className="text-xs text-on-surface-variant mt-1 mb-0">{note}</p>
+      {example !== undefined && (
+        <p className="text-xs text-on-surface-variant italic mt-1 mb-0">{example}</p>
       )}
     </div>
   );
@@ -113,9 +153,15 @@ function HowWeMeasurePage(): React.JSX.Element {
 
         <main>
           {/* Page title */}
-          <h1 className="font-bold text-2xl text-primary mb-8 mt-0">
+          <h1 className="font-bold text-2xl text-primary mb-4 mt-0">
             How We Measure
           </h1>
+
+          <p className="text-sm text-on-surface leading-relaxed mb-10">
+            Every article gets a short bias readout. We try to show you <strong>what</strong> looks
+            slanted, <strong>where</strong> in the article it shows up, and <strong>how strongly</strong>{' '}
+            we think it's slanted — so you can make your own call.
+          </p>
 
           {/* Section 1 — The Rubric */}
           <section aria-labelledby="rubric-heading">
@@ -123,11 +169,11 @@ function HowWeMeasurePage(): React.JSX.Element {
               id="rubric-heading"
               className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3"
             >
-              The Rubric
+              The four things we look at
             </h2>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              Every analysis scores an article on four dimensions, each rated 0–4. Together
-              they form a composite picture of the article's tilt and intensity.
+              Each dimension gets a 0–4 score. Together they give you a snapshot of the
+              article's tilt and intensity.
             </p>
             {DIMENSIONS.map((d) => (
               <DimensionCard key={d.label} {...d} />
@@ -140,11 +186,12 @@ function HowWeMeasurePage(): React.JSX.Element {
               id="verb-ladder-heading"
               className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3"
             >
-              Reporting-Verb Ladder
+              A closer look at verbs
             </h2>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              The framing dimension uses a five-rung scale to assess the emotional weight
-              of attribution verbs used throughout the article.
+              The framing score leans heavily on how reporters introduce what people said. Here's
+              the ladder, from plain to loaded — the higher the rung, the more the verb itself pushes
+              you toward a conclusion.
             </p>
             {VERB_RUNGS.map((r) => (
               <VerbRungCard key={r.rung} {...r} />
@@ -157,78 +204,66 @@ function HowWeMeasurePage(): React.JSX.Element {
               id="limitations-heading"
               className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3"
             >
-              Known Limitations
+              What we can't do
             </h2>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              Inter-rater agreement ceiling: κ ≈ 0.4 at full rubric. This is expected for
-              subjective bias annotation tasks and is consistent with published benchmarks.
+              <strong>Bias isn't a fact, it's a judgment.</strong> Even trained human
+              reviewers only agree with each other part of the time on the same passages. Treat our
+              score as a signal, not a verdict.
             </p>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              Span miss rate: approximately 15% of bias spans go undetected by Layer 1
-              lexical matching. Layer 2 (Claude Haiku) catches more; neither is exhaustive.
+              <strong>We miss things.</strong> Our fast in-browser scan catches most loaded language.
+              The deeper scan — which uses Claude when you add your own API key — catches more.
+              Neither is exhaustive.
             </p>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              Word-count floor: articles under 400 words receive a "too short for analysis"
-              result rather than a bias score.
+              <strong>Very short articles get skipped.</strong> Under 400 words, there isn't
+              enough to work with, so we don't score it.
             </p>
           </section>
 
-          {/* Section 4 — BABE Agreement Metrics */}
-          <section aria-labelledby="babe-heading" className="mt-10">
+          {/* Section 4 — Accuracy */}
+          <section aria-labelledby="accuracy-heading" className="mt-10">
             <h2
-              id="babe-heading"
+              id="accuracy-heading"
               className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3"
             >
-              BABE Agreement Metrics
+              How well it works
             </h2>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              Slant Detective's rubric (v1.0) was evaluated against the full BABE
-              corpus — 3,663 expert-labeled sentences — using Claude Haiku 4.5. The
-              harness computes Cohen's κ for binary bias classification and
-              precision/recall/F1 for biased-word span detection. Full harness and
-              baseline file are committed in <code>eval/</code>.
+              We tested our rubric against a research dataset called <strong>BABE</strong> —
+              3,663 sentences that media-bias researchers labeled by hand. Here's how we lined
+              up, with each score translated into plain English.
             </p>
             <div className="bg-surface-variant rounded-lg px-4 py-3">
               <table className="w-full text-sm text-on-surface">
                 <thead>
                   <tr className="text-left border-b border-outline">
-                    <th className="py-1 pr-4 font-semibold">Metric</th>
+                    <th className="py-1 pr-4 font-semibold">What we measured</th>
                     <th className="py-1 pr-4 font-semibold">Score</th>
-                    <th className="py-1 font-semibold text-on-surface-variant">Floor</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td className="py-1 pr-4">Cohen's κ (classification)</td>
-                    <td className="py-1 pr-4 font-mono">0.58</td>
-                    <td className="py-1 font-mono text-on-surface-variant">≥ 0.35</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 pr-4">Precision (classification)</td>
-                    <td className="py-1 pr-4 font-mono">0.76</td>
-                    <td className="py-1 font-mono text-on-surface-variant">—</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 pr-4">Recall (classification)</td>
-                    <td className="py-1 pr-4 font-mono">0.84</td>
-                    <td className="py-1 font-mono text-on-surface-variant">—</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 pr-4">F1 (classification)</td>
-                    <td className="py-1 pr-4 font-mono">0.80</td>
-                    <td className="py-1 font-mono text-on-surface-variant">≥ 0.50</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1 pr-4">F1 (biased-span detection)</td>
-                    <td className="py-1 pr-4 font-mono">0.65</td>
-                    <td className="py-1 font-mono text-on-surface-variant">—</td>
-                  </tr>
+                  {ACCURACY_ROWS.map((row) => (
+                    <React.Fragment key={row.metric}>
+                      <tr>
+                        <td className="pt-2 pr-4 align-top">{row.metric}</td>
+                        <td className="pt-2 pr-4 font-mono align-top">{row.score}</td>
+                      </tr>
+                      <tr>
+                        <td colSpan={2} className="pb-2 pt-0 text-xs text-on-surface-variant italic">
+                          {row.plainEnglish}
+                        </td>
+                      </tr>
+                    </React.Fragment>
+                  ))}
                 </tbody>
               </table>
             </div>
             <p className="text-xs text-on-surface-variant italic mt-2">
-              Baseline run 2026-04-20, rubric v1.0. Future prompt changes must keep
-              κ within 0.03 of this floor or the regression gate blocks release.
+              Baseline run 2026-04-20, rubric v1.0. If a future prompt change drops these scores,
+              our own build gate blocks the release. The testing code lives in the public repo
+              (<code>eval/</code>) — you can re-run it.
             </p>
           </section>
 
@@ -238,17 +273,16 @@ function HowWeMeasurePage(): React.JSX.Element {
               id="evidence-heading"
               className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3"
             >
-              Evidence Requirement
+              Every score comes with a receipt
             </h2>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              Every dimension score must be accompanied by a quoted evidence span from the
-              article. Layer 2 (Claude Haiku) provides these spans directly. The client
-              validates that each score has at least one evidence quote before accepting a
-              response — no score is displayed without justification.
+              We never show you a number without the sentence it's based on. Hover any
+              highlight in the article and you'll see the exact quote that earned it. If you
+              think we got it wrong, the raw material is right there — judge for yourself.
             </p>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              Layer 1 (in-browser) flags spans using the BABE lexicon match. No spans are
-              fabricated — misses are surfaced as gaps, not invented evidence.
+              Nothing is made up. We only highlight words that are actually in the article, and if
+              the deeper scan can't back up a score with a quote, we don't show the score.
             </p>
           </section>
         </main>
