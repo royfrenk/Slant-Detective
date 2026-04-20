@@ -4,6 +4,7 @@ import { validateApiKey } from './validate-api-key'
 import ApiKeyInput, { type InputState } from './api-key-input'
 import TestAndSaveButton from './test-and-save-button'
 import InlineFeedback, { type FeedbackState } from './inline-feedback'
+import { bump } from '../service-worker/telemetry'
 
 function maskedKey(key: string): string {
   return `${key.slice(0, 14)}${'•'.repeat(20)}`
@@ -62,16 +63,19 @@ export default function ApiKeyCard(): React.JSX.Element {
 
     if (result.status === 'ok') {
       chrome.storage.local.set({ [ANTHROPIC_API_KEY]: trimmed }, () => {})
+      void bump('key_saved')
       setFeedbackState('success')
       setHasStoredKey(true)
       setIsDirty(false)
     } else if (result.status === 'invalid') {
+      void bump('key_rejected')
       setFeedbackState('error')
       setErrorCode(result.code)
     } else if (result.status === 'reachable-unverified') {
       // Request reached Anthropic but got an unexpected status (429, 500, etc.).
       // Key format is plausibly correct — save with a warning.
       chrome.storage.local.set({ [ANTHROPIC_API_KEY]: trimmed }, () => {})
+      void bump('key_saved')
       setFeedbackState('warning')
       setHasStoredKey(true)
       setIsDirty(false)

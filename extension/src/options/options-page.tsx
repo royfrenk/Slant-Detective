@@ -1,6 +1,7 @@
 import React from 'react'
 import ApiKeyCard from './api-key-card'
 import HowToGetAKeyLink from './how-to-get-a-key-link'
+import TelemetryToggle from './telemetry-toggle'
 import FooterNav from '../side-panel/footer-nav'
 
 // TODO: confirm GitHub URL once repo is public
@@ -19,6 +20,10 @@ export default function OptionsPage(): React.JSX.Element {
         </h1>
 
         <ApiKeyCard />
+
+        <div className="mt-6">
+          <TelemetryToggle />
+        </div>
 
         <div className="mt-6">
           <HowToGetAKeyLink />
