@@ -1,4 +1,5 @@
-import type { AnthropicRequestBody } from './anthropic-client'
+// Single source of truth for all rubric prompts. See getRubricPrompt(providerId).
+import type { ProviderId } from './providers/types'
 
 export const RUBRIC_MODEL = 'claude-haiku-4-5-20251001'
 export const MAX_TOKENS = 2048
@@ -7,16 +8,9 @@ export const MAX_BODY_WORDS = 4000
 // Strip common publication suffixes: " - The New York Times", " | Fox News", etc.
 const PUBLICATION_SUFFIX_RE = /\s*[-–|]\s*[^-–|]+$/
 
-// Inline prompt template — avoids fetch() per request; versioned by file name.
-// {ARTICLE_TITLE}, {ARTICLE_BODY}, and {RUBRIC_VERSION} are interpolated at call time.
-const PROMPT_TEMPLATE = `You are a media-bias analyst. Analyze the following news article for political bias across four dimensions. Return ONLY a JSON object — no explanation, no markdown, no code fences.
-
-Article:
----
-{ARTICLE_TITLE}
-
-{ARTICLE_BODY}
----
+// System prompt: analyst instructions + JSON schema + output constraint.
+// The "Return ONLY a JSON object" line must appear here for OpenAI JSON mode compatibility.
+const SYSTEM_PROMPT = `You are a media-bias analyst. Analyze the following news article for political bias across four dimensions. Return ONLY a JSON object — no explanation, no markdown, no code fences.
 
 Return this exact JSON structure:
 {
@@ -63,6 +57,21 @@ Rules:
 - Do NOT reference the publication name, domain, or brand in your reasoning
 - Analyze the text content only — treat the article as anonymous`
 
+// User template — placeholders filled by the caller at request time.
+// {ARTICLE_TITLE} and {ARTICLE_BODY} are the only placeholders here.
+const USER_TEMPLATE = `Article:
+---
+{ARTICLE_TITLE}
+
+{ARTICLE_BODY}
+---`
+
+export interface RubricPrompt {
+  system: string
+  user: string    // Template with {ARTICLE_TITLE} and {ARTICLE_BODY} placeholders
+  version: string // Cache-key segment; provider-specific suffix added by SD-033/034
+}
+
 export interface ArticleForPrompt {
   title: string
   body: string
@@ -79,21 +88,38 @@ function stripPublicationSuffix(title: string): string {
   return title.replace(PUBLICATION_SUFFIX_RE, '').trim()
 }
 
-export function buildRubricPrompt(article: ArticleForPrompt): AnthropicRequestBody {
-  const cleanTitle = stripPublicationSuffix(article.title)
-  const truncatedBody = truncateToWords(article.body, MAX_BODY_WORDS)
+/**
+ * Return the rubric prompt descriptor for the given provider.
+ * system: fully resolved instruction block (no article placeholders).
+ * user: template string with {ARTICLE_TITLE} and {ARTICLE_BODY} that the caller fills.
+ * version: provider-specific rubric version string used in buildCacheKey.
+ *
+ * OpenAI (SD-033) and Gemini (SD-034) will add their own branches here.
+ */
+export function getRubricPrompt(providerId: ProviderId): RubricPrompt {
   const rubricVersion = __RUBRIC_VERSION__
 
-  const userContent = PROMPT_TEMPLATE
+  if (providerId === 'anthropic') {
+    const system = SYSTEM_PROMPT.replaceAll('{RUBRIC_VERSION}', rubricVersion)
+    return {
+      system,
+      user: USER_TEMPLATE,
+      version: rubricVersion,
+    }
+  }
+
+  // SD-033 / SD-034 will replace these stubs.
+  throw new Error(`Provider not yet implemented: ${providerId}`)
+}
+
+/**
+ * Build the filled user message for the given article.
+ * Strips publication suffix from title; truncates body to MAX_BODY_WORDS.
+ */
+export function fillUserTemplate(template: string, article: ArticleForPrompt): string {
+  const cleanTitle = stripPublicationSuffix(article.title)
+  const truncatedBody = truncateToWords(article.body, MAX_BODY_WORDS)
+  return template
     .replace('{ARTICLE_TITLE}', cleanTitle)
     .replace('{ARTICLE_BODY}', truncatedBody)
-    .replaceAll('{RUBRIC_VERSION}', rubricVersion)
-
-  return {
-    model: RUBRIC_MODEL,
-    max_tokens: MAX_TOKENS,
-    messages: [
-      { role: 'user', content: userContent },
-    ],
-  }
 }
