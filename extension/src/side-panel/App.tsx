@@ -10,13 +10,14 @@ import Layer2View from './layer2/layer2-view';
 import InvalidKeyCard from './layer2/invalid-key-card';
 import LLMTimeoutCard from './layer2/llm-timeout-card';
 import RateLimitCard from './layer2/rate-limit-card';
+import ContentFilteredCard from './layer2/content-filtered-card';
 import type { InboundMessage } from '../shared/messages';
 import type { Layer1Signals, RubricResponse } from '../shared/types';
 import { PROVIDERS_KEY, ACTIVE_PROVIDER_KEY } from '../shared/storage-keys';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 type Layer2Status = 'idle' | 'loading' | 'done' | 'error';
-type Layer2ErrorType = 'timeout' | 'invalid_key' | 'rate_limit' | 'parse_error' | null;
+type Layer2ErrorType = 'timeout' | 'invalid_key' | 'rate_limit' | 'parse_error' | 'content_filtered' | null;
 
 
 // 30s: first-run ONNX model load from HuggingFace can take 5–30s.
@@ -118,6 +119,7 @@ export default function App(): React.JSX.Element {
           quota_exceeded: 'rate_limit',
           network_error: 'timeout',
           unknown: null,
+          content_filtered: 'content_filtered',
         };
         setLayer2ErrorType(errorTypeMap[message.errorType] ?? null);
         setLayer2Status('error');
@@ -196,6 +198,7 @@ export default function App(): React.JSX.Element {
           {layer2ErrorType === 'invalid_key' && <InvalidKeyCard />}
           {layer2ErrorType === 'timeout' && <LLMTimeoutCard onRetry={handleRetryLayer2} />}
           {layer2ErrorType === 'rate_limit' && <RateLimitCard onRetry={handleRetryLayer2} />}
+          {layer2ErrorType === 'content_filtered' && <ContentFilteredCard />}
           {(layer2ErrorType == null || layer2ErrorType === 'parse_error') && (
             <LLMTimeoutCard onRetry={handleRetryLayer2} />
           )}

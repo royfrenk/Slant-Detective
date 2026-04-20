@@ -7,6 +7,7 @@ import {
 } from '../shared/storage-keys';
 import type { ProviderId } from './providers/types';
 import { ProviderApiError } from './providers/types';
+import { GeminiSafetyError } from './providers/gemini';
 import { getProvider } from './providers/index';
 import { runLayer2Analysis } from './layer2-pipeline';
 import { RubricValidationError } from './response-validator';
@@ -178,7 +179,13 @@ async function runAnalysis(): Promise<void> {
       spans: rubricResponse.spans,
     }).catch(() => {});
   } catch (err) {
-    if (err instanceof ProviderApiError && (err.statusCode === 401 || err.statusCode === 403)) {
+    if (err instanceof GeminiSafetyError) {
+      // Layer 2 safety block — Layer 1 results remain visible.
+      // Send layer2_failed (not analysis_failed) so the panel only replaces the L2 area.
+      const msg: InboundMessage = { action: 'layer2_failed', errorType: 'content_filtered' };
+      chrome.runtime.sendMessage(msg).catch(() => {});
+    } else if (err instanceof ProviderApiError && (err.statusCode === 400 || err.statusCode === 401 || err.statusCode === 403)) {
+      // 400 maps to invalid key for Gemini (its invalid-key HTTP status).
       void bump('analyze_invalid_key');
       const msg: InboundMessage = { action: 'analysis_failed', reason: 'invalid_api_key' };
       chrome.runtime.sendMessage(msg).catch(() => {});
