@@ -38,6 +38,12 @@ const EXCLUDED_FIELDS: readonly string[] = [
   'No IP address — the Cloudflare Worker reads it only for in-memory rate-limiting and never writes it to Analytics Engine',
 ] as const;
 
+const BUG_REPORT_NOT_SENT: readonly string[] = [
+  'No automatic extension state (rubric results, cache entries, API key, settings, history)',
+  'No IP address — the Worker reads it only for in-memory rate-limiting (5 reports/min per IP) and never writes it anywhere',
+  'No identifiers that persist across submissions',
+] as const;
+
 const NOT_COLLECTED: readonly string[] = [
   'No account, email address, or password',
   'No IP address logs',
@@ -161,6 +167,61 @@ function PrivacyPage(): React.JSX.Element {
           </section>
 
           {/* Section 4 */}
+          <section aria-labelledby="bug-reports-heading" className="mt-10">
+            <h2
+              id="bug-reports-heading"
+              className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3"
+            >
+              What Goes to Us (Bug Reports)
+            </h2>
+            <p className="text-sm text-on-surface leading-relaxed mb-3">
+              The extension has a <strong>Report bug</strong> affordance in the evidence tooltip and in
+              the side-panel footer. Nothing is sent unless you click <strong>Send</strong> in the
+              confirmation modal.
+            </p>
+            <p className="text-sm text-on-surface leading-relaxed mb-3">
+              When you do click Send, the following are forwarded — through our Cloudflare Worker — to
+              the operator inbox (<code className="font-mono text-xs">royfrenk@gmail.com</code>) via Resend.
+              The Worker uses <code className="font-mono text-xs">onboarding@resend.dev</code> as the
+              <code className="font-mono text-xs">{' '}from:</code> address and never stores the payload.
+            </p>
+            <ul className="m-0 pl-0 list-none">
+              <li className="text-sm text-on-surface leading-relaxed mb-2 flex gap-2">
+                <span aria-hidden="true" className="text-on-surface-variant select-none">·</span>
+                <span><strong>Page URL</strong> — optional, sent only when the "Include page URL" toggle is ON. Editable in the modal so you can strip query strings, tokens, or identifiers before sending.</span>
+              </li>
+              <li className="text-sm text-on-surface leading-relaxed mb-2 flex gap-2">
+                <span aria-hidden="true" className="text-on-surface-variant select-none">·</span>
+                <span><strong>Screenshot</strong> — optional, sent only when the "Include screenshot" toggle is ON. Full-capture PNG of the active tab at the moment you opened the modal. Cropping ships in a future update.</span>
+              </li>
+              <li className="text-sm text-on-surface leading-relaxed mb-2 flex gap-2">
+                <span aria-hidden="true" className="text-on-surface-variant select-none">·</span>
+                <span><strong>Free-text description</strong> — optional, up to 500 characters.</span>
+              </li>
+            </ul>
+            <p className="text-sm font-semibold text-on-surface mt-6 mb-3">
+              What is NOT sent with a bug report:
+            </p>
+            <ul className="m-0 pl-0 list-none">
+              {BUG_REPORT_NOT_SENT.map((item) => (
+                <li key={item} className="text-sm text-on-surface leading-relaxed mb-1 flex gap-2">
+                  <span aria-hidden="true" className="text-on-surface-variant select-none">·</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-sm text-on-surface leading-relaxed mt-6 mb-3">
+              <strong>Recipient:</strong> <code className="font-mono text-xs">royfrenk@gmail.com</code> only.
+              The payload is not stored on our Cloudflare Worker or in any database — it is forwarded to
+              Resend, which delivers the email, and nothing else is retained server-side.
+            </p>
+            <p className="text-sm text-on-surface leading-relaxed mb-3">
+              <strong>How to avoid it entirely:</strong> don't click Send. A network-level block on{' '}
+              <code className="font-mono text-xs">sd-telemetry.*.workers.dev</code> also blocks bug reports.
+            </p>
+          </section>
+
+          {/* Section 5 */}
           <section aria-labelledby="domain-safety-heading" className="mt-10">
             <h2
               id="domain-safety-heading"
@@ -183,7 +244,7 @@ function PrivacyPage(): React.JSX.Element {
             </p>
           </section>
 
-          {/* Section 5 */}
+          {/* Section 6 */}
           <section aria-labelledby="opt-out-heading" className="mt-10">
             <h2
               id="opt-out-heading"
@@ -205,7 +266,7 @@ function PrivacyPage(): React.JSX.Element {
             </p>
           </section>
 
-          {/* Section 6 */}
+          {/* Section 7 */}
           <section aria-labelledby="verify-heading" className="mt-10">
             <h2
               id="verify-heading"
@@ -232,7 +293,7 @@ function PrivacyPage(): React.JSX.Element {
             </p>
           </section>
 
-          {/* Section 7 */}
+          {/* Section 8 */}
           <section aria-labelledby="key-caveat-heading" className="mt-10">
             <h2
               id="key-caveat-heading"
@@ -254,7 +315,7 @@ function PrivacyPage(): React.JSX.Element {
             </p>
           </section>
 
-          {/* Section 8 */}
+          {/* Section 9 */}
           <section aria-labelledby="never-collect-heading" className="mt-10">
             <h2
               id="never-collect-heading"
@@ -272,7 +333,7 @@ function PrivacyPage(): React.JSX.Element {
             </ul>
           </section>
 
-          {/* Section 9 */}
+          {/* Section 10 */}
           <section aria-labelledby="transparency-heading" className="mt-10">
             <h2
               id="transparency-heading"
