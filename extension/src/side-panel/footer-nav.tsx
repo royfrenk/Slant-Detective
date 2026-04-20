@@ -5,13 +5,14 @@ type PageKey = 'how-we-measure' | 'privacy' | 'credits' | 'how-to-get-a-key';
 
 interface FooterNavProps {
   currentPage?: PageKey;
+  onReportBug?: () => void;
 }
 
 const LINK_CLASS = 'text-[0.625rem] text-on-surface-variant font-normal no-underline hover:underline cursor-pointer';
 const ACTIVE_CLASS = 'text-[0.625rem] text-primary font-semibold no-underline';
 const DOT_CLASS = 'text-[0.625rem] text-on-surface-variant';
 
-export default function FooterNav({ currentPage }: FooterNavProps): React.JSX.Element {
+export default function FooterNav({ currentPage, onReportBug }: FooterNavProps): React.JSX.Element {
   function openPage(pageName: string): void {
     chrome.tabs.create({ url: chrome.runtime.getURL(`src/pages/${pageName}.html`) }).catch(() => {});
   }
@@ -61,6 +62,17 @@ export default function FooterNav({ currentPage }: FooterNavProps): React.JSX.El
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openExternalUrl(FEEDBACK_FORM_URL); }}
       >
         Feedback
+      </a>
+      {dot}
+      <a
+        role="link"
+        tabIndex={0}
+        aria-label="Report a bug"
+        className={LINK_CLASS}
+        onClick={() => onReportBug?.()}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onReportBug?.(); }}
+      >
+        Report bug
       </a>
     </nav>
   );

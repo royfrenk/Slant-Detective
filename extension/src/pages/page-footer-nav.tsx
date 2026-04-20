@@ -19,6 +19,14 @@ function openExternalUrl(url: string): void {
   chrome.tabs.create({ url, active: true }).catch(() => {});
 }
 
+function openReportBugModal(): void {
+  try {
+    chrome.runtime.sendMessage({ action: 'openReportBugModal' });
+  } catch {
+    // Non-critical: message send failed (e.g., chrome API unavailable in test env).
+  }
+}
+
 export default function PageFooterNav({ currentPage, showSourceCode = false, showFeedback = true }: PageFooterNavProps): React.JSX.Element {
   const linkClass = [
     'text-xs text-on-surface-variant font-normal',
@@ -81,6 +89,17 @@ export default function PageFooterNav({ currentPage, showSourceCode = false, sho
             </a>
           </>
         )}
+        {dot}
+        <a
+          role="link"
+          tabIndex={0}
+          className={linkClass}
+          aria-label="Report a bug"
+          onClick={openReportBugModal}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openReportBugModal(); }}
+        >
+          Report bug
+        </a>
         {showSourceCode && (
           <>
             {dot}
