@@ -1,6 +1,7 @@
 import React from "react";
 import creditsData from "../../assets/credits.json";
 import DepRow from "./dep-row";
+import { FEEDBACK_FORM_URL } from "../shared/urls";
 
 // ---------------------------------------------------------------------------
 // Types derived from build-credits.mjs output shape
@@ -30,7 +31,7 @@ interface CreditsData {
 const data = creditsData as CreditsData;
 
 // ---------------------------------------------------------------------------
-// Footer nav triad
+// Footer nav quad
 // ---------------------------------------------------------------------------
 
 const GITHUB_URL = 'https://github.com/royfrenk/Slant-Detective' as const;
@@ -39,11 +40,17 @@ function openPage(pageName: string): void {
   chrome.tabs.create({ url: chrome.runtime.getURL(`src/pages/${pageName}.html`) }).catch(() => {});
 }
 
+function openExternalUrl(url: string): void {
+  chrome.tabs.create({ url, active: true }).catch(() => {});
+}
+
 const NAV_LINK_CLASS = [
   'text-xs text-on-surface-variant font-normal',
   'no-underline hover:underline',
   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-sm',
 ].join(' ');
+
+const DOT = <span className="mx-2 select-none" aria-hidden="true">·</span>;
 
 function FooterNav(): React.JSX.Element {
   return (
@@ -51,7 +58,7 @@ function FooterNav(): React.JSX.Element {
       className="mt-12 border-t border-outline pt-4"
       aria-label="Footer navigation"
     >
-      <div className="flex flex-wrap items-center gap-0 text-xs text-on-surface-variant">
+      <div className="flex flex-nowrap items-center gap-0 text-xs text-on-surface-variant">
         <a
           role="link"
           tabIndex={0}
@@ -62,7 +69,7 @@ function FooterNav(): React.JSX.Element {
         >
           How we measure
         </a>
-        <span className="mx-2 select-none" aria-hidden="true">·</span>
+        {DOT}
         <a
           role="link"
           tabIndex={0}
@@ -73,7 +80,7 @@ function FooterNav(): React.JSX.Element {
         >
           Privacy
         </a>
-        <span className="mx-2 select-none" aria-hidden="true">·</span>
+        {DOT}
         {/* Current page — not a link */}
         <span
           className="text-xs font-semibold text-primary"
@@ -81,7 +88,18 @@ function FooterNav(): React.JSX.Element {
         >
           Credits
         </span>
-        <span className="mx-2 select-none" aria-hidden="true">·</span>
+        {DOT}
+        <a
+          role="link"
+          tabIndex={0}
+          aria-label="Open Slant Detective feedback form in new tab"
+          className={NAV_LINK_CLASS}
+          onClick={() => openExternalUrl(FEEDBACK_FORM_URL)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openExternalUrl(FEEDBACK_FORM_URL); }}
+        >
+          Feedback
+        </a>
+        {DOT}
         <a
           href={GITHUB_URL}
           target="_blank"

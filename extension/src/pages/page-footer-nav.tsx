@@ -1,4 +1,5 @@
 import React from 'react';
+import { FEEDBACK_FORM_URL } from '../shared/urls';
 
 const GITHUB_URL = 'https://github.com/royfrenk/Slant-Detective' as const;
 
@@ -11,6 +12,10 @@ interface PageFooterNavProps {
 
 function openPage(pageName: string): void {
   chrome.tabs.create({ url: chrome.runtime.getURL(`src/pages/${pageName}.html`) }).catch(() => {});
+}
+
+function openExternalUrl(url: string): void {
+  chrome.tabs.create({ url, active: true }).catch(() => {});
 }
 
 export default function PageFooterNav({ currentPage, showSourceCode = false }: PageFooterNavProps): React.JSX.Element {
@@ -47,20 +52,33 @@ export default function PageFooterNav({ currentPage, showSourceCode = false }: P
     );
   }
 
+  const dot = <span aria-hidden="true" className="mx-2 text-xs text-on-surface-variant select-none">·</span>;
+
   return (
     <nav
       aria-label="Extension pages"
       className="mt-12 border-t border-outline pt-4"
     >
-      <div className="flex flex-wrap items-center gap-0">
+      <div className="flex flex-nowrap items-center gap-0">
         {navItem('how-we-measure', 'How we measure')}
-        <span aria-hidden="true" className="mx-2 text-xs text-on-surface-variant select-none">·</span>
+        {dot}
         {navItem('privacy', 'Privacy')}
-        <span aria-hidden="true" className="mx-2 text-xs text-on-surface-variant select-none">·</span>
+        {dot}
         {navItem('credits', 'Credits')}
+        {dot}
+        <a
+          role="link"
+          tabIndex={0}
+          className={linkClass}
+          aria-label="Open Slant Detective feedback form in new tab"
+          onClick={() => openExternalUrl(FEEDBACK_FORM_URL)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openExternalUrl(FEEDBACK_FORM_URL); }}
+        >
+          Feedback
+        </a>
         {showSourceCode && (
           <>
-            <span aria-hidden="true" className="mx-2 text-xs text-on-surface-variant select-none">·</span>
+            {dot}
             <a
               href={GITHUB_URL}
               target="_blank"
