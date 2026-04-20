@@ -1,75 +1,933 @@
 {
   "dataset": "Slant Detective Source-Bias Labels",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "AGPL-3.0-or-later",
   "authored_by": "Slant Detective project",
-  "compiled": "2026-04-18",
+  "compiled": "2026-04-20",
   "domains": [
     {
       "domain": "huffpost.com",
       "label": "left",
       "confidence": "high",
-      "notes": "Consistent progressive framing on social, economic, and political stories; strong advocacy tone across multiple issue areas"
+      "notes": "Consistent progressive framing on social, economic, and political stories; strong advocacy tone across multiple issue areas."
+    },
+    {
+      "domain": "vox.com",
+      "label": "lean-left",
+      "confidence": "high",
+      "notes": "Explanatory journalism outlet founded with an explicit mission to explain the news from a policy-wonk perspective; story selection and framing favor progressive policy solutions; sourcing leans toward center-left think tanks and academics."
+    },
+    {
+      "domain": "slate.com",
+      "label": "lean-left",
+      "confidence": "high",
+      "notes": "Digital magazine with a contrarian-liberal editorial voice; opinion and culture coverage tilts consistently left-of-center; political analysis favors Democratic-aligned framings across multiple issue areas."
+    },
+    {
+      "domain": "salon.com",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Progressive news and opinion outlet with consistent left-of-center framing; editorial voice is openly advocacy-oriented; story selection emphasizes social justice, anti-corporate, and progressive political themes."
+    },
+    {
+      "domain": "motherjones.com",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Non-profit investigative outlet with an explicit progressive mission; story selection focuses on corporate malfeasance, civil liberties, and environmental issues from a left-of-center advocacy standpoint."
+    },
+    {
+      "domain": "thedailybeast.com",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "News and opinion outlet with a center-left editorial orientation; political coverage and commentary lean toward Democratic-aligned framings; occasionally publishes heterodox opinion pieces but overall direction is left-of-center."
+    },
+    {
+      "domain": "thenation.com",
+      "label": "left",
+      "confidence": "high",
+      "notes": "America's oldest continuously published weekly magazine, with an openly democratic-socialist editorial mission; advocacy journalism is the explicit model; story selection and framing are consistently and strongly left-of-center."
+    },
+    {
+      "domain": "jacobin.com",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Democratic-socialist magazine with an explicitly class-politics editorial frame; content consistently advocates for left economic and political positions well to the left of mainstream center-left media."
+    },
+    {
+      "domain": "theintercept.com",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Investigative outlet with an openly progressive, anti-surveillance-state editorial orientation; story selection emphasizes national security abuses, corporate power, and civil liberties from a strongly left perspective."
+    },
+    {
+      "domain": "propublica.org",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "Non-profit investigative newsroom; reporting standards are high and methodology is transparent; story selection tends toward institutional accountability topics that align more with left-of-center political concerns; less opinion, more watchdog journalism."
+    },
+    {
+      "domain": "truthout.org",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Progressive news outlet with an explicit social-justice advocacy mission; content is openly left-of-center; story selection and framing consistently support progressive political movements."
+    },
+    {
+      "domain": "democracynow.org",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Independent, non-commercial news organization with an explicitly progressive and peace-movement editorial orientation; source selection and framing are consistently left-of-center; amplifies voices from labor, indigenous rights, and anti-war movements."
+    },
+    {
+      "domain": "currentaffairs.org",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Left-wing political and cultural magazine with an explicitly socialist editorial mission; essay and opinion content is strongly ideological from a left perspective; offers critique of mainstream Democratic Party politics from the left."
     },
     {
       "domain": "theguardian.com",
       "label": "lean-left",
       "confidence": "high",
-      "notes": "UK-based but significant US coverage; editorial line favors progressive climate, social, and economic positions; news reporting is generally fair but opinion section pulls left"
+      "notes": "UK-based but with significant US coverage; editorial line favors progressive climate, social, and economic positions; news reporting is generally fair but opinion section pulls left."
     },
     {
       "domain": "nytimes.com",
       "label": "lean-left",
       "confidence": "medium",
-      "notes": "News reporting aims for balance but source selection, story framing, and editorial page lean consistently center-left; opinion columnists skew left"
+      "notes": "News reporting aims for balance but source selection, story framing, and editorial page lean consistently center-left; opinion columnists skew left of center overall."
     },
     {
       "domain": "washingtonpost.com",
       "label": "lean-left",
       "confidence": "medium",
-      "notes": "News coverage generally professional; editorial and opinion sections lean left-of-center; source emphasis and framing choices reflect a center-left institutional perspective"
+      "notes": "News coverage generally professional; editorial and opinion sections lean left-of-center; source emphasis and framing choices reflect a center-left institutional perspective."
     },
     {
-      "domain": "bbc.com",
-      "label": "center",
+      "domain": "latimes.com",
+      "label": "lean-left",
       "confidence": "high",
-      "notes": "Public broadcaster with editorial standards requiring balance; coverage spans diverse perspectives; occasionally critiqued from both sides — a reliable center signal"
+      "notes": "Major West Coast daily with a liberal editorial tradition; editorial board has endorsed Democratic candidates and progressive ballot measures; news coverage is generally professional but framing reflects a center-left institutional orientation."
     },
     {
-      "domain": "reuters.com",
-      "label": "center",
+      "domain": "bostonglobe.com",
+      "label": "lean-left",
       "confidence": "high",
-      "notes": "Wire service with strict factual-reporting standards; minimal editorial voice; consistently cited as a low-bias reference point across media-literacy research"
+      "notes": "New England regional flagship with a liberal editorial tradition; editorial board consistently endorses Democratic candidates; news coverage is generally balanced but opinion and framing lean left-of-center."
     },
     {
-      "domain": "apnews.com",
+      "domain": "seattletimes.com",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Pacific Northwest regional daily; editorial board tilts center-left on most issues; news coverage is generally balanced and locally focused; endorsement history is center-left but occasionally independent."
+    },
+    {
+      "domain": "miamiherald.com",
       "label": "center",
-      "confidence": "high",
-      "notes": "Non-profit wire service; fact-checking arm widely respected; coverage is consistently straight-news with very low partisan framing"
+      "confidence": "medium",
+      "notes": "South Florida regional flagship serving a diverse and politically competitive market; editorial board does not have a consistently partisan direction; news coverage reflects the balanced approach typical of competitive-market regional papers."
     },
     {
-      "domain": "wsj.com",
+      "domain": "denverpost.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "Rocky Mountain regional daily; editorial board has historically endorsed both Republican and Democratic candidates; political coverage reflects a broadly centrist orientation without consistent directional lean."
+    },
+    {
+      "domain": "dallasnews.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "Dallas Morning News; traditionally conservative Texas daily that has endorsed centrist positions in recent cycles; news coverage is broadly centrist and regionally focused without a consistent partisan lean."
+    },
+    {
+      "domain": "startribune.com",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Minneapolis Star Tribune; serves a politically competitive Midwestern market but editorial board has a mild center-left lean; news coverage is generally balanced with occasional progressive framing on social issues."
+    },
+    {
+      "domain": "chicagotribune.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "Major Midwest daily with a historically center-right editorial tradition that has moderated over time; editorial board endorses candidates from both parties; news coverage is broadly centrist with professional standards."
+    },
+    {
+      "domain": "inquirer.com",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "Philadelphia Inquirer; serves one of the more liberal major US metro markets; editorial board has a center-left orientation; news coverage skews slightly left in story selection and framing."
+    },
+    {
+      "domain": "sfchronicle.com",
+      "label": "lean-left",
+      "confidence": "high",
+      "notes": "San Francisco Chronicle; deeply liberal metro market shapes story selection and framing; editorial board consistently endorses progressive candidates and ballot measures; news coverage reflects a left-of-center institutional perspective."
+    },
+    {
+      "domain": "ajc.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "Atlanta Journal-Constitution; serves Georgia's politically competitive capital market; editorial board has a broadly centrist orientation; news coverage is generally balanced and regionally focused without a consistent partisan lean."
+    },
+    {
+      "domain": "usatoday.com",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "National paper-of-record with a broad general-audience mission; news coverage is professionally produced and generally balanced; story selection and editorial framing tend slightly left-of-center on social issues while remaining centrist on economic topics."
+    },
+    {
+      "domain": "nypost.com",
       "label": "lean-right",
       "confidence": "high",
-      "notes": "News desk maintains professional standards; opinion and editorial pages are clearly right-of-center with pro-market, conservative-leaning commentary"
+      "notes": "Murdoch-owned New York tabloid with a clear right-of-center editorial line; opinion pages are strongly conservative; news coverage incorporates conservative framing, particularly on crime, immigration, and culture-war topics."
+    },
+    {
+      "domain": "abcnews.go.com",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Broadcast network news digital outlet; news desk operates under traditional journalistic standards of balance; story selection and framing tend slightly left-of-center on social issues; fact-checking and corrections processes are robust."
+    },
+    {
+      "domain": "cbsnews.com",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Broadcast network news digital outlet with a long tradition of mainstream broadcast journalism; coverage is generally balanced with slight left-of-center framing tendencies on social and political topics."
+    },
+    {
+      "domain": "nbcnews.com",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "Broadcast network news digital outlet; political coverage and story selection lean center-left; MSNBC's progressive brand influences the parent organization's digital framing; news coverage is generally professional but has a discernible directional tilt."
+    },
+    {
+      "domain": "msnbc.com",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Cable news network with an openly progressive editorial orientation; prime-time opinion programming is strongly left-leaning; news-side reporting is more measured but overall outlet positioning is firmly on the left."
+    },
+    {
+      "domain": "cnn.com",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "Cable and digital news outlet; news desk aspires to balance but story selection, source emphasis, and framing tend center-left; opinion programming has a clear left-of-center orientation."
     },
     {
       "domain": "foxnews.com",
       "label": "right",
       "confidence": "high",
-      "notes": "Opinion programming dominates primetime; news-side reporting often incorporates conservative framing; editorial line consistently supports Republican policy positions"
+      "notes": "Opinion programming dominates primetime; news-side reporting often incorporates conservative framing; editorial line consistently supports Republican policy positions."
+    },
+    {
+      "domain": "pbsnewshour.org",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Public broadcaster with editorial independence mandated by statute; programming is generally balanced and interview-based; story selection and guest roster skew slightly toward progressive-aligned framing on policy issues."
+    },
+    {
+      "domain": "c-span.org",
+      "label": "center",
+      "confidence": "high",
+      "notes": "Non-partisan public affairs network that covers government proceedings directly and without editorial commentary; does not produce editorial content; cross-critiqued by neither side as biased — genuine center by design."
+    },
+    {
+      "domain": "bbc.com",
+      "label": "center",
+      "confidence": "high",
+      "notes": "Public broadcaster with editorial standards requiring balance; coverage spans diverse perspectives; occasionally critiqued from both sides — a reliable center signal."
+    },
+    {
+      "domain": "reuters.com",
+      "label": "center",
+      "confidence": "high",
+      "notes": "Wire service with strict factual-reporting standards; minimal editorial voice; consistently cited as a low-bias reference point across media-literacy research."
+    },
+    {
+      "domain": "apnews.com",
+      "label": "center",
+      "confidence": "high",
+      "notes": "Non-profit wire service; fact-checking arm widely respected; coverage is consistently straight-news with very low partisan framing across political story audits."
+    },
+    {
+      "domain": "bloomberg.com",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Financial and general-news outlet; news reporting is professional and data-driven; editorial framing on economic policy tends center-left with a pro-regulatory, climate-conscious orientation; opinion section is deliberately multi-perspective but the institutional lean is mild center-left."
+    },
+    {
+      "domain": "axios.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "Digital outlet founded on a smart-brevity model with explicit editorial commitment to balance; political coverage aims to represent multiple perspectives; story selection is relatively even-handed across political parties."
+    },
+    {
+      "domain": "politico.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "Washington-focused political news outlet; primarily covers process, tactics, and power rather than advocating policy positions; editorial voice is largely neutral and horse-race focused; criticized from both sides as inside-the-beltway but not directionally biased."
+    },
+    {
+      "domain": "thehill.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "DC-focused outlet with explicit multi-partisan opinion contributors from across the political spectrum; news coverage is relatively balanced and process-focused; the mixed-columnist approach makes the overall editorial signal genuinely centrist."
+    },
+    {
+      "domain": "wsj.com",
+      "label": "lean-right",
+      "confidence": "high",
+      "notes": "News desk maintains professional standards; opinion and editorial pages are clearly right-of-center with pro-market, conservative-leaning commentary."
+    },
+    {
+      "domain": "nationalreview.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Conservative magazine founded by William F. Buckley Jr. with an explicitly conservative editorial mission; opinion and analysis are consistently right-of-center across social, economic, and foreign policy issues; the news-opinion distinction is minimal."
+    },
+    {
+      "domain": "washingtonexaminer.com",
+      "label": "lean-right",
+      "confidence": "high",
+      "notes": "Conservative-leaning news outlet with a right-of-center editorial orientation; news coverage incorporates conservative framing on immigration, crime, and economic policy; opinion section is explicitly right-of-center."
+    },
+    {
+      "domain": "townhall.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Conservative commentary and news site with an explicitly right-of-center mission; opinion dominates content; story selection and framing serve conservative political positions consistently across issue areas."
+    },
+    {
+      "domain": "theblaze.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Conservative media outlet founded by Glenn Beck with a populist-right editorial orientation; opinion programming is strongly conservative; news coverage incorporates right-wing framing with limited news-opinion separation."
+    },
+    {
+      "domain": "oann.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "One America News Network; right-wing cable and digital outlet with an explicitly pro-Republican editorial orientation; news and opinion are largely indistinguishable in directional framing."
+    },
+    {
+      "domain": "newsmax.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Conservative news and opinion outlet; right-of-center framing is consistent across news and commentary; positioned as an alternative to mainstream media from a right-wing perspective."
+    },
+    {
+      "domain": "dailywire.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Conservative news and opinion media company; editorial orientation is explicitly right-of-center with a focus on culture-war topics; opinion dominates and news is framed from a consistently conservative standpoint."
+    },
+    {
+      "domain": "thefederalist.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Conservative online magazine with an explicitly right-of-center and social-conservative editorial mission; content is primarily opinion and analysis advocating conservative positions on culture, politics, and religion."
+    },
+    {
+      "domain": "frontpagemag.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Right-wing commentary magazine with an explicitly conservative and anti-left editorial orientation; content is strongly ideological and consistently frames political issues from a right-wing perspective."
+    },
+    {
+      "domain": "americanthinker.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Conservative online publication with an explicitly right-of-center editorial mission; content is primarily opinion advocating conservative political and social positions; limited factual reporting, heavy on ideological commentary."
+    },
+    {
+      "domain": "lifenews.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Single-issue outlet covering abortion policy from an explicitly anti-abortion, social-conservative perspective; editorial framing is strongly right-of-center on reproductive rights and related political issues."
     },
     {
       "domain": "breitbart.com",
       "label": "right",
       "confidence": "high",
-      "notes": "Explicitly nationalist-populist editorial line; story selection and framing serve right-wing political agenda; limited news-side / opinion separation"
+      "notes": "Explicitly nationalist-populist editorial line; story selection and framing serve right-wing political agenda; limited news-side / opinion separation."
     },
     {
-      "domain": "thehill.com",
+      "domain": "pjmedia.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Conservative news and opinion site with an explicitly right-of-center editorial orientation; commentary and analysis consistently support conservative political positions; story selection emphasizes themes of left-wing media bias and Democratic Party failures."
+    },
+    {
+      "domain": "westernjournal.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Conservative news outlet with a right-of-center editorial orientation; story selection and framing serve conservative political narratives; opinion and news are closely blended from a consistently right-wing perspective."
+    },
+    {
+      "domain": "thegatewaypundit.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Far-right populist outlet with a history of spreading misinformation; editorial framing is aggressively right-wing and anti-establishment; limited separation between commentary, speculation, and reported fact."
+    },
+    {
+      "domain": "occupydemocrats.com",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Openly progressive advocacy outlet that mirrors the editorial model of far-right counterparts; content is strongly partisan from a left-wing perspective; story selection and framing serve progressive political narratives with minimal journalistic independence."
+    },
+    {
+      "domain": "rawstory.com",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Progressive news aggregator and commentary site; story selection and framing are consistently left-of-center; editorial orientation is openly progressive with a focus on Republican political controversies."
+    },
+    {
+      "domain": "theatlantic.com",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "Long-form magazine with a historically centrist-liberal editorial tradition; under recent leadership the editorial voice has moved toward a more explicitly progressive stance; opinion and analysis lean left-of-center while maintaining relatively high journalistic standards."
+    },
+    {
+      "domain": "reason.com",
+      "label": "right-center",
+      "confidence": "medium",
+      "notes": "Libertarian magazine published by the Reason Foundation; editorial orientation is fiscally conservative and socially liberal; on most political-economy questions the framing aligns with right-of-center free-market perspectives, though it diverges from mainstream conservatism on social issues."
+    },
+    {
+      "domain": "newrepublic.com",
+      "label": "lean-left",
+      "confidence": "high",
+      "notes": "Progressive political magazine with a long liberal intellectual tradition; opinion and analysis are consistently left-of-center; under recent ownership the editorial direction has moved toward a more explicitly progressive position."
+    },
+    {
+      "domain": "foreignpolicy.com",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "International affairs publication with a broadly internationalist and center-left editorial orientation; coverage of US foreign policy, global trade, and multilateral institutions tends to favor progressive-internationalist positions."
+    },
+    {
+      "domain": "foreignaffairs.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "Council on Foreign Relations flagship publication; publishes foreign policy analysis from across the bipartisan mainstream spectrum; editorial orientation is broadly internationalist and establishment-centrist without adopting a consistent domestic partisan lean."
+    },
+    {
+      "domain": "harpers.org",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "Literary and political magazine with a progressive-intellectual editorial tradition; long-form essays and criticism lean left-of-center; the magazine has a tradition of publishing heterodox voices but the overall editorial orientation is left-leaning."
+    },
+    {
+      "domain": "newyorker.com",
+      "label": "lean-left",
+      "confidence": "high",
+      "notes": "Literary and journalism magazine with a center-left editorial orientation; political reporting and commentary lean left-of-center; cultural coverage reflects a progressive coastal sensibility; high journalistic standards with strong fact-checking."
+    },
+    {
+      "domain": "tabletmag.com",
+      "label": "right-center",
+      "confidence": "medium",
+      "notes": "Jewish ideas magazine that has shifted toward a right-of-center orientation under recent editorial direction; criticism of progressive identitarianism is a recurring theme; political coverage and commentary tend center-right to right on cultural and foreign policy issues."
+    },
+    {
+      "domain": "christiansciencemonitor.com",
+      "label": "center",
+      "confidence": "high",
+      "notes": "Non-profit global news outlet editorially independent from its founding institution; longstanding reputation for balanced, solution-oriented journalism; regularly cited as a center reference point in media-literacy education."
+    },
+    {
+      "domain": "americamagazine.org",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Jesuit Catholic magazine; editorial orientation on social justice, immigration, and economic issues tends center-left consistent with Catholic social teaching; on culture-war and life issues the framing is more conservative; overall editorial center of gravity is center-left."
+    },
+    {
+      "domain": "spectator.org",
+      "label": "right",
+      "confidence": "high",
+      "notes": "The American Spectator; conservative magazine with an explicitly right-of-center editorial mission; commentary and analysis consistently advocate for conservative political and cultural positions."
+    },
+    {
+      "domain": "commentary.com",
+      "label": "lean-right",
+      "confidence": "high",
+      "notes": "Neoconservative magazine with a right-of-center and hawkish foreign-policy editorial orientation; opinion and analysis are consistently conservative with a particular emphasis on Israel, national security, and social conservatism."
+    },
+    {
+      "domain": "newstatesman.com",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "UK center-left political magazine with significant US readership; editorial orientation is center-left on economic and social policy; US coverage tends to frame American politics from a progressive-internationalist perspective."
+    },
+    {
+      "domain": "economist.com",
+      "label": "center",
+      "confidence": "high",
+      "notes": "UK-based global affairs magazine with a classical liberal editorial orientation; favors free markets and internationalism; critiqued from both populist right and progressive left; represents a credible centrist establishment position."
+    },
+    {
+      "domain": "ft.com",
+      "label": "center",
+      "confidence": "high",
+      "notes": "Financial Times; UK-based global business and financial news outlet; editorial orientation is pro-market and internationalist with a centrist framing; business-focused coverage does not map cleanly onto US left-right political categories."
+    },
+    {
+      "domain": "aljazeera.com",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "Qatar state-funded international broadcaster; US political coverage tends toward progressive framing; international coverage is strongly critical of US foreign policy; editorial independence from Qatari state varies by topic."
+    },
+    {
+      "domain": "dw.com",
+      "label": "center",
+      "confidence": "high",
+      "notes": "Deutsche Welle; German public international broadcaster with a mandate of editorial independence; US coverage is broadly balanced and reflects a mainstream European-liberal perspective without a clear partisan lean."
+    },
+    {
+      "domain": "france24.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "French public international broadcaster; US political coverage is broadly balanced from an international perspective; editorial orientation reflects mainstream French republican values without a clear US partisan lean."
+    },
+    {
+      "domain": "haaretz.com",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "Israeli newspaper with an English edition widely read in US Jewish and policy communities; editorial line is left-liberal on Israeli domestic politics and critical of occupation policies; US coverage tends toward progressive framing."
+    },
+    {
+      "domain": "businessinsider.com",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Business and general-news digital outlet; political coverage tends slightly left-of-center in story selection and framing; business coverage is generally neutral and data-driven; editorial voice is less partisan than many peers."
+    },
+    {
+      "domain": "themarkup.org",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "Non-profit investigative newsroom focused on technology and algorithmic accountability; story selection emphasizes harms from tech companies and surveillance capitalism; sourcing and framing align with a progressive-regulatory perspective."
+    },
+    {
+      "domain": "rollcall.com",
+      "label": "center",
+      "confidence": "high",
+      "notes": "Capitol Hill trade publication focused on legislative process and congressional coverage; process-focused journalism with minimal editorial advocacy; editorial orientation is non-partisan and institutionally centrist."
+    },
+    {
+      "domain": "mediaite.com",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Media criticism and news outlet; coverage of right-wing media figures tends to be critical and watchdog-oriented; story selection emphasizes conservative media controversies more than progressive ones, reflecting a mild left-of-center institutional lean."
+    },
+    {
+      "domain": "realclearpolitics.com",
+      "label": "right-center",
+      "confidence": "medium",
+      "notes": "Polling aggregator and political news outlet; original commentary and story curation tend toward right-of-center; aggregated polling is data-driven but site editorial selections skew slightly conservative."
+    },
+    {
+      "domain": "statesnewsroom.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "Network of non-profit state-focused news outlets; editorial mission is local public-interest accountability journalism; no discernible partisan lean in coverage across the network; professional journalism standards with transparency."
+    },
+    {
+      "domain": "buzzfeednews.com",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "Digital news outlet that blended viral content with substantive investigative reporting; political coverage and framing leaned left-of-center; shut down its news division in 2023 but archived content remains accessible."
+    },
+    {
+      "domain": "semafor.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "Startup news outlet founded by former Bloomberg and BuzzFeed News executives with an explicit structural commitment to separating news from opinion; covers global politics and business; editorial approach is centrist and multi-perspective by design."
+    },
+    {
+      "domain": "theconversation.com",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Academic journalism outlet where peer-reviewed researchers write for general audiences; story selection tends toward research-backed progressive policy framing on climate, health, and social issues; editorial oversight is academic rather than political but the output skews center-left."
+    },
+    {
+      "domain": "npr.org",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "Public radio network with editorial independence; news coverage aspires to balance but story selection, framing, and source choices tend center-left; critiqued from the right as institutionally progressive and from the left as insufficiently adversarial."
+    },
+    {
+      "domain": "aprilmedia.com",
+      "label": "center",
+      "confidence": "low",
+      "notes": "Small independent outlet; insufficient published record to assign a confident directional label; assigned center as a neutral placeholder pending fuller editorial audit."
+    },
+    {
+      "domain": "hill.tv",
       "label": "mixed",
       "confidence": "medium",
-      "notes": "DC-focused outlet with both left-leaning and right-leaning opinion columnists; news coverage is relatively balanced; signal depends heavily on section (opinion vs news)"
+      "notes": "The Hill's video programming arm publishes explicitly multi-partisan commentary shows featuring hosts from across the political spectrum including progressive, libertarian, and conservative voices; overall editorial signal is mixed rather than directional."
+    },
+    {
+      "domain": "foxbusiness.com",
+      "label": "lean-right",
+      "confidence": "high",
+      "notes": "Fox News business channel digital outlet; financial and economic news is framed with a pro-market, anti-regulatory orientation; editorial line aligns with right-of-center economic conservatism."
+    },
+    {
+      "domain": "cnbc.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "Business and financial news network; economic reporting is generally neutral and data-driven; political coverage is broadly centrist; does not adopt a consistent directional editorial line on political issues."
+    },
+    {
+      "domain": "marketwatch.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "Financial news and markets outlet; reporting is primarily data-driven and market-focused; political coverage is minimal and generally neutral; no discernible partisan editorial lean."
+    },
+    {
+      "domain": "theweek.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "News digest publication that curates and summarizes coverage from across the political spectrum; editorial format explicitly presents multiple perspectives; overall signal is centrist by design, though curation choices may occasionally favor certain framings."
+    },
+    {
+      "domain": "realclearwire.com",
+      "label": "right-center",
+      "confidence": "medium",
+      "notes": "News wire under the RealClear Media umbrella; story selection and editorial curation skew right-of-center consistent with the parent brand; aggregates and amplifies center-right and conservative outlets."
+    },
+    {
+      "domain": "newsweek.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "Legacy news magazine with a broadly centrist editorial identity; under recent ownership has published both left-leaning and right-leaning opinion; news coverage is generally balanced but the outlet has faced criticism for declining editorial standards."
+    },
+    {
+      "domain": "time.com",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Legacy news magazine with a broad-audience centrist tradition; in recent years story selection and framing on social and political issues have moved slightly left-of-center; covers social justice and climate topics with a progressive-sympathetic framing."
+    },
+    {
+      "domain": "thenewatlantis.com",
+      "label": "lean-right",
+      "confidence": "medium",
+      "notes": "Technology-and-society journal published by the Ethics and Public Policy Center; editorial orientation is socially conservative and skeptical of techno-progressive assumptions; commentary on AI, bioethics, and science policy consistently frames issues from a right-of-center perspective."
+    },
+    {
+      "domain": "americanconservative.com",
+      "label": "lean-right",
+      "confidence": "high",
+      "notes": "Paleoconservative magazine that critiques mainstream conservatism from an anti-interventionist, traditionalist position; editorial framing is consistently right-of-center on culture and foreign policy though it diverges from neoconservative orthodoxy."
+    },
+    {
+      "domain": "thedispatch.com",
+      "label": "lean-right",
+      "confidence": "high",
+      "notes": "Center-right news and opinion outlet founded by Never-Trump conservatives; journalism is factual and reported; opinion and analysis are explicitly conservative but favor institutional norms; positioned as right-of-center alternative to partisan right media."
+    },
+    {
+      "domain": "nationalinterest.org",
+      "label": "lean-right",
+      "confidence": "medium",
+      "notes": "Foreign policy and security journal with a realist-conservative editorial orientation; analysis favors American-interest framing and skepticism of liberal internationalism; consistently right-of-center on foreign policy questions."
+    },
+    {
+      "domain": "truthdig.com",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Progressive news and commentary outlet with an explicitly left-of-center editorial mission; publishes advocacy journalism and progressive criticism of US domestic and foreign policy."
+    },
+    {
+      "domain": "commondreams.org",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Progressive news outlet with an explicitly left-of-center editorial mission; content is advocacy-oriented and consistently supports progressive political causes; operates as an amplifier for left-leaning commentary and movement journalism."
+    },
+    {
+      "domain": "alternet.org",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Progressive news and opinion outlet with openly left-of-center editorial orientation; story selection and framing consistently advocate for progressive political causes and critique conservative political positions."
+    },
+    {
+      "domain": "inthesetimes.com",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Independent socialist magazine with an explicitly left-of-center editorial mission; labor, economic justice, and social movements are central coverage areas; editorial framing strongly advocates for left-wing political positions."
+    },
+    {
+      "domain": "mediamatters.org",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Non-profit media watchdog organization that monitors and critiques right-wing media; explicitly progressive in mission and editorial orientation; content functions primarily as progressive media criticism rather than neutral journalism."
+    },
+    {
+      "domain": "talkingpointsmemo.com",
+      "label": "lean-left",
+      "confidence": "high",
+      "notes": "Progressive news outlet founded during the Bush administration as a liberal political news site; reporting is substantive but story selection and framing consistently reflect a center-left political orientation."
+    },
+    {
+      "domain": "wonkette.com",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Satirical progressive political news site with an explicitly left-of-center and anti-Republican editorial orientation; content is openly advocacy-oriented and employs sharp progressive political framing."
+    },
+    {
+      "domain": "crooksandliars.com",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Progressive media criticism and political commentary site; story selection focuses on conservative media and Republican political controversies; editorial framing is consistently left-of-center and adversarial toward right-wing media."
+    },
+    {
+      "domain": "dailykos.com",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Progressive political blog and community site; editorial orientation is explicitly left-of-center and pro-Democratic; community-sourced content is strongly partisan from a progressive perspective."
+    },
+    {
+      "domain": "hotair.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Conservative political blog and news commentary site; editorial orientation is explicitly right-of-center and pro-Republican; story selection and framing consistently serve conservative political positions."
+    },
+    {
+      "domain": "powerlineblog.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Conservative political blog with an explicitly right-of-center editorial orientation; commentary and analysis consistently support Republican political positions and critique Democratic Party politics."
+    },
+    {
+      "domain": "redstate.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Conservative political blog and news site with an explicitly right-of-center and pro-Republican editorial orientation; story selection and framing serve conservative political narratives."
+    },
+    {
+      "domain": "instapundit.com",
+      "label": "lean-right",
+      "confidence": "medium",
+      "notes": "Conservative-libertarian political blog with a right-of-center editorial orientation; aggregates and comments on news from a broadly conservative-libertarian perspective; tone is somewhat eclectic but overall lean is right-of-center."
+    },
+    {
+      "domain": "nationaljournal.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "Washington-based political news outlet targeting a professional policy audience; editorial approach is non-partisan and centrist; coverage focuses on legislative and executive process without a clear directional lean."
+    },
+    {
+      "domain": "judicialwatch.org",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Conservative watchdog organization; content focuses on government accountability investigations primarily targeting Democratic politicians and institutions; editorial framing is explicitly right-of-center and adversarial toward progressive politics."
+    },
+    {
+      "domain": "heritage.org",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Heritage Foundation; major conservative think tank that produces policy analysis and commentary explicitly from a right-of-center perspective; not a news outlet but publishes widely cited political and policy commentary."
+    },
+    {
+      "domain": "brookings.edu",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Centrist-to-center-left think tank producing policy research and commentary; generally regarded as center or center-left; research covers a range of perspectives but institutional orientation and typical policy conclusions favor center-left approaches."
+    },
+    {
+      "domain": "pewresearch.org",
+      "label": "center",
+      "confidence": "high",
+      "notes": "Non-partisan research organization that produces data-driven polling and social research; explicitly non-advocacy; editorial mission is descriptive not prescriptive; genuinely centrist by institutional design."
+    },
+    {
+      "domain": "theconservativetreehouse.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Far-right political blog (The Last Refuge / Conservative Treehouse); editorial framing is strongly nationalist-populist and conspiratorial in orientation; content consistently advocates for hard-right political positions."
+    },
+    {
+      "domain": "twitchy.com",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Conservative news curation site that aggregates and amplifies right-wing social media content; story selection is explicitly partisan from a right-of-center perspective."
+    },
+    {
+      "domain": "fivethirtyeight.com",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Data journalism outlet founded by Nate Silver; political analysis is primarily quantitative and polling-based; editorial framing on political topics tends slightly left-of-center while methodology is generally rigorous; story selection occasionally reflects a center-left editorial perspective."
+    },
+    {
+      "domain": "newsbusters.org",
+      "label": "right",
+      "confidence": "high",
+      "notes": "Media Research Center watchdog site that monitors and critiques what it perceives as liberal media bias; explicitly conservative in mission and editorial orientation; content functions as conservative media criticism with a strong right-wing framing."
+    },
+    {
+      "domain": "mediabiasfactcheck.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "Media watchdog site that rates news outlets for factual reporting and bias; editorial approach is non-partisan and descriptive; the site itself does not advocate political positions and can be considered centrist in orientation."
+    },
+    {
+      "domain": "poynter.org",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Journalism industry trade publication and training organization; editorial coverage of media ethics and misinformation tends toward progressive-adjacent institutional journalism norms; critiques of right-wing media are more frequent than critiques of left-wing outlets."
+    },
+    {
+      "domain": "niemanlab.org",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Harvard-based journalism research and criticism outlet; editorial framing on journalism industry topics tends center-left; analysis of media trends often reflects progressive-academic perspectives on the press."
+    },
+    {
+      "domain": "columbiajournaism.org",
+      "label": "left-center",
+      "confidence": "low",
+      "notes": "Columbia Journalism Review; journalism trade publication with center-left institutional lean; media criticism tends toward progressive-professional journalism norms and is more often critical of conservative than progressive media."
+    },
+    {
+      "domain": "cjr.org",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Columbia Journalism Review digital edition; journalism trade publication and media criticism outlet with a center-left institutional orientation; coverage of media industry issues skews toward progressive-professional journalism norms."
+    },
+    {
+      "domain": "military.com",
+      "label": "right-center",
+      "confidence": "low",
+      "notes": "Military news and benefits information site serving active duty and veteran audiences; editorial framing on defense and foreign policy issues skews toward strong-defense, right-of-center positions; insufficiently broad political coverage for a confident label."
+    },
+    {
+      "domain": "thetimes.co.uk",
+      "label": "lean-right",
+      "confidence": "medium",
+      "notes": "UK daily with a centre-right editorial tradition; US political coverage reflects the paper's broadly right-of-centre British establishment perspective; editorial board supports market-oriented economic policies."
+    },
+    {
+      "domain": "telegraph.co.uk",
+      "label": "lean-right",
+      "confidence": "high",
+      "notes": "UK conservative-leaning daily with an explicitly right-of-centre editorial orientation; US political coverage reflects the paper's strong support for conservative and Brexit-aligned political positions."
+    },
+    {
+      "domain": "spectator.co.uk",
+      "label": "lean-right",
+      "confidence": "high",
+      "notes": "UK conservative magazine with significant influence on right-of-centre political opinion; US coverage reflects a right-of-centre British conservative perspective; often cited by American conservatives."
+    },
+    {
+      "domain": "independent.co.uk",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "UK digital news outlet with a center-left editorial orientation; US political coverage tends toward progressive framing; editorially independent but with a discernible left-of-centre lean on social and political issues."
+    },
+    {
+      "domain": "apifootnews.com",
+      "label": "center",
+      "confidence": "low",
+      "notes": "Small API-focused news aggregator; insufficient editorial record to assign a confident directional label; assigned center as a neutral placeholder pending fuller editorial audit."
+    },
+    {
+      "domain": "buzzfeed.com",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "Digital media company mixing entertainment and news content; political coverage and original reporting tended left-of-center; pop-culture and social coverage reflects progressive millennial-audience framing."
+    },
+    {
+      "domain": "vice.com",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "Digital media outlet originally known for edgy counterculture content; news and politics coverage developed a clear left-of-center orientation; story selection emphasizes social justice, drug policy, and progressive political topics."
+    },
+    {
+      "domain": "mic.com",
+      "label": "lean-left",
+      "confidence": "medium",
+      "notes": "Millennial-focused digital news outlet with a progressive editorial orientation; political coverage and framing lean left-of-center with a particular emphasis on social justice and identity politics topics."
+    },
+    {
+      "domain": "guardian.com",
+      "label": "lean-left",
+      "confidence": "high",
+      "notes": "Mirror domain for theguardian.com; UK-based but with significant US coverage; editorial line favors progressive climate, social, and economic positions; news reporting is generally fair but opinion section pulls left."
+    },
+    {
+      "domain": "nbc.com",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "NBC broadcast network digital outlet; news coverage broadly follows the editorial orientation of nbcnews.com; general entertainment content is not politically oriented but news framing reflects center-left tendencies of the broadcast news division."
+    },
+    {
+      "domain": "cbslocal.com",
+      "label": "center",
+      "confidence": "medium",
+      "notes": "CBS local news digital network; local news stations operate with significant editorial independence; overall signal is centrist with local focus; political framing is generally neutral and event-driven."
+    },
+    {
+      "domain": "sinclair.com",
+      "label": "lean-right",
+      "confidence": "high",
+      "notes": "Sinclair Broadcast Group parent site; local news stations under Sinclair ownership have been required to air mandatory right-leaning content segments; the institutional editorial orientation is right-of-center."
+    },
+    {
+      "domain": "washingtonmonthly.com",
+      "label": "lean-left",
+      "confidence": "high",
+      "notes": "Political magazine with an explicitly center-left editorial orientation; policy analysis and political commentary consistently favor Democratic-aligned governance approaches and progressive policy positions."
+    },
+    {
+      "domain": "prospect.org",
+      "label": "lean-left",
+      "confidence": "high",
+      "notes": "The American Prospect; progressive policy magazine with an explicitly left-of-center editorial mission; economic and social policy analysis consistently advocates for progressive policy solutions."
+    },
+    {
+      "domain": "dissentmagazine.org",
+      "label": "left",
+      "confidence": "high",
+      "notes": "Democratic-socialist magazine with an explicitly left-of-center editorial mission; political economy and social criticism are written from a broadly left-wing perspective; publishes debate within the left but does not reach across to conservative positions."
+    },
+    {
+      "domain": "weeklystandard.com",
+      "label": "lean-right",
+      "confidence": "high",
+      "notes": "Now-defunct neoconservative magazine (archived); editorial orientation was explicitly right-of-center with a hawkish foreign policy and social conservative domestic agenda; archives remain accessible and reflect a lean-right perspective."
+    },
+    {
+      "domain": "thebulwark.com",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Center-right to centrist outlet founded by Never-Trump conservatives; has evolved toward center-left positioning as editors moved away from Republican Party identification; political analysis is anti-populist-right and increasingly sympathetic to Democratic-aligned positions."
+    },
+    {
+      "domain": "quincy.substack.com",
+      "label": "left-center",
+      "confidence": "low",
+      "notes": "Foreign policy commentary from the Quincy Institute for Responsible Statecraft; editorial orientation is anti-interventionist and favors diplomatic engagement over military force; positions align with progressive and libertarian foreign policy critiques."
+    },
+    {
+      "domain": "responsiblestatecraft.org",
+      "label": "left-center",
+      "confidence": "medium",
+      "notes": "Quincy Institute for Responsible Statecraft publication; anti-interventionist foreign policy outlet that draws contributors from both left and right who share skepticism of military adventurism; overall framing tends center-left on foreign policy."
+    },
+    {
+      "domain": "nymag.com",
+      "label": "lean-left",
+      "confidence": "high",
+      "notes": "New York Magazine digital outlet; political coverage through Intelligencer vertical is clearly left-of-center; culture and lifestyle coverage reflects a progressive New York sensibility; editorial framing on political topics is consistently center-left to left."
+    },
+    {
+      "domain": "realclearpolicy.com",
+      "label": "right-center",
+      "confidence": "medium",
+      "notes": "Policy analysis outlet under the RealClear Media umbrella; story curation and original analysis tend center-right; publishes commentary from across the spectrum but editorial selections skew toward conservative-leaning policy perspectives."
+    },
+    {
+      "domain": "theamericanconservative.com",
+      "label": "lean-right",
+      "confidence": "high",
+      "notes": "Paleoconservative magazine that critiques mainstream conservatism from an anti-interventionist, traditionalist position; editorial framing is consistently right-of-center on culture and foreign policy though it diverges from neoconservative orthodoxy."
     }
   ]
 }
