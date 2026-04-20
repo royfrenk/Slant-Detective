@@ -3,6 +3,10 @@
 //   gpt-5-mini (2025-08-07) — default, cost-efficient
 //   gpt-5       (2025-08-07) — higher capability option
 // OpenAI allows direct browser calls for user-supplied keys — no CORS header needed.
+//
+// API note: gpt-5+ models require max_completion_tokens (not max_tokens).
+// max_tokens was deprecated for newer reasoning models. Using max_completion_tokens
+// is accepted by both older and newer models per OpenAI docs.
 
 import type { LLMProvider, ProviderCompleteInput, ApiKeyTestResult } from './types'
 import { ProviderApiError } from './types'
@@ -29,7 +33,7 @@ export class OpenAIProvider implements LLMProvider {
         },
         body: JSON.stringify({
           model: this.modelIds[0],
-          max_tokens: 1,
+          max_completion_tokens: 10,
           messages: [{ role: 'user', content: 'hi' }],
         }),
       })
@@ -64,7 +68,7 @@ export class OpenAIProvider implements LLMProvider {
       },
       body: JSON.stringify({
         model: input.model,
-        max_tokens: input.maxTokens,
+        max_completion_tokens: input.maxTokens,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: input.system },

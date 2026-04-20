@@ -122,6 +122,21 @@ describe('OpenAIProvider.complete', () => {
     expect(messages[1]).toEqual({ role: 'user', content: 'user content' })
   })
 
+  it('uses max_completion_tokens (not max_tokens) for gpt-5+ model compatibility', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(makeResponse(200, VALID_OPENAI_RESPONSE))
+    vi.stubGlobal('fetch', fetchSpy)
+
+    await provider.complete(
+      { system: 'sys', user: 'usr', model: 'gpt-5-mini', maxTokens: 2048 },
+      'sk-proj-test',
+    )
+
+    const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit]
+    const body = JSON.parse(init.body as string) as Record<string, unknown>
+    expect(body['max_completion_tokens']).toBe(2048)
+    expect(body['max_tokens']).toBeUndefined()
+  })
+
   it('uses the model from input (not a hardcoded constant)', async () => {
     const fetchSpy = vi.fn().mockResolvedValue(makeResponse(200, VALID_OPENAI_RESPONSE))
     vi.stubGlobal('fetch', fetchSpy)
