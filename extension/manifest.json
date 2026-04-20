@@ -44,7 +44,7 @@
         "src/pages/credits.html",
         "src/pages/how-to-get-a-key.html"
       ],
-      "matches": ["<all_urls>"]
+      "matches": ["chrome-extension://*/*"]
     }
   ],
   "icons": {

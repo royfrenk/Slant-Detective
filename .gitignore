@@ -23,3 +23,8 @@ extension/assets/credits.json
 
 # Eval harness — downloaded corpora (GPL-3.0 aggregate; re-downloadable at eval-time)
 eval/data/
+
+# Secrets — never commit .env files (defense in depth)
+.env
+.env.*
+!.env.example
