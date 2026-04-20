@@ -542,3 +542,49 @@ describe('"How we measure" link', () => {
     expect(chrome.runtime.getURL).toHaveBeenCalledWith('src/pages/how-we-measure.html')
   })
 })
+
+// ---------------------------------------------------------------------------
+// 9. "Report bug" link (SD-038 — H.1 + H.2)
+// ---------------------------------------------------------------------------
+
+describe('"Report bug" link', () => {
+  it('footer-row has two child links; rbLink has class hw-link, role=button, aria-label, and text containing "Report bug"', () => {
+    initTooltip({ shadowMode: 'open' })
+    const evidence = makeSpan()
+    const { anchored, spanEl } = makeAnchoredSpan(evidence)
+    wireTooltipEvents([anchored])
+
+    spanEl.dispatchEvent(new Event('focusin', { bubbles: true }))
+
+    const host = document.getElementById('sd-tooltip-host')!
+    const footerRow = host.shadowRoot!.querySelector<HTMLElement>('.footer-row')
+    expect(footerRow).not.toBeNull()
+
+    const children = footerRow!.children
+    expect(children).toHaveLength(2)
+
+    const rbLink = children[1] as HTMLElement
+    expect(rbLink.classList.contains('hw-link')).toBe(true)
+    expect(rbLink.getAttribute('role')).toBe('button')
+    expect(rbLink.getAttribute('aria-label')).toBe('Report a bug')
+    expect(rbLink.textContent).toContain('Report bug')
+  })
+
+  it('clicking rbLink calls chrome.runtime.sendMessage with { action: "openReportBugModal" }', () => {
+    initTooltip({ shadowMode: 'open' })
+    const evidence = makeSpan()
+    const { anchored, spanEl } = makeAnchoredSpan(evidence)
+    wireTooltipEvents([anchored])
+
+    spanEl.dispatchEvent(new Event('focusin', { bubbles: true }))
+
+    const host = document.getElementById('sd-tooltip-host')!
+    const footerRow = host.shadowRoot!.querySelector<HTMLElement>('.footer-row')!
+    const rbLink = footerRow.children[1] as HTMLElement
+
+    vi.mocked(chrome.runtime.sendMessage).mockClear()
+    rbLink.click()
+
+    expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({ action: 'openReportBugModal' })
+  })
+})
