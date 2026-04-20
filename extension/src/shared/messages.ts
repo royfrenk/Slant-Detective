@@ -4,7 +4,8 @@ import type { Layer1Signals, RubricResponse, RubricSpan } from './types';
 export type OutboundMessage =
   | { action: 'analyze' }
   | { action: 'retry_layer2' }
-  | { action: 'evidence_click'; spanId: string };
+  | { action: 'evidence_click'; spanId: string }
+  | { action: 'openReportBugModal' };
 
 // Content script analysis result — extraction result extended with Layer 1 signals.
 export type ContentScriptResult =
@@ -26,7 +27,8 @@ export type InboundMessage =
   | { action: 'layer2_result'; payload: RubricResponse }
   | { action: 'layer2_failed'; errorType: 'invalid_key' | 'quota_exceeded' | 'network_error' | 'timeout' | 'unknown' }
   | { action: 'highlight_hover'; spanId: string }
-  | { action: 'highlight_click'; spanId: string };
+  | { action: 'highlight_click'; spanId: string }
+  | { action: 'reportBugReady'; url: string; screenshotDataUrl: string | null };
 
 // Service worker → content script
 export type ContentScriptMessage =
