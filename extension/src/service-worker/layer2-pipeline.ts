@@ -1,7 +1,7 @@
 import type { RubricResponse } from '../shared/types'
 import type { LLMProvider } from './providers/types'
 import { ProviderApiError } from './providers/types'
-import { getRubricPrompt, fillUserTemplate, RUBRIC_MODEL, MAX_TOKENS } from './rubric-prompt'
+import { getRubricPrompt, fillUserTemplate, MAX_TOKENS } from './rubric-prompt'
 import { validateRubricResponse, RubricValidationError } from './response-validator'
 import { buildCacheKey, getCachedResult, setCachedResult } from './cache'
 
@@ -17,6 +17,7 @@ export interface Layer2Input {
 async function fetchAndValidate(
   title: string,
   body: string,
+  model: string,
   provider: LLMProvider,
   apiKey: string,
 ): Promise<RubricResponse> {
@@ -30,7 +31,7 @@ async function fetchAndValidate(
     {
       system: prompt.system,
       user: userMessage,
-      model: RUBRIC_MODEL,
+      model,
       maxTokens: MAX_TOKENS,
     },
     apiKey,
@@ -66,11 +67,11 @@ export async function runLayer2Analysis(
 
   let rubricResponse: RubricResponse
   try {
-    rubricResponse = await fetchAndValidate(input.title, input.body, provider, apiKey)
+    rubricResponse = await fetchAndValidate(input.title, input.body, input.model, provider, apiKey)
   } catch (err) {
     if (err instanceof RubricValidationError) {
       // Single retry on validation failure
-      rubricResponse = await fetchAndValidate(input.title, input.body, provider, apiKey)
+      rubricResponse = await fetchAndValidate(input.title, input.body, input.model, provider, apiKey)
     } else if (err instanceof ProviderApiError) {
       throw err
     } else {
