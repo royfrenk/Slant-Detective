@@ -108,7 +108,22 @@ export function getRubricPrompt(providerId: ProviderId): RubricPrompt {
     }
   }
 
-  // SD-033 / SD-034 will replace these stubs.
+  if (providerId === 'openai') {
+    // OpenAI Chat Completions JSON mode requires the word "JSON" to appear in the
+    // system or user message. SYSTEM_PROMPT already contains "Return ONLY a JSON object"
+    // which satisfies this requirement. The suffix below reinforces schema compliance
+    // (JSON mode guarantees valid JSON structure, not schema adherence).
+    const openaiSystem =
+      SYSTEM_PROMPT.replaceAll('{RUBRIC_VERSION}', 'rubric_v1.0-openai') +
+      '\n\nRespond with a JSON object only — no explanation, no code fences. Your entire response must be valid JSON matching the schema above.'
+    return {
+      system: openaiSystem,
+      user: USER_TEMPLATE,
+      version: 'rubric_v1.0-openai',
+    }
+  }
+
+  // SD-034 will replace this stub.
   throw new Error(`Provider not yet implemented: ${providerId}`)
 }
 

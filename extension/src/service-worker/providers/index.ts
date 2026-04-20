@@ -1,9 +1,10 @@
 import type { LLMProvider, ProviderId } from './types'
 import { AnthropicProvider } from './anthropic'
+import { OpenAIProvider } from './openai'
 
 const PROVIDERS: Record<string, LLMProvider> = {
   anthropic: new AnthropicProvider(),
-  // SD-033: openai will be added here
+  openai: new OpenAIProvider(),
   // SD-034: gemini will be added here
 }
 
