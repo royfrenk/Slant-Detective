@@ -263,14 +263,9 @@ export default function ReportBugModal({
           {/* Section 5: Info Callout */}
           <div className="flex items-start gap-3 bg-[#f0f7f9] p-4 rounded-lg border-l-[4px] border-[#0ea5e9]">
             <ShieldIcon />
-            <div className="flex flex-col gap-0.5">
-              <p className="text-[12px] text-[#0c4a6e] font-bold leading-tight tracking-tight">
-                Privacy &amp; Debugging Info
-              </p>
-              <p className="text-[11px] text-[#075985] font-medium leading-normal opacity-90">
-                Screenshots and specific URLs help us debug and improve our product more effectively.
-              </p>
-            </div>
+            <p className="text-[12px] text-[#0c4a6e] font-bold leading-tight tracking-tight">
+              Screenshots and specific URLs help us debug and improve our product more effectively.
+            </p>
           </div>
 
         </div>
