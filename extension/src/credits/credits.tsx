@@ -126,7 +126,7 @@ export default function Credits(): React.JSX.Element {
       <div className="max-w-[560px] mx-auto">
 
         {/* Wordmark */}
-        <p className="font-bold text-sm tracking-widest uppercase text-primary mb-8 m-0">
+        <p className="text-[0.875rem] font-black uppercase tracking-wordmark text-primary mb-8 m-0">
           SLANT DETECTIVE
         </p>
 

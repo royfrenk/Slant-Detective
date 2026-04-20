@@ -146,14 +146,14 @@ function HowWeMeasurePage(): React.JSX.Element {
 
         {/* Wordmark */}
         <header>
-          <p className="font-bold text-sm tracking-widest uppercase text-primary mb-8 m-0">
+          <p className="text-[0.875rem] font-black uppercase tracking-wordmark text-primary mb-8 m-0">
             SLANT DETECTIVE
           </p>
         </header>
 
         <main>
           {/* Page title */}
-          <h1 className="font-bold text-2xl text-primary mb-4 mt-0">
+          <h1 className="font-bold text-2xl text-primary mb-8 mt-0">
             How We Measure
           </h1>
 

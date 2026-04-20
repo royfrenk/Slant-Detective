@@ -114,7 +114,7 @@ function HowToGetAKeyPage(): React.JSX.Element {
 
         {/* Wordmark */}
         <header>
-          <p className="font-bold text-sm tracking-widest uppercase text-primary mb-8 m-0">
+          <p className="text-[0.875rem] font-black uppercase tracking-wordmark text-primary mb-8 m-0">
             SLANT DETECTIVE
           </p>
         </header>
