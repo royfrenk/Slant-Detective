@@ -18,6 +18,8 @@ const config: Config = {
         "primary-fixed": "#00668a",
         "on-tertiary-container": "#e96666",
         "slate-chip": "#64748b",
+        "dim-word-choice": "#6d28d9",
+        "dim-framing": "#0891b2",
       },
       boxShadow: {
         ambient: "0 12px 32px -4px rgba(25, 28, 30, 0.08)",

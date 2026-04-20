@@ -3,9 +3,8 @@ import type { Layer1Signals } from '../../shared/types';
 
 const TOTAL_BLOCKS = 10;
 
-// Fill colors per signal — only hex values are inline-style (design-spec exact colors
-// that have no Tailwind token equivalents except primary-fixed and on-tertiary-container).
-// We reference the CSS custom properties set by Tailwind to avoid magic hex in JSX.
+// Fill colors per signal — all sourced from Tailwind tokens (dim-word-choice, dim-framing,
+// primary-fixed) to keep the palette centralized in tailwind.config.ts.
 
 interface SignalBarConfig {
   readonly label: string;
@@ -18,14 +17,14 @@ const SIGNAL_BARS: readonly SignalBarConfig[] = [
   {
     label: 'Language intensity',
     glyph: '⚠',
-    fillClass: 'bg-tertiary',
-    glyphClass: 'text-tertiary',
+    fillClass: 'bg-dim-word-choice',
+    glyphClass: 'text-dim-word-choice',
   },
   {
     label: 'Headline drift',
     glyph: '✎',
-    fillClass: 'bg-on-tertiary-container',
-    glyphClass: 'text-on-tertiary-container',
+    fillClass: 'bg-dim-framing',
+    glyphClass: 'text-dim-framing',
   },
   {
     label: 'Attribution skew',

@@ -9,7 +9,7 @@ interface LoadedWordChipProps {
 
 function LoadedWordChip({ word }: LoadedWordChipProps): React.JSX.Element {
   return (
-    <span className="bg-surface-variant rounded-[4px] py-[3px] px-2 border-l-4 border-tertiary text-[0.625rem] text-on-surface-variant">
+    <span className="bg-surface-variant rounded-[4px] py-[3px] px-2 border-l-4 border-dim-word-choice text-[0.625rem] text-on-surface-variant">
       {word}
     </span>
   );

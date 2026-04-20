@@ -13,16 +13,16 @@ interface CategoryConfig {
 const CATEGORY_CONFIG: Record<RubricCategory, CategoryConfig> = {
   loaded_language: {
     glyph: '⚠',
-    accentClass: 'border-tertiary',
-    glyphClass: 'text-tertiary',
-    labelClass: 'text-tertiary',
+    accentClass: 'border-dim-word-choice',
+    glyphClass: 'text-dim-word-choice',
+    labelClass: 'text-dim-word-choice',
     label: 'LOADED LANGUAGE',
   },
   framing: {
     glyph: '◈',
-    accentClass: 'border-on-tertiary-container',
-    glyphClass: 'text-on-tertiary-container',
-    labelClass: 'text-on-tertiary-container',
+    accentClass: 'border-dim-framing',
+    glyphClass: 'text-dim-framing',
+    labelClass: 'text-dim-framing',
     label: 'FRAMING',
   },
   headline_slant: {
