@@ -3,6 +3,14 @@
  *
  * Source: Spinde et al. (2021), AGPL-3.0
  * https://github.com/Media-Bias-Group/Neural-Media-Bias-Detection-Using-Distant-Supervision-With-BABE
+ *
+ * Uses SG2 (second annotator group, ~3,677 sentences) as the primary corpus —
+ * the larger of the two sentence groups, closest to the 3,700 figure cited in
+ * the PRD and spec. SG1 (1,704 sentences) is available as a separate file.
+ *
+ * CSV format: semicolon-delimited, columns text;news_link;outlet;topic;type;label_bias;label_opinion;biased_words
+ * label_bias values: "Biased" | "Non-biased" | "No agreement"
+ * biased_words format: Python list literal e.g. ['word1', 'word2'] or []
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs'
@@ -11,31 +19,34 @@ import { fileURLToPath } from 'node:url'
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = resolve(SCRIPT_DIR, 'data')
-const CACHE_PATH = resolve(DATA_DIR, 'SGB_combined.csv')
+const CACHE_PATH = resolve(DATA_DIR, 'SGB_SG2.csv')
 
 const BABE_CSV_URL =
-  'https://raw.githubusercontent.com/Media-Bias-Group/Neural-Media-Bias-Detection-Using-Distant-Supervision-With-BABE/master/data/SGB_combined.csv'
+  'https://raw.githubusercontent.com/Media-Bias-Group/Neural-Media-Bias-Detection-Using-Distant-Supervision-With-BABE/main/data/final_labels_SG2.csv'
 
 /**
  * @typedef {{ text: string, label: 'biased' | 'not-biased', biasedWords: string[] }} BabeSentence
  */
 
 /**
- * Minimal CSV parser that handles quoted fields with embedded commas/newlines.
- * Returns rows as string arrays.
+ * Minimal semicolon-delimited CSV parser that handles quoted fields.
+ * Strips UTF-8 BOM if present.
  *
  * @param {string} csv
+ * @param {string} [delimiter=';']
  * @returns {string[][]}
  */
-function parseCSV(csv) {
+function parseCSV(csv, delimiter = ';') {
+  // Strip UTF-8 BOM
+  const text = csv.startsWith('\uFEFF') ? csv.slice(1) : csv
   const rows = []
   let row = []
   let field = ''
   let inQuotes = false
 
-  for (let i = 0; i < csv.length; i++) {
-    const ch = csv[i]
-    const next = csv[i + 1]
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]
+    const next = text[i + 1]
 
     if (inQuotes) {
       if (ch === '"' && next === '"') {
@@ -49,7 +60,7 @@ function parseCSV(csv) {
     } else {
       if (ch === '"') {
         inQuotes = true
-      } else if (ch === ',') {
+      } else if (ch === delimiter) {
         row.push(field)
         field = ''
       } else if (ch === '\r' && next === '\n') {
@@ -69,7 +80,6 @@ function parseCSV(csv) {
     }
   }
 
-  // Trailing row without newline
   if (field !== '' || row.length > 0) {
     row.push(field)
     rows.push(row)
@@ -79,22 +89,42 @@ function parseCSV(csv) {
 }
 
 /**
- * Download the BABE CSV from GitHub and cache locally.
+ * Parse Python-style list literal into string[].
+ * e.g. "['word1', 'word2']" → ['word1', 'word2']
+ * Returns [] for empty or malformed input.
+ *
+ * @param {string} raw
+ * @returns {string[]}
+ */
+function parsePythonList(raw) {
+  const s = raw.trim()
+  if (!s || s === '[]') return []
+  // Remove brackets and split on ', '
+  const inner = s.replace(/^\[/, '').replace(/\]$/, '')
+  return inner
+    .split(',')
+    .map((w) => w.trim().replace(/^['"]|['"]$/g, ''))
+    .filter(Boolean)
+}
+
+/**
+ * Download the BABE SG2 CSV from GitHub and cache locally.
  *
  * @returns {Promise<void>}
  */
 async function downloadBabe() {
-  process.stderr.write(`Downloading BABE corpus from ${BABE_CSV_URL}...\n`)
+  process.stderr.write(`Downloading BABE SG2 corpus from ${BABE_CSV_URL}...\n`)
   const res = await fetch(BABE_CSV_URL, { signal: AbortSignal.timeout(60_000) })
   if (!res.ok) throw new Error(`Failed to download BABE corpus: HTTP ${res.status}`)
   const text = await res.text()
   if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true })
   writeFileSync(CACHE_PATH, text, 'utf8')
-  process.stderr.write(`BABE corpus cached at ${CACHE_PATH}\n`)
+  process.stderr.write(`BABE corpus cached at ${CACHE_PATH} (${text.split('\n').length - 1} lines)\n`)
 }
 
 /**
- * Load and parse BABE corpus. Downloads on first call; reads cache on subsequent calls.
+ * Load and parse BABE SG2 corpus. Downloads on first call; reads cache on subsequent calls.
+ * Skips sentences with label "No agreement".
  *
  * @returns {Promise<BabeSentence[]>}
  */
@@ -104,37 +134,40 @@ export async function loadBabeCorpus() {
   }
 
   const raw = readFileSync(CACHE_PATH, 'utf8')
-  const rows = parseCSV(raw)
+  const rows = parseCSV(raw, ';')
 
   if (rows.length < 2) throw new Error('BABE CSV appears empty or malformed')
 
-  // Detect header row to find column indices
+  // Header: text;news_link;outlet;topic;type;label_bias;label_opinion;biased_words
   const header = rows[0].map((h) => h.trim().toLowerCase())
   const textIdx = header.findIndex((h) => h === 'text' || h === 'sentence')
-  const labelIdx = header.findIndex((h) => h === 'label')
+  const labelIdx = header.findIndex((h) => h === 'label_bias' || h === 'label')
   const wordsIdx = header.findIndex((h) => h === 'biased_words' || h === 'biasedwords')
 
-  if (textIdx === -1) throw new Error(`BABE CSV missing 'text' column. Headers: ${header.join(', ')}`)
-  if (labelIdx === -1) throw new Error(`BABE CSV missing 'label' column. Headers: ${header.join(', ')}`)
+  if (textIdx === -1) throw new Error(`BABE CSV missing 'text' column. Headers: ${header.join('; ')}`)
+  if (labelIdx === -1) throw new Error(`BABE CSV missing 'label_bias' column. Headers: ${header.join('; ')}`)
 
   /** @type {BabeSentence[]} */
   const sentences = []
 
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i]
-    if (row.length < 2) continue
+    if (!row || row.length < 2) continue
 
     const text = (row[textIdx] ?? '').trim()
+    if (!text) continue
+
     const rawLabel = (row[labelIdx] ?? '').trim().toLowerCase()
 
-    if (!text) continue
-    if (rawLabel !== 'biased' && rawLabel !== 'not-biased') continue
+    let label
+    if (rawLabel === 'biased') label = 'biased'
+    else if (rawLabel === 'non-biased' || rawLabel === 'not-biased') label = 'not-biased'
+    else continue  // skip "no agreement" and unrecognised labels
 
-    const label = /** @type {'biased' | 'not-biased'} */ (rawLabel)
     const rawWords = wordsIdx !== -1 ? (row[wordsIdx] ?? '').trim() : ''
-    const biasedWords = rawWords ? rawWords.split(/\s+/).filter(Boolean) : []
+    const biasedWords = parsePythonList(rawWords)
 
-    sentences.push({ text, label, biasedWords })
+    sentences.push({ text, label: /** @type {'biased' | 'not-biased'} */ (label), biasedWords })
   }
 
   if (sentences.length === 0) throw new Error('BABE CSV parsed 0 valid sentences')
