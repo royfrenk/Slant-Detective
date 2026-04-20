@@ -1,9 +1,60 @@
 import type { ContentScriptResult, InboundMessage } from '../shared/messages';
-import { ANTHROPIC_API_KEY, TELEMETRY_ENABLED } from '../shared/storage-keys';
+import {
+  ANTHROPIC_API_KEY,
+  PROVIDERS_KEY,
+  ACTIVE_PROVIDER_KEY,
+  TELEMETRY_ENABLED,
+} from '../shared/storage-keys';
+import type { ProviderId } from './providers/types';
+import { ProviderApiError } from './providers/types';
+import { getProvider } from './providers/index';
 import { runLayer2Analysis } from './layer2-pipeline';
-import { AnthropicApiError } from './anthropic-client';
 import { RubricValidationError } from './response-validator';
 import { bump, maybeEmit } from './telemetry';
+import { RUBRIC_MODEL } from './rubric-prompt';
+
+// Shape stored at PROVIDERS_KEY
+interface ProviderConfig {
+  key: string
+  model: string
+}
+interface ProvidersConfig {
+  anthropic?: ProviderConfig
+  openai?: ProviderConfig
+  gemini?: ProviderConfig
+}
+
+/**
+ * One-time idempotent migration from the old flat `anthropicApiKey` storage key
+ * to the new nested `providers` / `activeProvider` schema.
+ *
+ * Runs on every SW startup (cheap no-op after first run) and on `onInstalled`.
+ */
+async function runStorageMigration(): Promise<void> {
+  const stored = await chrome.storage.local.get([ANTHROPIC_API_KEY, PROVIDERS_KEY]);
+  const oldKey = stored[ANTHROPIC_API_KEY] as string | undefined;
+  const providers = stored[PROVIDERS_KEY] as ProvidersConfig | undefined;
+
+  // Already migrated — nothing to do.
+  if (providers?.anthropic) return;
+
+  // Fresh install with no old key — nothing to do.
+  if (!oldKey) return;
+
+  // Migrate: write new schema and delete old flat key.
+  const newProviders: ProvidersConfig = {
+    ...(providers ?? {}),
+    anthropic: { key: oldKey, model: RUBRIC_MODEL },
+  };
+  await chrome.storage.local.set({
+    [PROVIDERS_KEY]: newProviders,
+    [ACTIVE_PROVIDER_KEY]: 'anthropic' as ProviderId,
+  });
+  await chrome.storage.local.remove(ANTHROPIC_API_KEY);
+}
+
+// Run migration before any message listeners register.
+void runStorageMigration();
 
 // Open the panel on toolbar click. If the panel is already open, send
 // tab_navigated so it resets and re-analyzes the current page.
@@ -87,8 +138,11 @@ async function runAnalysis(): Promise<void> {
   void bump('analyze_layer1_ok');
 
   // Check for API key and attempt Layer 2
-  const stored = await chrome.storage.local.get(ANTHROPIC_API_KEY);
-  const apiKey = stored[ANTHROPIC_API_KEY] as string | undefined;
+  const stored = await chrome.storage.local.get([PROVIDERS_KEY, ACTIVE_PROVIDER_KEY]);
+  const activeProviderId = (stored[ACTIVE_PROVIDER_KEY] as ProviderId | undefined) ?? 'anthropic';
+  const providers = stored[PROVIDERS_KEY] as ProvidersConfig | undefined;
+  const apiKey = providers?.[activeProviderId]?.key;
+  const model = providers?.[activeProviderId]?.model ?? RUBRIC_MODEL;
 
   if (!apiKey) {
     const msg: InboundMessage = { action: 'analyzed', payload: { ...result, layer2: null } };
@@ -97,6 +151,7 @@ async function runAnalysis(): Promise<void> {
   }
 
   const canonicalUrl = tab.url ?? '';
+  const provider = getProvider(activeProviderId);
 
   try {
     const rubricResponse = await runLayer2Analysis(
@@ -105,7 +160,10 @@ async function runAnalysis(): Promise<void> {
         body: result.body,
         canonicalUrl,
         rubricVersion: __RUBRIC_VERSION__,
+        provider: activeProviderId,
+        model,
       },
+      provider,
       apiKey,
     );
 
@@ -120,11 +178,11 @@ async function runAnalysis(): Promise<void> {
       spans: rubricResponse.spans,
     }).catch(() => {});
   } catch (err) {
-    if (err instanceof AnthropicApiError && (err.statusCode === 401 || err.statusCode === 403)) {
+    if (err instanceof ProviderApiError && (err.statusCode === 401 || err.statusCode === 403)) {
       void bump('analyze_invalid_key');
       const msg: InboundMessage = { action: 'analysis_failed', reason: 'invalid_api_key' };
       chrome.runtime.sendMessage(msg).catch(() => {});
-    } else if (err instanceof AnthropicApiError && err.statusCode === 429) {
+    } else if (err instanceof ProviderApiError && err.statusCode === 429) {
       void bump('analyze_rate_limit');
       const msg: InboundMessage = { action: 'analysis_failed', reason: 'rate_limited' };
       chrome.runtime.sendMessage(msg).catch(() => {});
@@ -211,6 +269,10 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 // Extension update (reason === 'update') and browser reload (reason === 'chrome_update')
 // must NOT open the tab.
 chrome.runtime.onInstalled.addListener((details) => {
+  // Run migration on install/update so existing users get migrated
+  // even if the SW was already active (onInstalled fires for updates too).
+  void runStorageMigration();
+
   if (details.reason === 'install') {
     try {
       chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') });

@@ -12,7 +12,7 @@ import LLMTimeoutCard from './layer2/llm-timeout-card';
 import RateLimitCard from './layer2/rate-limit-card';
 import type { InboundMessage } from '../shared/messages';
 import type { Layer1Signals, RubricResponse } from '../shared/types';
-import { ANTHROPIC_API_KEY } from '../shared/storage-keys';
+import { PROVIDERS_KEY, ACTIVE_PROVIDER_KEY } from '../shared/storage-keys';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 type Layer2Status = 'idle' | 'loading' | 'done' | 'error';
@@ -33,10 +33,14 @@ export default function App(): React.JSX.Element {
   const [reportBugData, setReportBugData] = useState<{ url: string; screenshotDataUrl: string | null } | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Check API key presence on mount and listen for changes
+  // Check API key presence on mount and listen for changes.
+  // Derive hasApiKey from providers[activeProvider].key in the new storage schema.
   useEffect(() => {
-    chrome.storage.local.get(ANTHROPIC_API_KEY, (result) => {
-      setHasApiKey(typeof result[ANTHROPIC_API_KEY] === 'string' && result[ANTHROPIC_API_KEY].length > 0);
+    chrome.storage.local.get([PROVIDERS_KEY, ACTIVE_PROVIDER_KEY], (result) => {
+      const activeProvider = (result[ACTIVE_PROVIDER_KEY] as string | undefined) ?? 'anthropic';
+      const providers = result[PROVIDERS_KEY] as Record<string, { key?: string }> | undefined;
+      const key = providers?.[activeProvider]?.key;
+      setHasApiKey(typeof key === 'string' && key.length > 0);
     });
 
     function handleStorageChange(
@@ -44,9 +48,14 @@ export default function App(): React.JSX.Element {
       area: string,
     ): void {
       if (area !== 'local') return;
-      if (ANTHROPIC_API_KEY in changes) {
-        const newVal = changes[ANTHROPIC_API_KEY]?.newValue;
-        setHasApiKey(typeof newVal === 'string' && newVal.length > 0);
+      if (PROVIDERS_KEY in changes || ACTIVE_PROVIDER_KEY in changes) {
+        // Re-read both keys to derive hasApiKey correctly.
+        chrome.storage.local.get([PROVIDERS_KEY, ACTIVE_PROVIDER_KEY], (result) => {
+          const activeProvider = (result[ACTIVE_PROVIDER_KEY] as string | undefined) ?? 'anthropic';
+          const providers = result[PROVIDERS_KEY] as Record<string, { key?: string }> | undefined;
+          const key = providers?.[activeProvider]?.key;
+          setHasApiKey(typeof key === 'string' && key.length > 0);
+        });
       }
     }
 

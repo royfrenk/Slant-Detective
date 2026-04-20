@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from 'react'
-import { ANTHROPIC_API_KEY } from '../shared/storage-keys'
+import { PROVIDERS_KEY, ACTIVE_PROVIDER_KEY } from '../shared/storage-keys'
 import { validateApiKey } from './validate-api-key'
 import ApiKeyInput, { type InputState } from './api-key-input'
 import TestAndSaveButton from './test-and-save-button'
 import InlineFeedback, { type FeedbackState } from './inline-feedback'
 import { bump } from '../service-worker/telemetry'
+
+interface ProviderConfig {
+  key: string
+  model: string
+}
+interface ProvidersConfig {
+  anthropic?: ProviderConfig
+  openai?: ProviderConfig
+  gemini?: ProviderConfig
+}
+
+const DEFAULT_ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001'
 
 function maskedKey(key: string): string {
   return `${key.slice(0, 14)}${'•'.repeat(20)}`
@@ -29,8 +41,9 @@ export default function ApiKeyCard(): React.JSX.Element {
   const [errorCode, setErrorCode] = useState<number | null>(null)
 
   useEffect(() => {
-    chrome.storage.local.get(ANTHROPIC_API_KEY, (result) => {
-      const stored = result[ANTHROPIC_API_KEY] as string | undefined
+    chrome.storage.local.get(PROVIDERS_KEY, (result) => {
+      const providers = result[PROVIDERS_KEY] as ProvidersConfig | undefined
+      const stored = providers?.anthropic?.key
       if (stored) {
         setInputValue(maskedKey(stored))
         setHasStoredKey(true)
@@ -59,22 +72,51 @@ export default function ApiKeyCard(): React.JSX.Element {
       return
     }
 
-    const result = await validateApiKey(trimmed)
+    const testResult = await validateApiKey(trimmed)
 
-    if (result.status === 'ok') {
-      chrome.storage.local.set({ [ANTHROPIC_API_KEY]: trimmed }, () => {})
+    if (testResult.status === 'ok') {
+      // Read existing providers config to avoid overwriting other providers.
+      const existing = await new Promise<Record<string, unknown>>((resolve) => {
+        chrome.storage.local.get(PROVIDERS_KEY, resolve)
+      })
+      const existingProviders = (existing[PROVIDERS_KEY] as ProvidersConfig | undefined) ?? {}
+      const updated: ProvidersConfig = {
+        ...existingProviders,
+        anthropic: { key: trimmed, model: DEFAULT_ANTHROPIC_MODEL },
+      }
+      chrome.storage.local.set(
+        {
+          [PROVIDERS_KEY]: updated,
+          [ACTIVE_PROVIDER_KEY]: 'anthropic',
+        },
+        () => {},
+      )
       void bump('key_saved')
       setFeedbackState('success')
       setHasStoredKey(true)
       setIsDirty(false)
-    } else if (result.status === 'invalid') {
+    } else if (testResult.status === 'invalid') {
       void bump('key_rejected')
       setFeedbackState('error')
-      setErrorCode(result.code)
-    } else if (result.status === 'reachable-unverified') {
+      setErrorCode(testResult.code)
+    } else if (testResult.status === 'reachable-unverified') {
       // Request reached Anthropic but got an unexpected status (429, 500, etc.).
       // Key format is plausibly correct — save with a warning.
-      chrome.storage.local.set({ [ANTHROPIC_API_KEY]: trimmed }, () => {})
+      const existing = await new Promise<Record<string, unknown>>((resolve) => {
+        chrome.storage.local.get(PROVIDERS_KEY, resolve)
+      })
+      const existingProviders = (existing[PROVIDERS_KEY] as ProvidersConfig | undefined) ?? {}
+      const updated: ProvidersConfig = {
+        ...existingProviders,
+        anthropic: { key: trimmed, model: DEFAULT_ANTHROPIC_MODEL },
+      }
+      chrome.storage.local.set(
+        {
+          [PROVIDERS_KEY]: updated,
+          [ACTIVE_PROVIDER_KEY]: 'anthropic',
+        },
+        () => {},
+      )
       void bump('key_saved')
       setFeedbackState('warning')
       setHasStoredKey(true)
@@ -99,7 +141,19 @@ export default function ApiKeyCard(): React.JSX.Element {
       'Remove your saved API key? The extension will revert to Layer 1 (in-browser) analysis only.',
     )
     if (!confirmed) return
-    chrome.storage.local.remove(ANTHROPIC_API_KEY, () => {
+
+    chrome.storage.local.get(PROVIDERS_KEY, (result) => {
+      const providers = (result[PROVIDERS_KEY] as ProvidersConfig | undefined) ?? {}
+      // Remove anthropic key from providers object (immutably).
+      const { anthropic: _removed, ...rest } = providers
+      const hasOtherProvider = Object.keys(rest).length > 0
+
+      if (hasOtherProvider) {
+        chrome.storage.local.set({ [PROVIDERS_KEY]: rest }, () => {})
+      } else {
+        chrome.storage.local.remove([PROVIDERS_KEY, ACTIVE_PROVIDER_KEY], () => {})
+      }
+
       setInputValue('')
       setHasStoredKey(false)
       setIsDirty(false)
