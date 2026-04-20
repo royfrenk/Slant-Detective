@@ -166,25 +166,24 @@ describe('anchorSpans() — matched spans', () => {
   })
 
   it('span crossing two adjacent text nodes produces two sub-ranges', () => {
-    document.body.innerHTML = ''
-    const p = document.createElement('p')
-    p.appendChild(document.createTextNode('Hello '))   // offsets 0-5
-    p.appendChild(document.createTextNode('world'))    // offsets 6-10
-    document.body.appendChild(p)
-
-    // Span covers " world" — crosses the node boundary
-    const span = makeSpan({ start: 3, end: 9, text: 'lo wor' })
+    // Inline element splits the paragraph into three text nodes, so a span
+    // that covers two full words naturally crosses a node boundary while
+    // remaining word-boundary-safe.
+    document.body.innerHTML = '<p>Hello <em>quick</em> world</p>'
+    // Text nodes: "Hello " [0,6), "quick" [6,11), " world" [11,17)
+    // "Hello quick" covers [0,11) — crosses nodes 1 and 2.
+    const span = makeSpan({ start: 0, end: 11, text: 'Hello quick' })
     const result = anchorSpans([span], document)
 
     expect(result[0].status).toBe('matched')
     if (result[0].status === 'matched') {
       expect(result[0].domRanges).toHaveLength(2)
-      // First sub-range: within "Hello " node, from offset 3 to 6
-      expect(result[0].domRanges[0].startOffset).toBe(3)
+      // First sub-range: "Hello " node, full length
+      expect(result[0].domRanges[0].startOffset).toBe(0)
       expect(result[0].domRanges[0].endOffset).toBe(6)
-      // Second sub-range: within "world" node, from offset 0 to 3
+      // Second sub-range: "quick" node, full length
       expect(result[0].domRanges[1].startOffset).toBe(0)
-      expect(result[0].domRanges[1].endOffset).toBe(3)
+      expect(result[0].domRanges[1].endOffset).toBe(5)
     }
   })
 
@@ -256,12 +255,19 @@ describe('anchorSpans() — unmatched spans', () => {
 // ---------------------------------------------------------------------------
 
 describe('anchorSpans() — cross-element span split', () => {
-  it('span starting mid-<p> and ending mid-next-<p> produces two sub-ranges', () => {
-    // "First paragraph" (15 chars) + "Second paragraph" (16 chars)
-    makeDocument('<p>First paragraph</p><p>Second paragraph</p>')
-    // Corpus: "First paragraphSecond paragraph"
-    // Span from offset 10 ("agraph") to offset 21 ("Second par")
-    const span = makeSpan({ start: 10, end: 21, text: 'agraphSecond' })
+  it('span across sibling <p> elements produces two sub-ranges', () => {
+    // Trailing space in the first <p> plus leading space handling means the
+    // corpus concatenates as "First paragraph.Second paragraph". A cross-<p>
+    // span must begin and end at word boundaries to survive anchoring.
+    makeDocument('<p>First paragraph.</p><p>Second paragraph.</p>')
+    // Corpus: "First paragraph.Second paragraph."
+    // "paragraph.Second paragraph." spans both <p> text nodes and is
+    // boundary-safe (before: ' ', after: end-of-corpus).
+    const span = makeSpan({
+      start: 6,
+      end: 33,
+      text: 'paragraph.Second paragraph.',
+    })
     const result = anchorSpans([span], document)
 
     expect(result[0].status).toBe('matched')
@@ -307,18 +313,28 @@ describe('anchorSpans() — text-search takes priority over LLM offsets', () => 
     }
   })
 
-  it('falls back to LLM offsets when span.text is not found in corpus', () => {
+  it('marks span unmatched when span.text is not found (no raw-offset fallback)', () => {
+    // LLM offsets address the Readability body, not the live DOM. When text
+    // can't be located, applying raw offsets to the live corpus can drag the
+    // highlight onto byline/dek/date chrome — always unsafe. Unmatched spans
+    // are surfaced in the evidence panel without an on-page highlight.
     makeDocument('<p>Hello world</p>')
-    // text not in corpus; offsets point to valid "Hello"
     const span = makeSpan({ start: 0, end: 5, text: 'MISSING' })
     const result = anchorSpans([span], document)
 
-    // Should fall back to offsets (0-5 = "Hello") and match
-    expect(result[0].status).toBe('matched')
-    if (result[0].status === 'matched') {
-      expect(result[0].domRanges[0].startOffset).toBe(0)
-      expect(result[0].domRanges[0].endOffset).toBe(5)
+    expect(result[0].status).toBe('unmatched')
+    if (result[0].status === 'unmatched') {
+      expect(result[0].domRanges).toHaveLength(0)
     }
+  })
+
+  it('does not match mid-word when span.text is a short in-word substring', () => {
+    // "ten" appears inside "Listen" — must NOT produce a mid-word highlight.
+    makeDocument('<p>Listen to this</p>')
+    const span = makeSpan({ start: 0, end: 3, text: 'ten' })
+    const result = anchorSpans([span], document)
+
+    expect(result[0].status).toBe('unmatched')
   })
 
   it('returns unmatched when neither text nor offsets can resolve', () => {

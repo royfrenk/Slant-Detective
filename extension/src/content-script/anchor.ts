@@ -13,6 +13,7 @@ export const SKIP_TAGS: ReadonlySet<string> = new Set([
   'SCRIPT', 'STYLE', 'NOSCRIPT', 'IFRAME', 'OBJECT', 'EMBED',
   'NAV', 'HEADER', 'FOOTER', 'ASIDE', 'FIGURE', 'FIGCAPTION',
   'FORM', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA',
+  'TIME', 'ADDRESS',  // publish dates, bylines
 ])
 
 // ---------------------------------------------------------------------------
@@ -29,8 +30,20 @@ interface TextNodeEntry {
 // Root selection
 // ---------------------------------------------------------------------------
 
+// Prefer article-body-specific containers over the outer <article> element.
+// Outer <article> on news sites (NYT, WaPo) wraps the audio player, byline,
+// dek, and publish date alongside the body — those inflate the corpus with
+// text the LLM never saw, shifting every offset and dragging highlights onto
+// metadata chrome. Body-specific selectors narrow the corpus to the same
+// region Readability extracts for Layer 2.
 function getArticleRoot(doc: Document): Element {
   return (
+    doc.querySelector('[itemprop="articleBody"]') ??
+    doc.querySelector('[data-testid="article-body"]') ??
+    doc.querySelector('article section[name="articleBody"]') ??
+    doc.querySelector('[class*="article-body"]') ??
+    doc.querySelector('[class*="story-body"]') ??
+    doc.querySelector('[class*="post-content"]') ??
     doc.querySelector('article') ??
     doc.querySelector('[role="main"]') ??
     doc.querySelector('main') ??
@@ -66,6 +79,10 @@ export function buildCorpus(root: Element): { corpus: string; map: TextNodeEntry
       const el = node as Element
       if (SKIP_TAGS.has(el.tagName)) {
         // Skip this entire subtree.
+        continue
+      }
+      if (el.getAttribute('aria-hidden') === 'true') {
+        // Hidden decorative chrome (audio widgets, visual-only glyphs).
         continue
       }
       // Push children in reverse order so the first child is processed first.
@@ -139,13 +156,21 @@ function indexOfAtBoundary(haystack: string, needle: string): number {
 /**
  * Resolve the best [start, end) interval in `corpus` for `span`.
  *
+ * Only boundary-safe matches are returned. Mid-word matches and raw
+ * LLM offsets are intentionally NOT used as fallbacks:
+ *   - Mid-word matches produce ragged highlights (e.g. "ten" inside "Listen").
+ *   - LLM offsets address the Readability-extracted body, so applying them
+ *     to the live-DOM corpus drags highlights onto byline/dek/date chrome
+ *     by exactly the length of that prefix.
+ *
+ * An unmatched span is surfaced in the evidence panel without an on-page
+ * highlight, which is always safer than a wrong highlight.
+ *
  * Priority:
  *   1. Exact match of span.text in corpus at a word boundary.
  *   2. Whitespace-normalised match at a word boundary.
  *   3. Quote/dash-normalised match (Readability vs live-DOM typographic divergence).
- *   4. Both whitespace + typo normalisation combined.
- *   5. Exact match without boundary constraint (handles mid-word hyphenations).
- *   6. Fall back to the LLM-provided offsets (may be off if corpora diverge).
+ *   4. Whitespace + typo normalisation combined.
  */
 function resolveInterval(
   span: EvidenceSpan,
@@ -175,16 +200,6 @@ function resolveInterval(
   const fullNormText = normaliseWs(typoText)
   const fullIdx = indexOfAtBoundary(fullNormCorpus, fullNormText)
   if (fullIdx >= 0) return { start: fullIdx, end: fullIdx + fullNormText.length }
-
-  // 5. Exact match without boundary constraint — handles hyphenated or
-  //    punctuation-adjacent words that legitimately lack a letter boundary.
-  const exactAny = corpus.indexOf(text)
-  if (exactAny >= 0) return { start: exactAny, end: exactAny + text.length }
-
-  // 6. LLM offsets as last resort
-  if (span.start < span.end && span.end <= corpus.length) {
-    return { start: span.start, end: span.end }
-  }
 
   return null
 }
