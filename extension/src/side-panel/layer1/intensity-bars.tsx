@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Layer1Signals } from '../../shared/types';
 
-const TOTAL_BLOCKS = 12;
+const TOTAL_BLOCKS = 10;
 
 // Fill colors per signal — only hex values are inline-style (design-spec exact colors
 // that have no Tailwind token equivalents except primary-fixed and on-tertiary-container).
@@ -36,7 +36,7 @@ const SIGNAL_BARS: readonly SignalBarConfig[] = [
 ];
 
 function filledBlockCount(score: number): number {
-  return Math.round((Math.max(0, Math.min(10, score)) / 10) * TOTAL_BLOCKS);
+  return Math.round(Math.max(0, Math.min(TOTAL_BLOCKS, score)));
 }
 
 function attributionScore(signals: Layer1Signals): number {

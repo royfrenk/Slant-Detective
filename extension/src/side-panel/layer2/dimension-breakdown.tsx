@@ -2,7 +2,7 @@ import React from 'react';
 import type { RubricDimensions, RubricDirection } from '../../shared/types';
 import DirectionChip from './direction-chip';
 
-const TOTAL_BLOCKS = 12;
+const TOTAL_BLOCKS = 10;
 
 interface DimensionConfig {
   readonly key: keyof RubricDimensions;
@@ -44,7 +44,7 @@ const DIMENSION_CONFIG: readonly DimensionConfig[] = [
 ];
 
 function filledBlockCount(score: number): number {
-  return Math.round((Math.max(0, Math.min(10, score)) / 10) * TOTAL_BLOCKS);
+  return Math.round(Math.max(0, Math.min(TOTAL_BLOCKS, score)));
 }
 
 interface BlockMeterProps {

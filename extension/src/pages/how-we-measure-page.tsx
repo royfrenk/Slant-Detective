@@ -172,7 +172,7 @@ function HowWeMeasurePage(): React.JSX.Element {
               The four things we look at
             </h2>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              Each dimension gets a 0–4 score. Together they give you a snapshot of the
+              Each dimension gets a 0–10 score. Together they give you a snapshot of the
               article's tilt and intensity.
             </p>
             {DIMENSIONS.map((d) => (
