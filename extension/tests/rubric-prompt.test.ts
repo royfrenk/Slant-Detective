@@ -48,11 +48,49 @@ describe('getRubricPrompt("anthropic")', () => {
   })
 })
 
-describe('getRubricPrompt — unimplemented providers', () => {
-  it('throws for "openai" (SD-033 not yet implemented)', () => {
-    expect(() => getRubricPrompt('openai')).toThrow('Provider not yet implemented')
+describe('getRubricPrompt("openai")', () => {
+  it('version is rubric_v1.0-openai', () => {
+    const prompt = getRubricPrompt('openai')
+    expect(prompt.version).toBe('rubric_v1.0-openai')
   })
 
+  it('system contains "Return ONLY a JSON object" (activates OpenAI JSON mode)', () => {
+    const { system } = getRubricPrompt('openai')
+    expect(system).toContain('Return ONLY a JSON object')
+  })
+
+  it('system contains JSON-only directive suffix', () => {
+    const { system } = getRubricPrompt('openai')
+    expect(system).toContain('Respond with a JSON object only')
+  })
+
+  it('system does NOT contain {ARTICLE_TITLE} placeholder', () => {
+    const { system } = getRubricPrompt('openai')
+    expect(system).not.toContain('{ARTICLE_TITLE}')
+  })
+
+  it('system does NOT contain {ARTICLE_BODY} placeholder', () => {
+    const { system } = getRubricPrompt('openai')
+    expect(system).not.toContain('{ARTICLE_BODY}')
+  })
+
+  it('user template contains {ARTICLE_TITLE} placeholder', () => {
+    const { user } = getRubricPrompt('openai')
+    expect(user).toContain('{ARTICLE_TITLE}')
+  })
+
+  it('user template contains {ARTICLE_BODY} placeholder', () => {
+    const { user } = getRubricPrompt('openai')
+    expect(user).toContain('{ARTICLE_BODY}')
+  })
+
+  it('system does NOT contain the word "anthropic" (no provider-specific leakage)', () => {
+    const { system } = getRubricPrompt('openai')
+    expect(system.toLowerCase()).not.toContain('anthropic')
+  })
+})
+
+describe('getRubricPrompt — unimplemented providers', () => {
   it('throws for "gemini" (SD-034 not yet implemented)', () => {
     expect(() => getRubricPrompt('gemini')).toThrow('Provider not yet implemented')
   })

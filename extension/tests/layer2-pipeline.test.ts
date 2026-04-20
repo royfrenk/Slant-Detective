@@ -218,4 +218,27 @@ describe('runLayer2Analysis', () => {
 
     expect(mockGetRubricPrompt).toHaveBeenCalledWith('anthropic')
   })
+
+  it('passes input.model to provider.complete (not a hardcoded constant)', async () => {
+    const validResponse = makeValidRubricResponse()
+    mockProvider.complete.mockResolvedValue({})
+    mockProvider.extractText.mockReturnValue(JSON.stringify(validResponse))
+
+    await runLayer2Analysis(TEST_INPUT, mockProvider, 'sk-ant-test')
+
+    const completeCall = mockProvider.complete.mock.calls[0] as [{ model: string }, string]
+    expect(completeCall[0].model).toBe(TEST_INPUT.model)
+  })
+
+  it('same article + different input.model → different model sent to provider', async () => {
+    const validResponse = makeValidRubricResponse()
+    mockProvider.complete.mockResolvedValue({})
+    mockProvider.extractText.mockReturnValue(JSON.stringify(validResponse))
+
+    const inputGpt = { ...TEST_INPUT, provider: 'openai', model: 'gpt-5-mini' }
+    await runLayer2Analysis(inputGpt, mockProvider, 'sk-openai-test')
+
+    const completeCall = mockProvider.complete.mock.calls[0] as [{ model: string }, string]
+    expect(completeCall[0].model).toBe('gpt-5-mini')
+  })
 })
