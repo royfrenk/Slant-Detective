@@ -1,10 +1,12 @@
 import React from 'react'
+import type { ProviderId } from '../service-worker/providers/types'
 
-export type FeedbackState = 'idle' | 'success' | 'error' | 'warning'
+export type FeedbackState = 'idle' | 'success' | 'error' | 'warning' | 'rate-limit'
 
 interface InlineFeedbackProps {
   state: FeedbackState
   errorCode?: number | null
+  provider?: ProviderId
 }
 
 interface FeedbackContent {
@@ -15,39 +17,72 @@ interface FeedbackContent {
   textClass: string
 }
 
-const FEEDBACK_MAP: Record<Exclude<FeedbackState, 'idle'>, FeedbackContent> = {
-  success: {
-    icon: '✓',
-    iconClass: 'text-primary-fixed',
-    primaryText: 'Key saved. Layer 2 analysis is now active.',
-    secondaryText: '',
-    textClass: 'text-primary-fixed',
-  },
-  error: {
-    icon: '✕',
-    iconClass: 'text-tertiary',
-    primaryText: 'Invalid key. Check that you pasted the full sk-ant-... value.',
-    secondaryText: 'If your key was recently revoked, generate a new one at console.anthropic.com.',
-    textClass: 'text-tertiary',
-  },
-  warning: {
-    icon: '⚠',
-    iconClass: 'text-on-tertiary-container',
-    primaryText: "Couldn't reach Anthropic to validate — key saved anyway.",
-    secondaryText: 'Layer 2 will confirm connectivity when you run your first analysis.',
-    textClass: 'text-on-surface-variant',
-  },
+const PROVIDER_ERROR_PREFIX: Record<ProviderId, string> = {
+  anthropic: 'sk-ant-...',
+  openai: 'sk-...',
+  gemini: 'AIza...',
 }
 
-export default function InlineFeedback({ state, errorCode }: InlineFeedbackProps): React.JSX.Element {
+const PROVIDER_CONSOLE_URL: Record<ProviderId, string> = {
+  anthropic: 'console.anthropic.com',
+  openai: 'platform.openai.com',
+  gemini: 'aistudio.google.com',
+}
+
+const PROVIDER_DISPLAY_NAME: Record<ProviderId, string> = {
+  anthropic: 'Anthropic',
+  openai: 'OpenAI',
+  gemini: 'Gemini',
+}
+
+function buildFeedbackMap(provider: ProviderId): Record<Exclude<FeedbackState, 'idle'>, FeedbackContent> {
+  const prefix = PROVIDER_ERROR_PREFIX[provider]
+  const consoleUrl = PROVIDER_CONSOLE_URL[provider]
+  const displayName = PROVIDER_DISPLAY_NAME[provider]
+
+  return {
+    success: {
+      icon: '✓',
+      iconClass: 'text-primary-fixed',
+      primaryText: 'Key saved. Layer 2 analysis is now active.',
+      secondaryText: '',
+      textClass: 'text-primary-fixed',
+    },
+    error: {
+      icon: '✕',
+      iconClass: 'text-tertiary',
+      primaryText: `Invalid key. Check that you pasted the full ${prefix} value.`,
+      secondaryText: `If your key was recently revoked, generate a new one at ${consoleUrl}.`,
+      textClass: 'text-tertiary',
+    },
+    warning: {
+      icon: '⚠',
+      iconClass: 'text-on-tertiary-container',
+      primaryText: `Couldn't reach ${displayName} to validate — key saved anyway.`,
+      secondaryText: 'Layer 2 will confirm connectivity when you run your first analysis.',
+      textClass: 'text-on-surface-variant',
+    },
+    // 429 rate-limit: key NOT saved, softer tone than error
+    'rate-limit': {
+      icon: '⚠',
+      iconClass: 'text-on-tertiary-container',
+      primaryText: 'Rate limited. Your key is probably valid — try again in a moment.',
+      secondaryText: '',
+      textClass: 'text-on-surface-variant',
+    },
+  }
+}
+
+export default function InlineFeedback({ state, errorCode, provider = 'anthropic' }: InlineFeedbackProps): React.JSX.Element {
   const isVisible = state !== 'idle'
-  const baseContent = isVisible ? FEEDBACK_MAP[state] : null
+  const feedbackMap = buildFeedbackMap(provider)
+  const baseContent = isVisible ? feedbackMap[state] : null
   const content = baseContent !== null && state === 'error' && errorCode != null
     ? {
         ...baseContent,
         primaryText: errorCode === 0
           ? 'Key display is masked — paste your key again to replace it.'
-          : `${baseContent.primaryText} (HTTP ${errorCode})`,
+          : baseContent.primaryText,
       }
     : baseContent
 

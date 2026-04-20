@@ -9,6 +9,7 @@ interface PageFooterNavProps {
   currentPage?: PageKey;
   showSourceCode?: boolean;
   showFeedback?: boolean;
+  showCopyright?: boolean;
 }
 
 function openPage(pageName: string): void {
@@ -27,7 +28,7 @@ function openReportBugModal(): void {
   }
 }
 
-export default function PageFooterNav({ currentPage, showSourceCode = false, showFeedback = true }: PageFooterNavProps): React.JSX.Element {
+export default function PageFooterNav({ currentPage, showSourceCode = false, showFeedback = true, showCopyright = false }: PageFooterNavProps): React.JSX.Element {
   const linkClass = [
     'text-xs text-on-surface-variant font-normal',
     'no-underline hover:underline',
@@ -63,58 +64,76 @@ export default function PageFooterNav({ currentPage, showSourceCode = false, sho
 
   const dot = <span aria-hidden="true" className="mx-2 text-xs text-on-surface-variant select-none">·</span>;
 
+  const navLinks = (
+    <div className="flex flex-nowrap items-center gap-0">
+      {navItem('how-we-measure', 'How we measure')}
+      {dot}
+      {navItem('privacy', 'Privacy')}
+      {dot}
+      {navItem('credits', 'Credits')}
+      {showFeedback && (
+        <>
+          {dot}
+          <a
+            role="link"
+            tabIndex={0}
+            className={linkClass}
+            aria-label="Open Slant Detective feedback form in new tab"
+            onClick={() => openExternalUrl(FEEDBACK_FORM_URL)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openExternalUrl(FEEDBACK_FORM_URL); }}
+          >
+            Feedback
+          </a>
+        </>
+      )}
+      {dot}
+      <a
+        role="link"
+        tabIndex={0}
+        className={linkClass}
+        aria-label="Report a bug"
+        onClick={openReportBugModal}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openReportBugModal(); }}
+      >
+        Report bug
+      </a>
+      {showSourceCode && (
+        <>
+          {dot}
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Source code on GitHub (opens in new tab)"
+            className={linkClass}
+          >
+            Source code
+          </a>
+        </>
+      )}
+    </div>
+  );
+
+  if (showCopyright) {
+    return (
+      <nav
+        aria-label="Extension pages"
+        className="mt-8 pt-4 pb-4 px-6 flex items-center justify-between"
+      >
+        <span className="text-[0.625rem] text-on-surface-variant">
+          © 2026 Slant Detective Forensic Suite
+        </span>
+        {navLinks}
+      </nav>
+    );
+  }
+
   return (
     <nav
       aria-label="Extension pages"
       className="mt-12 border-t border-outline pt-4"
     >
-      <div className="flex flex-nowrap items-center gap-0">
-        {navItem('how-we-measure', 'How we measure')}
-        {dot}
-        {navItem('privacy', 'Privacy')}
-        {dot}
-        {navItem('credits', 'Credits')}
-        {showFeedback && (
-          <>
-            {dot}
-            <a
-              role="link"
-              tabIndex={0}
-              className={linkClass}
-              aria-label="Open Slant Detective feedback form in new tab"
-              onClick={() => openExternalUrl(FEEDBACK_FORM_URL)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openExternalUrl(FEEDBACK_FORM_URL); }}
-            >
-              Feedback
-            </a>
-          </>
-        )}
-        {dot}
-        <a
-          role="link"
-          tabIndex={0}
-          className={linkClass}
-          aria-label="Report a bug"
-          onClick={openReportBugModal}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openReportBugModal(); }}
-        >
-          Report bug
-        </a>
-        {showSourceCode && (
-          <>
-            {dot}
-            <a
-              href={GITHUB_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Source code on GitHub (opens in new tab)"
-              className={linkClass}
-            >
-              Source code
-            </a>
-          </>
-        )}
-      </div>
+      {navLinks}
     </nav>
   );
 }
