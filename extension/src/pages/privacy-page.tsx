@@ -181,8 +181,8 @@ function PrivacyPage(): React.JSX.Element {
             </p>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
               When you do click Send, the following are forwarded — through our Cloudflare Worker — to
-              the operator inbox (<code className="font-mono text-xs">royfrenk@gmail.com</code>) via Resend.
-              The Worker uses <code className="font-mono text-xs">onboarding@resend.dev</code> as the
+              the extension author via Resend. The Worker uses{' '}
+              <code className="font-mono text-xs">onboarding@resend.dev</code> as the
               <code className="font-mono text-xs">{' '}from:</code> address and never stores the payload.
             </p>
             <ul className="m-0 pl-0 list-none">
@@ -211,9 +211,9 @@ function PrivacyPage(): React.JSX.Element {
               ))}
             </ul>
             <p className="text-sm text-on-surface leading-relaxed mt-6 mb-3">
-              <strong>Recipient:</strong> <code className="font-mono text-xs">royfrenk@gmail.com</code> only.
-              The payload is not stored on our Cloudflare Worker or in any database — it is forwarded to
-              Resend, which delivers the email, and nothing else is retained server-side.
+              <strong>Recipient:</strong> the extension author only. The payload is not stored on our
+              Cloudflare Worker or in any database — it is forwarded to Resend, which delivers the email,
+              and nothing else is retained server-side.
             </p>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
               <strong>How to avoid it entirely:</strong> don't click Send. A network-level block on{' '}
@@ -331,24 +331,6 @@ function PrivacyPage(): React.JSX.Element {
                 </li>
               ))}
             </ul>
-          </section>
-
-          {/* Section 10 */}
-          <section aria-labelledby="transparency-heading" className="mt-10">
-            <h2
-              id="transparency-heading"
-              className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3"
-            >
-              Post-Launch Transparency
-            </h2>
-            <p className="text-sm text-on-surface leading-relaxed mb-3">
-              After launch, the Worker will expose a public <code className="font-mono text-xs">/stats</code> endpoint
-              showing the same aggregate numbers we see internally (total analyses per day,
-              approximate geographic distribution from CF edge regions, no per-device breakdown).
-            </p>
-            <p className="text-sm text-on-surface leading-relaxed mb-3">
-              The URL will be published in the extension's GitHub README when available.
-            </p>
           </section>
         </main>
 

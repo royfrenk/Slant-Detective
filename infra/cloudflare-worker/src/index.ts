@@ -12,6 +12,7 @@
 export interface Env {
   TELEMETRY: AnalyticsEngineDataset
   RESEND_API_KEY: string
+  BUG_REPORT_RECIPIENT: string
 }
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -286,7 +287,7 @@ async function handleReportBug(request: Request, env: Env, clientIp: string, now
 
   const emailBody: Record<string, unknown> = {
     from: 'Slant Detective <onboarding@resend.dev>',
-    to: ['royfrenk@gmail.com'],
+    to: [env.BUG_REPORT_RECIPIENT],
     subject: '[Slant Detective] Bug report',
     html: htmlParts.join('\n'),
   }

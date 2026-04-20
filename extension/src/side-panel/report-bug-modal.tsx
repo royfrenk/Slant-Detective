@@ -257,7 +257,7 @@ export default function ReportBugModal({
 
           {/* Section 4: Privacy Note */}
           <p className="text-[11px] italic text-[#45474c]">
-            Sent privately to royfrenk@gmail.com. Nothing is logged server-side.
+            Sent privately to the extension author. Nothing is logged server-side.
           </p>
 
           {/* Section 5: Info Callout */}

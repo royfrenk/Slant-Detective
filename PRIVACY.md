@@ -66,7 +66,7 @@ interface TelemetryBatch {
 
 The extension has a **Report bug** affordance in the evidence tooltip and in the side-panel footer. Nothing is sent unless you click **Send** in the confirmation modal.
 
-When you do click Send, the following are forwarded — through our Cloudflare Worker — to the operator inbox (`royfrenk@gmail.com`) via Resend. The Worker uses `onboarding@resend.dev` as the `from:` address and never stores the payload.
+When you do click Send, the following are forwarded — through our Cloudflare Worker — to the extension author via Resend. The Worker uses `onboarding@resend.dev` as the `from:` address and never stores the payload.
 
 - **Page URL** — optional, sent only when the "Include page URL" toggle is ON at Send time. The URL is editable in the modal so you can strip query strings, tokens, or identifiers before sending.
 - **Screenshot** — optional, sent only when the "Include screenshot" toggle is ON at Send time. This is a full-capture PNG of the active tab at the moment you opened the modal. Cropping will ship in a future update.
@@ -78,7 +78,7 @@ When you do click Send, the following are forwarded — through our Cloudflare W
 - No IP address — the Worker reads it only for in-memory rate-limiting (5 reports per minute per IP) and never writes it anywhere
 - No identifiers that persist across submissions
 
-**Recipient:** royfrenk@gmail.com only. The payload is not stored on our Cloudflare Worker or in any database — it is forwarded to Resend, which delivers the email, and nothing else is retained server-side.
+**Recipient:** the extension author only. The payload is not stored on our Cloudflare Worker or in any database — it is forwarded to Resend, which delivers the email, and nothing else is retained server-side.
 
 **How to avoid it entirely:** don't click Send. If you prefer a network-level block, add `sd-telemetry.*.workers.dev` to your hosts file or uBlock filters — this also blocks aggregate telemetry.
 
@@ -132,11 +132,3 @@ Recommendations: if this concerns you, disable Chrome Sync for extensions in Chr
 - No article content contribution to any database
 - No rubric output aggregation at the per-article level
 - No advertising IDs or third-party tracking
-
----
-
-## Post-Launch Transparency
-
-After launch, the Worker will expose a public `/stats` endpoint showing the same aggregate numbers we see internally (total analyses per day, approximate geographic distribution from CF edge regions, no per-device breakdown).
-
-The URL will be published in the extension's GitHub README when available.
