@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PanelChrome from './panel-chrome';
 import ExtractionFailedCard from './extraction-failed-card';
 import FooterNav from './footer-nav';
+import ReportBugModal from './report-bug-modal';
 import Layer1SkeletonView from './layer1/layer1-skeleton-view';
 import Layer1View from './layer1/layer1-view';
 import Layer2SkeletonView from './layer2/layer2-skeleton-view';
@@ -28,6 +29,8 @@ export default function App(): React.JSX.Element {
   const [layer2Result, setLayer2Result] = useState<RubricResponse | null>(null);
   const [layer2ErrorType, setLayer2ErrorType] = useState<Layer2ErrorType>(null);
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [showReportBug, setShowReportBug] = useState(false);
+  const [reportBugData, setReportBugData] = useState<{ url: string; screenshotDataUrl: string | null } | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Check API key presence on mount and listen for changes
@@ -90,7 +93,12 @@ export default function App(): React.JSX.Element {
         if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
         setStatus('error');
       } else if (message.action === 'tab_navigated') {
+        setShowReportBug(false);
+        setReportBugData(null);
         startFreshAnalysis();
+      } else if (message.action === 'reportBugReady') {
+        setReportBugData({ url: message.url, screenshotDataUrl: message.screenshotDataUrl });
+        setShowReportBug(true);
       } else if (message.action === 'layer2_result') {
         setLayer2Result(message.payload);
         setLayer2Status('done');
@@ -194,13 +202,20 @@ export default function App(): React.JSX.Element {
   }
 
   return (
-    <div className="flex flex-col h-full bg-background overflow-x-hidden">
+    <div className="relative flex flex-col h-full bg-background overflow-x-hidden">
       <PanelChrome />
       <main className="flex-1 overflow-y-auto overflow-x-hidden">
         <div className="max-w-[560px] mx-auto w-full px-4 pt-4 pb-4">
           {hasApiKey ? renderLayer2Path() : renderLayer1Path()}
         </div>
       </main>
+      {showReportBug && reportBugData != null && (
+        <ReportBugModal
+          initialUrl={reportBugData.url}
+          screenshotDataUrl={reportBugData.screenshotDataUrl}
+          onClose={() => { setShowReportBug(false); setReportBugData(null); }}
+        />
+      )}
     </div>
   );
 }

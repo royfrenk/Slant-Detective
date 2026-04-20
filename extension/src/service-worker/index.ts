@@ -167,6 +167,37 @@ chrome.runtime.onMessage.addListener((message) => {
   if (message?.action === 'analyze') {
     runAnalysis();
   }
+
+  // SD-038: Capture screenshot + ensure panel open + broadcast reportBugReady.
+  if (message?.action === 'openReportBugModal') {
+    void (async () => {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabId = tab?.id;
+      const url = tab?.url ?? '';
+
+      let screenshotDataUrl: string | null = null;
+      if (typeof tab?.windowId === 'number') {
+        try {
+          screenshotDataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
+        } catch {
+          // Permission denied or tab not captureable (e.g., chrome:// pages).
+          screenshotDataUrl = null;
+        }
+      }
+
+      if (typeof tabId === 'number') {
+        try {
+          await chrome.sidePanel.open({ tabId });
+        } catch {
+          // Panel may already be open — non-fatal.
+        }
+      }
+
+      const ready: InboundMessage = { action: 'reportBugReady', url, screenshotDataUrl };
+      chrome.runtime.sendMessage(ready).catch(() => {});
+    })();
+    return false;
+  }
 });
 
 // SD-030: Emit telemetry on the telemetry_emit alarm (6h cadence).
