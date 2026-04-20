@@ -1,8 +1,9 @@
 import type { ContentScriptResult, InboundMessage } from '../shared/messages';
-import { ANTHROPIC_API_KEY } from '../shared/storage-keys';
+import { ANTHROPIC_API_KEY, TELEMETRY_ENABLED } from '../shared/storage-keys';
 import { runLayer2Analysis } from './layer2-pipeline';
 import { AnthropicApiError } from './anthropic-client';
 import { RubricValidationError } from './response-validator';
+import { bump, maybeEmit } from './telemetry';
 
 // Open the panel on toolbar click. If the panel is already open, send
 // tab_navigated so it resets and re-analyzes the current page.
@@ -56,6 +57,9 @@ async function runAnalysis(): Promise<void> {
     return;
   }
 
+  // SD-030: bump analyze_started with page URL for domain-hash tracking
+  void bump('analyze_started', 1, tab.url ?? '');
+
   let result: ContentScriptResult;
   try {
     result = await sendAnalyze(tabId);
@@ -66,12 +70,23 @@ async function runAnalysis(): Promise<void> {
   }
 
   if (!result.ok) {
+    if (result.error === 'extraction_failed') {
+      void bump('analyze_extraction_failed');
+    }
     const msg: InboundMessage = { action: 'analysis_failed', reason: result.error };
     chrome.runtime.sendMessage(msg).catch(() => {});
     return;
   }
 
-  // Layer 1 complete — check for API key and attempt Layer 2
+  // Word-count floor check — bump counter if article is too short
+  if (result.word_count < 400) {
+    void bump('analyze_too_short');
+  }
+
+  // Layer 1 complete
+  void bump('analyze_layer1_ok');
+
+  // Check for API key and attempt Layer 2
   const stored = await chrome.storage.local.get(ANTHROPIC_API_KEY);
   const apiKey = stored[ANTHROPIC_API_KEY] as string | undefined;
 
@@ -94,6 +109,8 @@ async function runAnalysis(): Promise<void> {
       apiKey,
     );
 
+    void bump('analyze_layer2_ok');
+
     const msg: InboundMessage = { action: 'analyzed', payload: { ...result, layer2: rubricResponse } };
     chrome.runtime.sendMessage(msg).catch(() => {});
 
@@ -104,9 +121,11 @@ async function runAnalysis(): Promise<void> {
     }).catch(() => {});
   } catch (err) {
     if (err instanceof AnthropicApiError && (err.statusCode === 401 || err.statusCode === 403)) {
+      void bump('analyze_invalid_key');
       const msg: InboundMessage = { action: 'analysis_failed', reason: 'invalid_api_key' };
       chrome.runtime.sendMessage(msg).catch(() => {});
     } else if (err instanceof AnthropicApiError && err.statusCode === 429) {
+      void bump('analyze_rate_limit');
       const msg: InboundMessage = { action: 'analysis_failed', reason: 'rate_limited' };
       chrome.runtime.sendMessage(msg).catch(() => {});
     } else if (err instanceof RubricValidationError) {
@@ -146,6 +165,13 @@ chrome.runtime.onMessage.addListener((message) => {
   }
 });
 
+// SD-030: Emit telemetry on the telemetry_emit alarm (6h cadence).
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'telemetry_emit') {
+    void maybeEmit();
+  }
+});
+
 // Open the welcome tab exactly once on fresh install.
 // Extension update (reason === 'update') and browser reload (reason === 'chrome_update')
 // must NOT open the tab.
@@ -156,5 +182,18 @@ chrome.runtime.onInstalled.addListener((details) => {
     } catch {
       // Non-critical: failure to open the welcome tab must not crash the service worker.
     }
+
+    // SD-030: Set default telemetry opt-in on fresh install.
+    chrome.storage.local.get(TELEMETRY_ENABLED, (result) => {
+      if (result[TELEMETRY_ENABLED] === undefined) {
+        chrome.storage.local.set({ [TELEMETRY_ENABLED]: true });
+      }
+    });
+
+    // SD-030: Register telemetry alarm (6h cadence = 360 minutes).
+    chrome.alarms.create('telemetry_emit', { periodInMinutes: 360 });
   }
 });
+
+// SD-030: Check for pending telemetry on service-worker startup.
+void maybeEmit();
