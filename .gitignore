@@ -20,3 +20,6 @@ dist/
 
 # Generated at build time — not committed
 extension/assets/credits.json
+
+# Eval harness — downloaded corpora (GPL-3.0 aggregate; re-downloadable at eval-time)
+eval/data/

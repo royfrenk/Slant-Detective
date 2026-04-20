@@ -5,7 +5,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "license-audit": "node scripts/license-audit.mjs"
+    "license-audit": "node scripts/license-audit.mjs",
+    "eval": "node eval/run.mjs"
   },
   "engines": {
     "node": ">=18"
