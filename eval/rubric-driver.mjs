@@ -148,7 +148,8 @@ function validateSpan(raw, index) {
   const reason = assertString(raw['reason'], `spans[${index}].reason`)
   const offset_start = typeof raw['offset_start'] === 'number' ? raw['offset_start'] : 0
   const offset_end = typeof raw['offset_end'] === 'number' ? raw['offset_end'] : 0
-  const category = assertInSet(raw['category'], `spans[${index}].category`, VALID_CATEGORIES)
+  const rawCategory = raw['category'] === 'word_choice' ? 'loaded_language' : raw['category']
+  const category = assertInSet(rawCategory, `spans[${index}].category`, VALID_CATEGORIES)
   const severity = assertInSet(raw['severity'], `spans[${index}].severity`, VALID_SEVERITIES)
   const tilt = assertInSet(raw['tilt'], `spans[${index}].tilt`, VALID_TILTS)
   const dimension = assertInSet(raw['dimension'], `spans[${index}].dimension`, VALID_DIMENSIONS)

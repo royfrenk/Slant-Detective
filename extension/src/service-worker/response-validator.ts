@@ -125,7 +125,8 @@ function validateSpan(raw: unknown, index: number): RubricSpan {
   const reason = assertString(s['reason'], `spans[${index}].reason`)
   const offset_start = typeof s['offset_start'] === 'number' ? s['offset_start'] : 0
   const offset_end = typeof s['offset_end'] === 'number' ? s['offset_end'] : 0
-  const category = assertInSet(s['category'], `spans[${index}].category`, VALID_CATEGORIES) as RubricCategory
+  const rawCategory = s['category'] === 'word_choice' ? 'loaded_language' : s['category']
+  const category = assertInSet(rawCategory, `spans[${index}].category`, VALID_CATEGORIES) as RubricCategory
   const severity = assertInSet(s['severity'], `spans[${index}].severity`, VALID_SEVERITIES) as RubricSeverity
   const tilt = assertInSet(s['tilt'], `spans[${index}].tilt`, VALID_TILTS) as SpanTilt
   const dimension = assertInSet(s['dimension'], `spans[${index}].dimension`, VALID_DIMENSIONS) as keyof RubricDimensions

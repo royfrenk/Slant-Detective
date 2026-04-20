@@ -112,6 +112,13 @@ describe('validateRubricResponse', () => {
     expect(() => validateRubricResponse(rest)).toThrow(RubricValidationError)
   })
 
+  it('normalizes span category "word_choice" to "loaded_language" (LLM vocab confusion)', () => {
+    const response = makeValidResponse()
+    const confusedSpan = { ...response.spans[0], category: 'word_choice' as never }
+    const result = validateRubricResponse({ ...response, spans: [confusedSpan] })
+    expect(result.spans[0].category).toBe('loaded_language')
+  })
+
   it('rejects a span with empty text', () => {
     const response = makeValidResponse()
     const badSpan = { ...response.spans[0], text: '' }
