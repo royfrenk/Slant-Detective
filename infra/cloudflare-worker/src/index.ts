@@ -5,11 +5,13 @@
  * Strips the IP before any write — it is used only for in-memory rate-limiting.
  * Source: public (AGPL-3.0). Audit trail: grep for writeDataPoint — IP never appears.
  *
- * POST /v1/ingest  → 204 (valid) | 400 (invalid schema) | 413 (too large) | 405 (wrong method)
+ * POST /v1/ingest      → 204 (valid) | 400 (invalid schema) | 413 (too large) | 405 (wrong method)
+ * POST /v1/report-bug  → 204 (forwarded) | 400 (invalid) | 413 (too large) | 429 (rate-limited) | 502 (Resend error)
  */
 
 export interface Env {
   TELEMETRY: AnalyticsEngineDataset
+  RESEND_API_KEY: string
 }
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -36,6 +38,12 @@ interface Counters {
   key_rejected: number
 }
 
+interface BugReport {
+  url?: string
+  screenshot_data_url?: string
+  description?: string
+}
+
 // ── Rate-limit (in-memory, best-effort abuse guard) ───────────────────────────
 
 interface RateLimitEntry {
@@ -43,22 +51,42 @@ interface RateLimitEntry {
   windowStart: number
 }
 
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000 // 10 minutes
-const RATE_LIMIT_MAX = 1 // max requests per IP per window (1 batch / 10 min per SD-030 spec)
+// Ingest: 1 batch per 10 minutes per IP (SD-030 spec)
+const INGEST_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000
+const INGEST_RATE_LIMIT_MAX = 1
 
-// LRU is overkill for an abuse guard; simple Map is fine.
-// Workers are single-threaded and short-lived — Map resets on cold start.
-const rateLimitMap = new Map<string, RateLimitEntry>()
+// Bug reports: 5 per minute per IP
+const BUG_RATE_LIMIT_WINDOW_MS = 60_000
+const BUG_RATE_LIMIT_MAX = 5
 
-function isRateLimited(ip: string, now: number): boolean {
-  const entry = rateLimitMap.get(ip)
-  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
-    rateLimitMap.set(ip, { count: 1, windowStart: now })
+// LRU is overkill for an abuse guard; simple Maps are fine.
+// Workers are single-threaded and short-lived — Maps reset on cold start.
+const ingestRateLimitMap = new Map<string, RateLimitEntry>()
+const bugRateLimitMap = new Map<string, RateLimitEntry>()
+
+function isRateLimited(
+  map: Map<string, RateLimitEntry>,
+  windowMs: number,
+  max: number,
+  ip: string,
+  now: number,
+): boolean {
+  const entry = map.get(ip)
+  if (!entry || now - entry.windowStart > windowMs) {
+    map.set(ip, { count: 1, windowStart: now })
     return false
   }
-  if (entry.count >= RATE_LIMIT_MAX) return true
-  rateLimitMap.set(ip, { ...entry, count: entry.count + 1 })
+  if (entry.count >= max) return true
+  map.set(ip, { ...entry, count: entry.count + 1 })
   return false
+}
+
+function isIngestRateLimited(ip: string, now: number): boolean {
+  return isRateLimited(ingestRateLimitMap, INGEST_RATE_LIMIT_WINDOW_MS, INGEST_RATE_LIMIT_MAX, ip, now)
+}
+
+function isBugRateLimited(ip: string, now: number): boolean {
+  return isRateLimited(bugRateLimitMap, BUG_RATE_LIMIT_WINDOW_MS, BUG_RATE_LIMIT_MAX, ip, now)
 }
 
 // ── Validation ────────────────────────────────────────────────────────────────
@@ -109,6 +137,32 @@ function validatePayload(raw: unknown): TelemetryBatch | null {
   return obj as unknown as TelemetryBatch
 }
 
+function validateBugReport(raw: unknown): BugReport | null {
+  if (typeof raw !== 'object' || raw === null) return null
+
+  const obj = raw as Record<string, unknown>
+
+  if ('url' in obj) {
+    if (typeof obj['url'] !== 'string' || obj['url'].length > 2048) return null
+  }
+
+  if ('screenshot_data_url' in obj) {
+    if (
+      typeof obj['screenshot_data_url'] !== 'string' ||
+      !obj['screenshot_data_url'].startsWith('data:image/png;base64,') ||
+      obj['screenshot_data_url'].length > 900_000
+    ) {
+      return null
+    }
+  }
+
+  if ('description' in obj) {
+    if (typeof obj['description'] !== 'string' || obj['description'].length > 500) return null
+  }
+
+  return obj as BugReport
+}
+
 // ── Analytics Engine write ────────────────────────────────────────────────────
 
 function writeTelemetryRow(env: Env, batch: TelemetryBatch): void {
@@ -140,6 +194,143 @@ function writeTelemetryRow(env: Env, batch: TelemetryBatch): void {
   })
 }
 
+// ── Route handlers ────────────────────────────────────────────────────────────
+
+async function handleIngest(request: Request, env: Env, clientIp: string, now: number): Promise<Response> {
+  // Reject large bodies before parsing (Content-Length check + byte count)
+  const contentLength = parseInt(request.headers.get('Content-Length') ?? '0', 10)
+  if (contentLength > 4096) {
+    console.log('413 content-length header')
+    return new Response('Payload Too Large', { status: 413 })
+  }
+
+  if (request.headers.get('Content-Type') !== 'application/json') {
+    console.log('400 content-type')
+    return new Response('Bad Request: Content-Type must be application/json', { status: 400 })
+  }
+
+  // Read body — cap at 4096 bytes
+  const bodyBytes = await request.arrayBuffer()
+  if (bodyBytes.byteLength > 4096) {
+    console.log('413 body size')
+    return new Response('Payload Too Large', { status: 413 })
+  }
+
+  if (isIngestRateLimited(clientIp, now)) {
+    console.log('429 rate-limited')
+    return new Response('Too Many Requests', { status: 429 })
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(new TextDecoder().decode(bodyBytes))
+  } catch {
+    console.log('400 json parse error')
+    return new Response('Bad Request: invalid JSON', { status: 400 })
+  }
+
+  const batch = validatePayload(parsed)
+  if (batch === null) {
+    console.log('400 schema validation failed')
+    return new Response('Bad Request: schema validation failed', { status: 400 })
+  }
+
+  writeTelemetryRow(env, batch)
+  console.log('204')
+  return new Response(null, { status: 204 })
+}
+
+async function handleReportBug(request: Request, env: Env, clientIp: string, now: number): Promise<Response> {
+  // Reject large bodies before parsing (1 MB cap)
+  const BODY_LIMIT = 1_048_576
+  const contentLength = parseInt(request.headers.get('Content-Length') ?? '0', 10)
+  if (contentLength > BODY_LIMIT) {
+    console.log('413 content-length header')
+    return new Response('Payload Too Large', { status: 413 })
+  }
+
+  // Read body — cap at 1 MB
+  const bodyBytes = await request.arrayBuffer()
+  if (bodyBytes.byteLength > BODY_LIMIT) {
+    console.log('413 body size')
+    return new Response('Payload Too Large', { status: 413 })
+  }
+
+  if (isBugRateLimited(clientIp, now)) {
+    console.log('429 rate-limited')
+    return new Response('Too Many Requests', { status: 429 })
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(new TextDecoder().decode(bodyBytes))
+  } catch {
+    console.log('400 json parse error')
+    return new Response('Bad Request: invalid JSON', { status: 400 })
+  }
+
+  const report = validateBugReport(parsed)
+  if (report === null) {
+    console.log('400 bug report validation failed')
+    return new Response('Bad Request: invalid bug report', { status: 400 })
+  }
+
+  // Build Resend email payload — never log the report body
+  const htmlParts: string[] = ['<h2>Slant Detective Bug Report</h2>']
+  if (report.url) {
+    htmlParts.push(`<p><strong>Page URL:</strong> <a href="${escapeHtml(report.url)}">${escapeHtml(report.url)}</a></p>`)
+  }
+  if (report.description) {
+    htmlParts.push(`<p><strong>Description:</strong></p><p>${escapeHtml(report.description).replace(/\n/g, '<br>')}</p>`)
+  }
+
+  const emailBody: Record<string, unknown> = {
+    from: 'Slant Detective <onboarding@resend.dev>',
+    to: ['royfrenk@gmail.com'],
+    subject: '[Slant Detective] Bug report',
+    html: htmlParts.join('\n'),
+  }
+
+  // Attach screenshot as base64 if present
+  if (report.screenshot_data_url) {
+    // Strip the data URL prefix to get raw base64
+    const base64Content = report.screenshot_data_url.replace('data:image/png;base64,', '')
+    emailBody['attachments'] = [{ filename: 'screenshot.png', content: base64Content }]
+  }
+
+  let resendResponse: Response
+  try {
+    resendResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(emailBody),
+    })
+  } catch {
+    console.log('502 resend fetch failed')
+    return new Response('Bad Gateway', { status: 502 })
+  }
+
+  if (!resendResponse.ok) {
+    console.log(`502 resend upstream ${resendResponse.status}`)
+    return new Response('Bad Gateway', { status: 502 })
+  }
+
+  console.log('204 bug report forwarded')
+  return new Response(null, { status: 204 })
+}
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 // ── Fetch handler ─────────────────────────────────────────────────────────────
 
 export default {
@@ -155,54 +346,19 @@ export default {
       return new Response('Method Not Allowed', { status: 405 })
     }
 
-    if (path !== '/v1/ingest') {
-      console.log('404')
-      return new Response('Not Found', { status: 404 })
-    }
-
-    // Reject large bodies before parsing (Content-Length check + byte count)
-    const contentLength = parseInt(request.headers.get('Content-Length') ?? '0', 10)
-    if (contentLength > 4096) {
-      console.log('413 content-length header')
-      return new Response('Payload Too Large', { status: 413 })
-    }
-
-    if (request.headers.get('Content-Type') !== 'application/json') {
-      console.log('400 content-type')
-      return new Response('Bad Request: Content-Type must be application/json', { status: 400 })
-    }
-
-    // Read body — cap at 4096 bytes
-    const bodyBytes = await request.arrayBuffer()
-    if (bodyBytes.byteLength > 4096) {
-      console.log('413 body size')
-      return new Response('Payload Too Large', { status: 413 })
-    }
-
     // rate-limit bucket key only — never persisted
     const clientIp = request.headers.get('CF-Connecting-IP') ?? 'unknown'
     const now = Date.now()
-    if (isRateLimited(clientIp, now)) {
-      console.log('429 rate-limited')
-      return new Response('Too Many Requests', { status: 429 })
+
+    if (path === '/v1/ingest') {
+      return handleIngest(request, env, clientIp, now)
     }
 
-    let parsed: unknown
-    try {
-      parsed = JSON.parse(new TextDecoder().decode(bodyBytes))
-    } catch {
-      console.log('400 json parse error')
-      return new Response('Bad Request: invalid JSON', { status: 400 })
+    if (path === '/v1/report-bug') {
+      return handleReportBug(request, env, clientIp, now)
     }
 
-    const batch = validatePayload(parsed)
-    if (batch === null) {
-      console.log('400 schema validation failed')
-      return new Response('Bad Request: schema validation failed', { status: 400 })
-    }
-
-    writeTelemetryRow(env, batch)
-    console.log('204')
-    return new Response(null, { status: 204 })
+    console.log('404')
+    return new Response('Not Found', { status: 404 })
   },
 }
