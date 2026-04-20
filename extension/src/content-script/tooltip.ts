@@ -169,6 +169,13 @@ function buildTooltipCSS(): string {
   margin-bottom: 10px;
 }
 
+.footer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
 .hw-link {
   font-size: 0.6875rem;
   font-weight: 400;
@@ -332,12 +339,41 @@ function buildTooltipDOM(shadow: ShadowRoot): {
     }
   })
 
+  // "Report bug" link
+  const rbLink = document.createElement('a')
+  rbLink.className = 'hw-link'
+  rbLink.setAttribute('role', 'button')
+  rbLink.setAttribute('tabindex', '0')
+  rbLink.setAttribute('aria-label', 'Report a bug')
+  rbLink.textContent = 'Report bug\u00A0\u2192'
+
+  rbLink.addEventListener('click', () => {
+    try {
+      chrome.runtime.sendMessage({ action: 'openReportBugModal' })
+    } catch {
+      // Non-critical: message send failed (e.g., chrome API unavailable in test env).
+    }
+  })
+
+  rbLink.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      rbLink.click()
+    }
+  })
+
+  // Footer row — hwLink on the left, rbLink on the right
+  const footerRow = document.createElement('div')
+  footerRow.className = 'footer-row'
+  footerRow.appendChild(hwLink)
+  footerRow.appendChild(rbLink)
+
   tooltip.appendChild(phrase)
   tooltip.appendChild(chip)
   tooltip.appendChild(tiltRow)
   tooltip.appendChild(reason)
   tooltip.appendChild(separator)
-  tooltip.appendChild(hwLink)
+  tooltip.appendChild(footerRow)
 
   shadow.appendChild(style)
   shadow.appendChild(tooltip)
