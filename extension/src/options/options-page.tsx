@@ -26,7 +26,7 @@ export default function OptionsPage(): React.JSX.Element {
           <HowToGetAKeyLink />
         </div>
 
-        <PageFooterNav showSourceCode={true} />
+        <PageFooterNav showSourceCode={true} showFeedback={false} />
       </div>
     </div>
   )

@@ -8,6 +8,7 @@ type PageKey = 'how-we-measure' | 'privacy' | 'credits' | 'how-to-get-a-key';
 interface PageFooterNavProps {
   currentPage?: PageKey;
   showSourceCode?: boolean;
+  showFeedback?: boolean;
 }
 
 function openPage(pageName: string): void {
@@ -18,7 +19,7 @@ function openExternalUrl(url: string): void {
   chrome.tabs.create({ url, active: true }).catch(() => {});
 }
 
-export default function PageFooterNav({ currentPage, showSourceCode = false }: PageFooterNavProps): React.JSX.Element {
+export default function PageFooterNav({ currentPage, showSourceCode = false, showFeedback = true }: PageFooterNavProps): React.JSX.Element {
   const linkClass = [
     'text-xs text-on-surface-variant font-normal',
     'no-underline hover:underline',
@@ -65,17 +66,21 @@ export default function PageFooterNav({ currentPage, showSourceCode = false }: P
         {navItem('privacy', 'Privacy')}
         {dot}
         {navItem('credits', 'Credits')}
-        {dot}
-        <a
-          role="link"
-          tabIndex={0}
-          className={linkClass}
-          aria-label="Open Slant Detective feedback form in new tab"
-          onClick={() => openExternalUrl(FEEDBACK_FORM_URL)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openExternalUrl(FEEDBACK_FORM_URL); }}
-        >
-          Feedback
-        </a>
+        {showFeedback && (
+          <>
+            {dot}
+            <a
+              role="link"
+              tabIndex={0}
+              className={linkClass}
+              aria-label="Open Slant Detective feedback form in new tab"
+              onClick={() => openExternalUrl(FEEDBACK_FORM_URL)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openExternalUrl(FEEDBACK_FORM_URL); }}
+            >
+              Feedback
+            </a>
+          </>
+        )}
         {showSourceCode && (
           <>
             {dot}
