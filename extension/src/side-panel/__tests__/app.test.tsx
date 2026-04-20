@@ -43,10 +43,13 @@ function getMessageListener(): (msg: InboundMessage) => void {
 describe('App — Layer 2 state machine integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Default: API key present
+    // Default: API key present in new storage schema
     (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
       (_keys: unknown, cb: (r: Record<string, unknown>) => void) => {
-        cb({ anthropicApiKey: 'sk-ant-test-key' });
+        cb({
+          providers: { anthropic: { key: 'sk-ant-test-key', model: 'claude-haiku-4-5-20251001' } },
+          activeProvider: 'anthropic',
+        });
       },
     );
   });

@@ -10,15 +10,17 @@ const storageMock = {
   remove: vi.fn(),
 }
 
+const DEFAULT_MODEL = 'claude-haiku-4-5-20251001'
+
 beforeEach(() => {
   vi.clearAllMocks()
-  storageMock.get.mockImplementation((_key: string, cb: (result: Record<string, unknown>) => void) => {
+  storageMock.get.mockImplementation((_key: string | string[], cb: (result: Record<string, unknown>) => void) => {
     cb({})
   })
   storageMock.set.mockImplementation((_data: Record<string, unknown>, cb?: () => void) => {
     if (cb) cb()
   })
-  storageMock.remove.mockImplementation((_key: string, cb?: () => void) => {
+  storageMock.remove.mockImplementation((_key: string | string[], cb?: () => void) => {
     if (cb) cb()
   })
   globalThis.chrome = {
@@ -87,8 +89,14 @@ describe('ApiKeyCard', () => {
     await waitFor(() => {
       expect(screen.getByText(/Key saved\. Layer 2 analysis is now active\./i)).toBeInTheDocument()
     })
+    // Written to new providers schema
     expect(storageMock.set).toHaveBeenCalledWith(
-      expect.objectContaining({ anthropicApiKey: 'sk-ant-valid' }),
+      expect.objectContaining({
+        providers: expect.objectContaining({
+          anthropic: { key: 'sk-ant-valid', model: DEFAULT_MODEL },
+        }),
+        activeProvider: 'anthropic',
+      }),
       expect.anything(),
     )
   })
@@ -127,7 +135,12 @@ describe('ApiKeyCard', () => {
       expect(screen.getByText(/Couldn't reach Anthropic/i)).toBeInTheDocument()
     })
     expect(storageMock.set).toHaveBeenCalledWith(
-      expect.objectContaining({ anthropicApiKey: 'sk-ant-maybe' }),
+      expect.objectContaining({
+        providers: expect.objectContaining({
+          anthropic: { key: 'sk-ant-maybe', model: DEFAULT_MODEL },
+        }),
+        activeProvider: 'anthropic',
+      }),
       expect.anything(),
     )
   })
@@ -151,8 +164,8 @@ describe('ApiKeyCard', () => {
   })
 
   it('displays masked key when a key is already stored', async () => {
-    storageMock.get.mockImplementation((_key: string, cb: (result: Record<string, unknown>) => void) => {
-      cb({ anthropicApiKey: 'sk-ant-api03-realkey1234' })
+    storageMock.get.mockImplementation((_key: string | string[], cb: (result: Record<string, unknown>) => void) => {
+      cb({ providers: { anthropic: { key: 'sk-ant-api03-realkey1234', model: DEFAULT_MODEL } } })
     })
 
     render(<ApiKeyCard />)
@@ -195,8 +208,8 @@ describe('ApiKeyCard', () => {
   })
 
   it('button stays disabled until user modifies the masked stored key', async () => {
-    storageMock.get.mockImplementation((_key: string, cb: (result: Record<string, unknown>) => void) => {
-      cb({ anthropicApiKey: 'sk-ant-api03-realkey1234' })
+    storageMock.get.mockImplementation((_key: string | string[], cb: (result: Record<string, unknown>) => void) => {
+      cb({ providers: { anthropic: { key: 'sk-ant-api03-realkey1234', model: DEFAULT_MODEL } } })
     })
 
     render(<ApiKeyCard />)
@@ -223,8 +236,8 @@ describe('ApiKeyCard', () => {
     })
 
     it('shows the Remove key button when a key is stored and input is untouched', async () => {
-      storageMock.get.mockImplementation((_key: string, cb: (result: Record<string, unknown>) => void) => {
-        cb({ anthropicApiKey: 'sk-ant-api03-stored' })
+      storageMock.get.mockImplementation((_key: string | string[], cb: (result: Record<string, unknown>) => void) => {
+        cb({ providers: { anthropic: { key: 'sk-ant-api03-stored', model: DEFAULT_MODEL } } })
       })
 
       render(<ApiKeyCard />)
@@ -233,8 +246,8 @@ describe('ApiKeyCard', () => {
     })
 
     it('hides the Remove key button while the input is dirty', async () => {
-      storageMock.get.mockImplementation((_key: string, cb: (result: Record<string, unknown>) => void) => {
-        cb({ anthropicApiKey: 'sk-ant-api03-stored' })
+      storageMock.get.mockImplementation((_key: string | string[], cb: (result: Record<string, unknown>) => void) => {
+        cb({ providers: { anthropic: { key: 'sk-ant-api03-stored', model: DEFAULT_MODEL } } })
       })
 
       render(<ApiKeyCard />)
@@ -249,8 +262,8 @@ describe('ApiKeyCard', () => {
     })
 
     it('does nothing if the user cancels the confirm dialog', async () => {
-      storageMock.get.mockImplementation((_key: string, cb: (result: Record<string, unknown>) => void) => {
-        cb({ anthropicApiKey: 'sk-ant-api03-stored' })
+      storageMock.get.mockImplementation((_key: string | string[], cb: (result: Record<string, unknown>) => void) => {
+        cb({ providers: { anthropic: { key: 'sk-ant-api03-stored', model: DEFAULT_MODEL } } })
       })
       const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
 
@@ -267,8 +280,10 @@ describe('ApiKeyCard', () => {
     })
 
     it('clears the stored key and resets the UI when confirmed', async () => {
-      storageMock.get.mockImplementation((_key: string, cb: (result: Record<string, unknown>) => void) => {
-        cb({ anthropicApiKey: 'sk-ant-api03-stored' })
+      storageMock.get.mockImplementation((_key: string | string[], cb: (result: Record<string, unknown>) => void) => {
+        // First call: read stored key on mount
+        // Subsequent calls (from handleRemove): return empty providers
+        cb({ providers: { anthropic: { key: 'sk-ant-api03-stored', model: DEFAULT_MODEL } } })
       })
       const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
 
@@ -277,7 +292,11 @@ describe('ApiKeyCard', () => {
 
       await act(async () => { fireEvent.click(removeBtn) })
 
-      expect(storageMock.remove).toHaveBeenCalledWith('anthropicApiKey', expect.any(Function))
+      // Should remove both keys (no other providers)
+      expect(storageMock.remove).toHaveBeenCalledWith(
+        ['providers', 'activeProvider'],
+        expect.any(Function),
+      )
 
       await waitFor(() => {
         expect(screen.queryByRole('button', { name: /remove key/i })).not.toBeInTheDocument()
