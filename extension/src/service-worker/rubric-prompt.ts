@@ -123,8 +123,19 @@ export function getRubricPrompt(providerId: ProviderId): RubricPrompt {
     }
   }
 
-  // SD-034 will replace this stub.
-  throw new Error(`Provider not yet implemented: ${providerId}`)
+  // Gemini 2.5 Flash supports native systemInstruction — the system field is placed
+  // in systemInstruction.parts[].text by GeminiProvider.complete(), and the user
+  // field goes into contents[0].parts[0].text. Same rubric content as OpenAI,
+  // with an explicit JSON-only reinforcement and a distinct version string for
+  // cache isolation.
+  const geminiSystem =
+    SYSTEM_PROMPT.replaceAll('{RUBRIC_VERSION}', 'rubric_v1.0-gemini') +
+    '\n\nRespond with a JSON object only — no explanation, no code fences. Your entire response must be valid JSON matching the schema above.'
+  return {
+    system: geminiSystem,
+    user: USER_TEMPLATE,
+    version: 'rubric_v1.0-gemini',
+  }
 }
 
 /**
