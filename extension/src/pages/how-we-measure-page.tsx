@@ -183,7 +183,7 @@ function HowWeMeasurePage(): React.JSX.Element {
             </h2>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
               Slant Detective's rubric (v1.0) was evaluated against the full BABE
-              corpus — 3,656 expert-labeled sentences — using Claude Haiku 4.5. The
+              corpus — 3,663 expert-labeled sentences — using Claude Haiku 4.5. The
               harness computes Cohen's κ for binary bias classification and
               precision/recall/F1 for biased-word span detection. Full harness and
               baseline file are committed in <code>eval/</code>.
@@ -200,12 +200,12 @@ function HowWeMeasurePage(): React.JSX.Element {
                 <tbody>
                   <tr>
                     <td className="py-1 pr-4">Cohen's κ (classification)</td>
-                    <td className="py-1 pr-4 font-mono">0.57</td>
+                    <td className="py-1 pr-4 font-mono">0.58</td>
                     <td className="py-1 font-mono text-on-surface-variant">≥ 0.35</td>
                   </tr>
                   <tr>
                     <td className="py-1 pr-4">Precision (classification)</td>
-                    <td className="py-1 pr-4 font-mono">0.75</td>
+                    <td className="py-1 pr-4 font-mono">0.76</td>
                     <td className="py-1 font-mono text-on-surface-variant">—</td>
                   </tr>
                   <tr>
@@ -215,7 +215,7 @@ function HowWeMeasurePage(): React.JSX.Element {
                   </tr>
                   <tr>
                     <td className="py-1 pr-4">F1 (classification)</td>
-                    <td className="py-1 pr-4 font-mono">0.79</td>
+                    <td className="py-1 pr-4 font-mono">0.80</td>
                     <td className="py-1 font-mono text-on-surface-variant">≥ 0.50</td>
                   </tr>
                   <tr>

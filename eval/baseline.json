@@ -1,16 +1,16 @@
 {
   "rubric_version": "v1.0",
-  "run_at": "2026-04-20T08:00:27.254Z",
-  "n_sentences": 3656,
+  "run_at": "2026-04-20T15:30:19.884Z",
+  "n_sentences": 3663,
   "classification": {
-    "kappa": 0.5701,
-    "precision": 0.752,
-    "recall": 0.8401,
-    "f1": 0.7936
+    "kappa": 0.5758,
+    "precision": 0.7566,
+    "recall": 0.838,
+    "f1": 0.7953
   },
   "span_detection": {
-    "precision": 0.5231,
-    "recall": 0.8626,
-    "f1": 0.6512
+    "precision": 0.5207,
+    "recall": 0.867,
+    "f1": 0.6506
   }
 }

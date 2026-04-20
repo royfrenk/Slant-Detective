@@ -112,9 +112,10 @@ export function computeSpanMetrics(results) {
 
     annotatedCount++
     const lowerWords = words.map((w) => w.toLowerCase().trim())
-    const matched = spans.some((span) =>
-      lowerWords.some((w) => span.toLowerCase().trim().includes(w) || w.includes(span.toLowerCase().trim()))
-    )
+    const matched = spans.some((span) => {
+      const s = span.toLowerCase().trim()
+      return lowerWords.some((w) => s.includes(w))
+    })
     if (matched) tp++
     else fn++
   }
