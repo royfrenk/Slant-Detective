@@ -54,6 +54,7 @@ const SEVERITY_STYLES: Record<RubricSeverity, SeverityBadgeStyle> = {
 };
 
 const HOVER_DELAY_MS = 200;
+const HIDE_GRACE_MS = 150;
 
 interface EvidenceItemProps {
   item: RubricSpan;
@@ -70,6 +71,7 @@ export default function EvidenceItem({
   const sevStyle = SEVERITY_STYLES[item.severity] ?? SEVERITY_STYLES.low;
   const containerRef = useRef<HTMLDivElement>(null);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tooltipId = `tooltip-${item.id}`;
 
   const handleToggle = useCallback(() => {
@@ -86,24 +88,42 @@ export default function EvidenceItem({
     [handleToggle],
   );
 
+  const cancelHideTimer = useCallback(() => {
+    if (hideTimerRef.current != null) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleHide = useCallback(() => {
+    cancelHideTimer();
+    hideTimerRef.current = setTimeout(() => {
+      onTooltipToggle(null);
+      hideTimerRef.current = null;
+    }, HIDE_GRACE_MS);
+  }, [cancelHideTimer, onTooltipToggle]);
+
   const handleMouseEnter = useCallback(() => {
+    cancelHideTimer();
     hoverTimerRef.current = setTimeout(() => {
       if (!isTooltipOpen) {
         onTooltipToggle(item.id);
       }
     }, HOVER_DELAY_MS);
-  }, [item.id, isTooltipOpen, onTooltipToggle]);
+  }, [item.id, isTooltipOpen, onTooltipToggle, cancelHideTimer]);
 
+  // Grace-period close lets the cursor cross the gap between the card and the
+  // portal-rendered tooltip without losing the tooltip. If the cursor lands on
+  // the tooltip before HIDE_GRACE_MS, the tooltip cancels the hide timer.
   const handleMouseLeave = useCallback(() => {
     if (hoverTimerRef.current != null) {
       clearTimeout(hoverTimerRef.current);
       hoverTimerRef.current = null;
     }
-    // Close tooltip immediately when cursor leaves the card
     if (isTooltipOpen) {
-      onTooltipToggle(null);
+      scheduleHide();
     }
-  }, [isTooltipOpen, onTooltipToggle]);
+  }, [isTooltipOpen, scheduleHide]);
 
   const getAnchorRect = (): DOMRect | null => {
     return containerRef.current?.getBoundingClientRect() ?? null;
@@ -160,6 +180,8 @@ export default function EvidenceItem({
           item={item}
           anchorRect={getAnchorRect()}
           onDismiss={() => onTooltipToggle(null)}
+          onMouseEnter={cancelHideTimer}
+          onMouseLeave={scheduleHide}
         />
       )}
     </div>
