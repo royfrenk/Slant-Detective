@@ -1,0 +1,16 @@
+{
+  "name": "sd-telemetry-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker: aggregate-only telemetry ingest for Slant Detective. AGPL-3.0.",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241004.0",
+    "typescript": "^5.8.3",
+    "wrangler": "^3.109.3"
+  }
+}

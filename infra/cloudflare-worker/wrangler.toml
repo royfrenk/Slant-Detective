@@ -1,0 +1,7 @@
+name = "sd-telemetry"
+main = "src/index.ts"
+compatibility_date = "2024-10-04"
+
+[[analytics_engine_datasets]]
+binding = "TELEMETRY"
+dataset = "sd_telemetry_v1"
