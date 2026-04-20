@@ -131,6 +131,10 @@ async function runAnalysis(): Promise<void> {
     } else if (err instanceof RubricValidationError) {
       const msg: InboundMessage = { action: 'analysis_failed', reason: 'rubric_validation_failed' };
       chrome.runtime.sendMessage(msg).catch(() => {});
+    } else if (err instanceof DOMException && err.name === 'TimeoutError') {
+      void bump('analyze_llm_timeout');
+      const msg: InboundMessage = { action: 'analysis_failed', reason: 'network_error' };
+      chrome.runtime.sendMessage(msg).catch(() => {});
     } else {
       const msg: InboundMessage = { action: 'analysis_failed', reason: 'network_error' };
       chrome.runtime.sendMessage(msg).catch(() => {});

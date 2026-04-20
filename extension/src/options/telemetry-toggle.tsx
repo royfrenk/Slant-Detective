@@ -8,8 +8,6 @@
 import React, { useState, useEffect } from 'react'
 import { TELEMETRY_ENABLED } from '../shared/storage-keys'
 
-const PRIVACY_URL = chrome.runtime.getURL('src/pages/privacy.html')
-
 function Spinner(): React.JSX.Element {
   return (
     <span
@@ -58,6 +56,7 @@ function PillToggle({ enabled, saving, onToggle }: PillToggleProps): React.JSX.E
 }
 
 export default function TelemetryToggle(): React.JSX.Element {
+  const PRIVACY_URL = chrome.runtime.getURL('src/pages/privacy.html')
   const [enabled, setEnabled] = useState(true)
   const [saving, setSaving] = useState(false)
 

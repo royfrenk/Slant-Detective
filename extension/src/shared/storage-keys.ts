@@ -8,4 +8,3 @@ export const TELEMETRY_COUNTERS = 'telemetryCounters' as const
 export const TELEMETRY_LAST_EMIT = 'telemetryLastEmit' as const
 export const TELEMETRY_DAILY_SALT = 'telemetryDailySalt' as const
 export const TELEMETRY_SALT_DATE = 'telemetrySaltDate' as const
-export const TELEMETRY_INGEST_URL = 'https://sd-telemetry.rabbit-factory.workers.dev/v1/ingest' as const

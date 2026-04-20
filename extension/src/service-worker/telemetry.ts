@@ -19,8 +19,8 @@ import {
   TELEMETRY_LAST_EMIT,
   TELEMETRY_DAILY_SALT,
   TELEMETRY_SALT_DATE,
-  TELEMETRY_INGEST_URL,
 } from '../shared/storage-keys'
+import { TELEMETRY_INGEST_URL } from '../shared/telemetry-constants'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -254,8 +254,8 @@ async function maybeEmitInternal(): Promise<void> {
   const today = utcDateString()
 
   // Nothing to report if all counters are zero
-  const hasActivity = Object.values(ZERO_COUNTERS).some(
-    (_, i) => (counters[Object.keys(ZERO_COUNTERS)[i] as keyof typeof ZERO_COUNTERS] ?? 0) > 0,
+  const hasActivity = Object.keys(ZERO_COUNTERS).some(
+    (k) => (counters[k as keyof typeof ZERO_COUNTERS] ?? 0) > 0,
   )
   const hasDomains = Object.keys(counters.domain_counts).length > 0
   if (!hasActivity && !hasDomains) return

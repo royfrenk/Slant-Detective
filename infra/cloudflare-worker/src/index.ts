@@ -44,7 +44,7 @@ interface RateLimitEntry {
 }
 
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000 // 10 minutes
-const RATE_LIMIT_MAX = 3 // max requests per IP per window
+const RATE_LIMIT_MAX = 1 // max requests per IP per window (1 batch / 10 min per SD-030 spec)
 
 // LRU is overkill for an abuse guard; simple Map is fine.
 // Workers are single-threaded and short-lived — Map resets on cold start.
