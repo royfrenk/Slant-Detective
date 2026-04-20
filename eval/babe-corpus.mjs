@@ -175,20 +175,41 @@ export async function loadBabeCorpus() {
 }
 
 /**
+ * Mulberry32 — deterministic 32-bit PRNG seeded by a number.
+ * Returns a function that yields floats in [0, 1).
+ *
+ * @param {number} seed
+ * @returns {() => number}
+ */
+function mulberry32(seed) {
+  let s = seed >>> 0
+  return () => {
+    s += 0x6d2b79f5
+    let z = s
+    z = Math.imul(z ^ (z >>> 15), z | 1)
+    z ^= z + Math.imul(z ^ (z >>> 7), z | 61)
+    return ((z ^ (z >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+/**
  * Stratified sample of n sentences: n/2 biased + n/2 not-biased (or all available).
+ * Uses a seeded PRNG for deterministic results across runs.
  *
  * @param {BabeSentence[]} corpus
  * @param {number} n - total desired sample size
+ * @param {number} [seed=42] - PRNG seed. Override with --seed N for variance testing.
  * @returns {BabeSentence[]}
  */
-export function sampleCorpus(corpus, n) {
+export function sampleCorpus(corpus, n, seed = 42) {
   const half = Math.floor(n / 2)
+  const rand = mulberry32(seed)
 
   const biased = corpus.filter((s) => s.label === 'biased')
   const notBiased = corpus.filter((s) => s.label === 'not-biased')
 
   const sample = (arr, k) => {
-    const shuffled = [...arr].sort(() => Math.random() - 0.5)
+    const shuffled = [...arr].sort(() => rand() - 0.5)
     return shuffled.slice(0, Math.min(k, shuffled.length))
   }
 

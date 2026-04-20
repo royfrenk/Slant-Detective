@@ -33,6 +33,14 @@ ANTHROPIC_API_KEY=sk-ant-... npm run eval
 ANTHROPIC_API_KEY=sk-ant-... node eval/run.mjs --sample 500
 ```
 
+### With custom seed (for variance testing)
+
+```bash
+ANTHROPIC_API_KEY=sk-ant-... node eval/run.mjs --sample 500 --seed 123
+```
+
+Seed defaults to 42. Override with `--seed N` to draw a different stratified sample and confirm score stability across shuffles.
+
 ### With MBIB secondary benchmark
 
 ```bash
@@ -63,6 +71,14 @@ Biased-word detection (1240 annotated sentences)
 ─────────────────────────────────────────────
 Gate: PASS  (baseline κ = 0.40, current κ = 0.42)
 ```
+
+---
+
+## How the regression gate works
+
+The baseline is a floor, not a historical record. Every passing run (even a small regression within the 0.03 tolerance) overwrites `baseline.json` with the current metrics. This is intentional — it lets incremental changes ratchet the floor down gently without blocking merges. Over time, compounding small regressions could erode the floor; to hold a hard floor, commit a frozen `baseline.pinned.json` alongside `baseline.json` and compare manually.
+
+Seed defaults to 42. Override with `--seed N` for variance testing — this lets you confirm a score is stable across different stratified sample draws rather than a lucky shuffle.
 
 ---
 

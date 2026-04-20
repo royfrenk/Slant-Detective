@@ -26,6 +26,7 @@ const PROGRESS_EVERY = 100
 function parseArgs() {
   const args = process.argv.slice(2)
   let sampleN = null
+  let seed = 42
   let runMbib = false
   let updateBaseline = false
 
@@ -37,6 +38,13 @@ function parseArgs() {
         process.exit(1)
       }
       i++
+    } else if (args[i] === '--seed' && args[i + 1]) {
+      seed = parseInt(args[i + 1], 10)
+      if (isNaN(seed)) {
+        process.stderr.write('--seed requires an integer\n')
+        process.exit(1)
+      }
+      i++
     } else if (args[i] === '--mbib') {
       runMbib = true
     } else if (args[i] === '--update-baseline') {
@@ -44,7 +52,7 @@ function parseArgs() {
     }
   }
 
-  return { sampleN, runMbib, updateBaseline }
+  return { sampleN, seed, runMbib, updateBaseline }
 }
 
 // ─── Progress tracker ─────────────────────────────────────────────────────────
@@ -145,9 +153,9 @@ async function runMbibReport(apiKey) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  const { sampleN, runMbib, updateBaseline } = parseArgs()
+  const { sampleN, seed, runMbib, updateBaseline } = parseArgs()
 
-  const apiKey = process.env['ANTHROPIC_API_KEY']
+  const apiKey = process.env['ANTHROPIC_API_KEY']?.trim()
   if (!apiKey) {
     process.stderr.write(
       'Error: ANTHROPIC_API_KEY environment variable is required.\n' +
@@ -160,7 +168,7 @@ async function main() {
   process.stderr.write('Loading BABE corpus...\n')
   const fullCorpus = await loadBabeCorpus()
 
-  const corpus = sampleN ? sampleCorpus(fullCorpus, sampleN) : fullCorpus
+  const corpus = sampleN ? sampleCorpus(fullCorpus, sampleN, seed) : fullCorpus
   const nBiased = corpus.filter((s) => s.label === 'biased').length
   const nNotBiased = corpus.length - nBiased
   process.stderr.write(

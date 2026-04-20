@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "license-audit": "node scripts/license-audit.mjs",
-    "eval": "node eval/run.mjs"
+    "eval": "node eval/run.mjs",
+    "test:eval": "node --test eval/*.test.mjs"
   },
   "engines": {
     "node": ">=18"
