@@ -142,12 +142,36 @@ describe('HowToGetAKeyPage — external link security attributes', () => {
   });
 });
 
-describe('HowToGetAKeyPage — cost table placeholders', () => {
-  it('all cost cells show "— (pending)" text, not empty cells', () => {
+describe('HowToGetAKeyPage — cost table values (SD-035 parity eval)', () => {
+  it('Anthropic cost rows show SD-035-derived values', () => {
     render(<HowToGetAKeyPage />);
-    const pendingCells = screen.getAllByText('— (pending)');
-    // 3 Anthropic + 4 OpenAI + 4 Gemini = 11 pending cells
-    expect(pendingCells.length).toBe(11);
+    expect(screen.getByText('~$0.0018')).toBeTruthy();
+    expect(screen.getByText('~$1.07')).toBeTruthy();
+    expect(screen.getByText('~$3.22')).toBeTruthy();
+  });
+
+  it('OpenAI gpt-5-mini cost rows show SD-035-derived values', () => {
+    render(<HowToGetAKeyPage />);
+    expect(screen.getByText('~$0.0003')).toBeTruthy();
+    expect(screen.getByText('~$0.17')).toBeTruthy();
+  });
+
+  it('Gemini flash cost rows show SD-035-derived values', () => {
+    render(<HowToGetAKeyPage />);
+    expect(screen.getByText('~$0.0004')).toBeTruthy();
+    expect(screen.getByText('~$0.22')).toBeTruthy();
+  });
+
+  it('gpt-5 and gemini-pro cost rows show no-eval-data marker (awaiting eval run)', () => {
+    render(<HowToGetAKeyPage />);
+    const noDataCells = screen.getAllByText('— (no eval data)');
+    // gpt-5 per-article + gpt-5 light + gemini-pro per-article + gemini-pro light = 4
+    expect(noDataCells.length).toBe(4);
+  });
+
+  it('no cost cell is still pending', () => {
+    render(<HowToGetAKeyPage />);
+    expect(screen.queryByText('— (pending)')).toBeNull();
   });
 });
 

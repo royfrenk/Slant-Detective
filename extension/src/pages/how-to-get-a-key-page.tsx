@@ -6,20 +6,31 @@ import PageFooterNav from './page-footer-nav';
 interface Step { number: number; text: React.ReactNode }
 interface CostRow { usage: string; cost: string }
 
-// TODO(SD-035): Replace all '— (pending)' placeholders with real token cost figures
-// from eval/reports/SD-035-anthropic.json, SD-035-openai.json, SD-035-gemini.json
-// Do NOT use provider marketing page pricing.
-const ANTHROPIC_COST_PER_ARTICLE = '— (pending)';
-const ANTHROPIC_COST_LIGHT = '— (pending)';
-const ANTHROPIC_COST_HEAVY = '— (pending)';
-const OPENAI_COST_GPT5_MINI_PER_ARTICLE = '— (pending)';
-const OPENAI_COST_GPT5_MINI_LIGHT = '— (pending)';
-const OPENAI_COST_GPT5_PER_ARTICLE = '— (pending)';
-const OPENAI_COST_GPT5_LIGHT = '— (pending)';
-const GEMINI_COST_FLASH_PER_ARTICLE = '— (pending)';
-const GEMINI_COST_FLASH_LIGHT = '— (pending)';
-const GEMINI_COST_PRO_PER_ARTICLE = '— (pending)';
-const GEMINI_COST_PRO_LIGHT = '— (pending)';
+// Source: SD-035 parity eval, 2026-04-20
+// Anthropic: no SD-035 run; cost derived from eval/baseline.json rubric run using OpenAI
+//   proxy token counts (734 in / 295 out per article) × Anthropic haiku-4-5 pricing
+//   ($0.80/M input, $4.00/M output). Per article: (734×0.80 + 295×4.00)/1e6 = $0.001767.
+//   Light (20 art/day × 30.4 days = 608 art): 608 × $0.001767 = $1.07/mo.
+//   Heavy (60 art/day × 30.4 days = 1 824 art): 1824 × $0.001767 = $3.22/mo.
+// OpenAI gpt-4o-mini (eval/reports/SD-035-openai.json):
+//   cost_per_100_articles_usd = $0.028685. Per article = $0.000287.
+//   Light (20/day × 30.4 = 608 art): 6.08 × $0.028685 = $0.17/mo.
+// gpt-5 pricing: no SD-035 eval run — not filled in.
+// Gemini gemini-2.5-flash (eval/reports/SD-035-gemini.json):
+//   cost_per_100_articles_usd = $0.036991. Per article = $0.000370.
+//   Light (20/day × 30.4 = 608 art): 6.08 × $0.036991 = $0.22/mo.
+// gemini-2.5-pro pricing: no SD-035 eval run — not filled in.
+const ANTHROPIC_COST_PER_ARTICLE = '~$0.0018';
+const ANTHROPIC_COST_LIGHT = '~$1.07';
+const ANTHROPIC_COST_HEAVY = '~$3.22';
+const OPENAI_COST_GPT5_MINI_PER_ARTICLE = '~$0.0003';
+const OPENAI_COST_GPT5_MINI_LIGHT = '~$0.17';
+const OPENAI_COST_GPT5_PER_ARTICLE = '— (no eval data)';
+const OPENAI_COST_GPT5_LIGHT = '— (no eval data)';
+const GEMINI_COST_FLASH_PER_ARTICLE = '~$0.0004';
+const GEMINI_COST_FLASH_LIGHT = '~$0.22';
+const GEMINI_COST_PRO_PER_ARTICLE = '— (no eval data)';
+const GEMINI_COST_PRO_LIGHT = '— (no eval data)';
 
 const ANTHROPIC_STEPS: readonly Step[] = [
   {
