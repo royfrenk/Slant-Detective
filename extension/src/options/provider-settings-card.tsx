@@ -156,7 +156,11 @@ export default function ProviderSettingsCard(): React.JSX.Element {
           }
           chrome.storage.local.set(
             { [PROVIDERS_KEY]: promoted, [ACTIVE_PROVIDER_KEY]: 'anthropic' },
-            () => {},
+            () => {
+              if (chrome.runtime.lastError) {
+                console.warn('Legacy key migration failed:', chrome.runtime.lastError.message)
+              }
+            },
           )
           providers = promoted
         }
@@ -218,7 +222,7 @@ export default function ProviderSettingsCard(): React.JSX.Element {
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
-    if (e.key === 'Enter' && !isButtonDisabled()) {
+    if (e.key === 'Enter' && !isButtonDisabled) {
       void handleSubmit()
     }
   }
@@ -235,12 +239,12 @@ export default function ProviderSettingsCard(): React.JSX.Element {
   // ── Button state ─────────────────────────────────────────────
   const current = providerState[activeTab]
 
-  function isButtonDisabled(): boolean {
+  const isButtonDisabled: boolean = (() => {
     if (isLoading) return true
     if (!current.inputValue.trim()) return true
     if (current.hasStoredKey && !current.isDirty) return true
     return false
-  }
+  })()
 
   function inputState(): InputState {
     if (isLoading) return 'disabled'
@@ -252,7 +256,9 @@ export default function ProviderSettingsCard(): React.JSX.Element {
   // ── Submit ───────────────────────────────────────────────────
   const handleSubmit = useCallback(async (): Promise<void> => {
     const trimmed = normalizeKey(current.inputValue)
-    if (!trimmed || isButtonDisabled()) return
+    if (!trimmed) return
+    if (isLoading) return
+    if (current.hasStoredKey && !current.isDirty) return
 
     // Guard: masking bullets indicate user hasn't replaced the stored key display.
     if (trimmed.includes('•')) {
@@ -266,15 +272,7 @@ export default function ProviderSettingsCard(): React.JSX.Element {
     setErrorCode(null)
 
     const meta = getProviderMeta(activeTab)
-
-    // Only call getProvider for 'anthropic' — SD-033/034 not yet registered.
-    // For unregistered providers, treat as network-error (graceful fallback).
-    let testResult: import('../service-worker/providers/types').ApiKeyTestResult
-    try {
-      testResult = await getProvider(activeTab).validateKey(trimmed)
-    } catch {
-      testResult = { status: 'network-error' }
-    }
+    const testResult = await getProvider(activeTab).validateKey(trimmed)
 
     if (testResult.status === 'ok') {
       await persistKey(trimmed, meta.id, current.selectedModel)
@@ -288,8 +286,9 @@ export default function ProviderSettingsCard(): React.JSX.Element {
       void bump('key_rejected')
       setFeedbackState('error')
       setErrorCode(testResult.code)
-    } else if (testResult.status === 'reachable-unverified') {
-      // Key saved with warning — could not confirm but reached the server.
+    } else {
+      // reachable-unverified OR network-error — save key, show warning.
+      // Spec §8c + SD-017 audit: offline/rate-limited users keep a working key.
       await persistKey(trimmed, meta.id, current.selectedModel)
       void bump('key_saved')
       setFeedbackState('warning')
@@ -297,13 +296,10 @@ export default function ProviderSettingsCard(): React.JSX.Element {
         ...prev,
         [activeTab]: { ...prev[activeTab], hasStoredKey: true, isDirty: false },
       }))
-    } else {
-      // network-error — do not save
-      setFeedbackState('warning')
     }
 
     setIsLoading(false)
-  }, [activeTab, current, isButtonDisabled])
+  }, [activeTab, current, isLoading])
 
   async function persistKey(key: string, providerId: ProviderId, model: string): Promise<void> {
     const existing = await new Promise<Record<string, unknown>>((resolve) => {
@@ -315,10 +311,18 @@ export default function ProviderSettingsCard(): React.JSX.Element {
       ...existingProviders,
       [providerId]: { key, model },
     }
-    chrome.storage.local.set(
-      { [PROVIDERS_KEY]: updated, [ACTIVE_PROVIDER_KEY]: providerId },
-      () => {},
-    )
+    await new Promise<void>((resolve) => {
+      chrome.storage.local.set(
+        { [PROVIDERS_KEY]: updated, [ACTIVE_PROVIDER_KEY]: providerId },
+        () => {
+          if (chrome.runtime.lastError) {
+            console.warn('Key persist failed:', chrome.runtime.lastError.message)
+            setFeedbackState('error')
+          }
+          resolve()
+        },
+      )
+    })
   }
 
   // ── Derived ──────────────────────────────────────────────────
@@ -331,7 +335,7 @@ export default function ProviderSettingsCard(): React.JSX.Element {
   }))
 
   return (
-    <div className="bg-surface rounded-[10px] p-6 shadow-ambient mt-6 w-full">
+    <div className="bg-surface rounded-[10px] p-6 shadow-ambient w-full">
       <ProviderTabGroup
         tabs={tabs}
         activeId={activeTab}
@@ -359,7 +363,7 @@ export default function ProviderSettingsCard(): React.JSX.Element {
 
       <TestAndSaveButton
         isLoading={isLoading}
-        isDisabled={isButtonDisabled()}
+        isDisabled={isButtonDisabled}
         onClick={() => void handleSubmit()}
       />
 

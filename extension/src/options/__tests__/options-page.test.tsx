@@ -9,7 +9,7 @@
  * - HTTP 200 → success feedback + storage write
  * - HTTP 401 → error feedback + no storage write
  * - reachable-unverified → warning + storage write
- * - network-error → warning + no storage write
+ * - network-error → warning + storage write (spec §8c / SD-017 audit — offline users keep a working key)
  * - Masked key displayed when key stored; button disabled until modified
  * - Em-dash normalization on paste
  * - Non-ASCII stripping on paste
@@ -170,7 +170,7 @@ describe('ProviderSettingsCard (options-page behavioral tests)', () => {
     )
   })
 
-  it('shows warning and does NOT write to storage on true network error', async () => {
+  it('shows warning AND writes to storage on true network error (spec §8c — offline users keep a working key)', async () => {
     vi.spyOn(providerIndex.getProvider('anthropic'), 'validateKey').mockResolvedValue({ status: 'network-error' })
 
     render(<ProviderSettingsCard />)
@@ -185,7 +185,7 @@ describe('ProviderSettingsCard (options-page behavioral tests)', () => {
     await waitFor(() => {
       expect(screen.getByText(/Couldn't reach Anthropic to validate/i)).toBeInTheDocument()
     })
-    expect(storageMock.set).not.toHaveBeenCalled()
+    expect(storageMock.set).toHaveBeenCalled()
   })
 
   it('displays masked key when a key is already stored', async () => {

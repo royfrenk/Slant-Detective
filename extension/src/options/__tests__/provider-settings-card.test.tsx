@@ -349,7 +349,7 @@ describe('ProviderSettingsCard — feedback states (SD-032)', () => {
     expect(storageMock.set).toHaveBeenCalled()
   })
 
-  it('shows warning but does NOT save on true network error', async () => {
+  it('shows warning AND saves on true network error (spec §8c / SD-017 audit — offline users keep a working key)', async () => {
     const { getProvider } = await import('../../service-worker/providers/index')
     vi.spyOn(getProvider('anthropic'), 'validateKey').mockResolvedValue({ status: 'network-error' })
 
@@ -364,7 +364,8 @@ describe('ProviderSettingsCard — feedback states (SD-032)', () => {
     await waitFor(() => {
       expect(screen.getByText(/Couldn't reach Anthropic to validate/i)).toBeInTheDocument()
     })
-    expect(storageMock.set).not.toHaveBeenCalled()
+    // Key IS saved on network-error (spec §8c)
+    expect(storageMock.set).toHaveBeenCalled()
   })
 })
 

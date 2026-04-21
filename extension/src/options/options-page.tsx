@@ -21,7 +21,7 @@ export default function OptionsPage(): React.JSX.Element {
 
         <ProviderSettingsCard />
 
-        <div className="mt-6 border-t border-outline pt-6">
+        <div className="mt-6 pt-6">
           <TelemetryToggle />
         </div>
 

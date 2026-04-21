@@ -107,7 +107,7 @@ export default function PageFooterNav({ currentPage, showSourceCode = false, sho
             aria-label="Source code on GitHub (opens in new tab)"
             className={linkClass}
           >
-            Source code
+            Source code <span aria-hidden="true">↗</span>
           </a>
         </>
       )}
