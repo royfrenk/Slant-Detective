@@ -16,7 +16,7 @@ const BULLETS: readonly Bullet[] = [
     body: "Source labels and language-intensity signals run entirely in your browser, no account required.",
   },
   {
-    title: "Paste an Anthropic API key later for the full rubric",
+    title: "Add an API key later — Anthropic, OpenAI, or Gemini",
     body: "Unlock tilt direction, four-dimension breakdown, evidence spans, and inline highlights.",
   },
 ] as const;
