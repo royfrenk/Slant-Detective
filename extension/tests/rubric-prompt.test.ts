@@ -90,9 +90,45 @@ describe('getRubricPrompt("openai")', () => {
   })
 })
 
-describe('getRubricPrompt — unimplemented providers', () => {
-  it('throws for "gemini" (SD-034 not yet implemented)', () => {
-    expect(() => getRubricPrompt('gemini')).toThrow('Provider not yet implemented')
+describe('getRubricPrompt("gemini")', () => {
+  it('version is rubric_v1.0-gemini', () => {
+    const prompt = getRubricPrompt('gemini')
+    expect(prompt.version).toBe('rubric_v1.0-gemini')
+  })
+
+  it('system contains "Return ONLY a JSON object"', () => {
+    const { system } = getRubricPrompt('gemini')
+    expect(system).toContain('Return ONLY a JSON object')
+  })
+
+  it('system contains JSON-only reinforcement suffix', () => {
+    const { system } = getRubricPrompt('gemini')
+    expect(system).toContain('Respond with a JSON object only')
+  })
+
+  it('system does NOT contain {ARTICLE_TITLE} placeholder', () => {
+    const { system } = getRubricPrompt('gemini')
+    expect(system).not.toContain('{ARTICLE_TITLE}')
+  })
+
+  it('system does NOT contain {ARTICLE_BODY} placeholder', () => {
+    const { system } = getRubricPrompt('gemini')
+    expect(system).not.toContain('{ARTICLE_BODY}')
+  })
+
+  it('user template contains {ARTICLE_TITLE} placeholder', () => {
+    const { user } = getRubricPrompt('gemini')
+    expect(user).toContain('{ARTICLE_TITLE}')
+  })
+
+  it('user template contains {ARTICLE_BODY} placeholder', () => {
+    const { user } = getRubricPrompt('gemini')
+    expect(user).toContain('{ARTICLE_BODY}')
+  })
+
+  it('system does NOT contain the word "anthropic" (no provider-specific leakage)', () => {
+    const { system } = getRubricPrompt('gemini')
+    expect(system.toLowerCase()).not.toContain('anthropic')
   })
 })
 
