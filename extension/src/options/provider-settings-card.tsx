@@ -332,6 +332,20 @@ export default function ProviderSettingsCard(): React.JSX.Element {
     id: m.id,
     label: m.label,
     disabled: false, // All shown; runtime error acceptable for unregistered providers before SD-033/034
+    ...(m.id === 'anthropic' && {
+      badge: {
+        text: 'RECOMMENDED',
+        variant: 'recommended',
+      } as const,
+    }),
+    ...(m.id === 'openai' && {
+      badge: {
+        text: 'NOT RECOMMENDED',
+        variant: 'warning',
+        tooltip:
+          'Lower accuracy in our parity eval (κ 0.32 vs 0.58 baseline). Use Anthropic or Gemini for more reliable Layer 2 analysis.',
+      } as const,
+    }),
   }))
 
   return (

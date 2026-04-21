@@ -406,6 +406,9 @@ export async function complete(text, apiKey, model = DEFAULT_MODEL) {
     ],
     generationConfig: {
       maxOutputTokens: MAX_TOKENS,
+      // thinkingBudget: 0 suppresses chain-of-thought tokens to match production behavior.
+      // Without thinking, output tokens drop from ~418 to ~120, cutting eval cost ~40%.
+      thinkingConfig: { thinkingBudget: 0 },
     },
     safetySettings: SAFETY_SETTINGS,
   }

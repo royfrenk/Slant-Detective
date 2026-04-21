@@ -4,6 +4,13 @@ export interface ProviderTab {
   id: string
   label: string
   disabled?: boolean
+  badge?: {
+    text: string
+    /** 'recommended' renders in primary color; 'warning' renders in muted/amber */
+    variant: 'recommended' | 'warning'
+    /** Full tooltip text for title= attribute */
+    tooltip?: string
+  }
 }
 
 interface ProviderTabGroupProps {
@@ -59,6 +66,10 @@ export default function ProviderTabGroup({
               key={tab.id}
               ref={(el) => { tabRefs.current[index] = el }}
               role="tab"
+              // aria-label pins the accessible name to just the provider label so that
+              // the badge span's text does not alter the computed tab name. Screen readers
+              // will still pick up the badge via its own aria-label on the inner span.
+              aria-label={tab.label}
               aria-selected={isActive}
               aria-controls="provider-panel"
               tabIndex={isActive ? 0 : -1}
@@ -68,6 +79,7 @@ export default function ProviderTabGroup({
               onKeyDown={(e) => handleKeyDown(e, index)}
               className={[
                 'flex-1 h-9 rounded-md text-[0.875rem] font-semibold',
+                'flex flex-col items-center justify-center gap-0',
                 'transition-[background,color] duration-150 ease-out',
                 'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0',
                 isActive
@@ -77,7 +89,22 @@ export default function ProviderTabGroup({
                     : 'bg-transparent text-on-surface-variant cursor-pointer hover:bg-[#e5e7eb] hover:text-on-surface',
               ].join(' ')}
             >
-              {tab.label}
+              <span aria-hidden="true">{tab.label}</span>
+              {tab.badge && (
+                <span
+                  aria-label={`${tab.label}: ${tab.badge.text}`}
+                  title={tab.badge.tooltip ?? tab.badge.text}
+                  className={[
+                    'text-[0.5rem] font-bold leading-none px-1 py-px rounded-sm',
+                    'pointer-events-none select-none',
+                    tab.badge.variant === 'recommended'
+                      ? 'text-emerald-700 bg-emerald-100'
+                      : 'text-amber-700 bg-amber-100',
+                  ].join(' ')}
+                >
+                  {tab.badge.text}
+                </span>
+              )}
             </button>
           )
         })}

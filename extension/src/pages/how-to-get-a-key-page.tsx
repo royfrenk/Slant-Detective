@@ -12,13 +12,16 @@ interface CostRow { usage: string; cost: string }
 //   ($0.80/M input, $4.00/M output). Per article: (734×0.80 + 295×4.00)/1e6 = $0.001767.
 //   Light (20 art/day × 30.4 days = 608 art): 608 × $0.001767 = $1.07/mo.
 //   Heavy (60 art/day × 30.4 days = 1 824 art): 1824 × $0.001767 = $3.22/mo.
-// OpenAI gpt-4o-mini (eval/reports/SD-035-openai.json):
+// OpenAI gpt-4o-mini (eval/reports/SD-035-gemini.json):
 //   cost_per_100_articles_usd = $0.028685. Per article = $0.000287.
 //   Light (20/day × 30.4 = 608 art): 6.08 × $0.028685 = $0.17/mo.
 // gpt-5 pricing: no SD-035 eval run — not filled in.
-// Gemini gemini-2.5-flash (eval/reports/SD-035-gemini.json):
-//   cost_per_100_articles_usd = $0.036991. Per article = $0.000370.
-//   Light (20/day × 30.4 = 608 art): 6.08 × $0.036991 = $0.22/mo.
+// Gemini gemini-2.5-flash (eval/reports/SD-035-gemini.json) with thinkingBudget:0 (2026-04-20):
+//   SD-035 ran without thinkingBudget:0; thinking tokens were ~418 of 418 output avg.
+//   Estimated post-thinkingBudget:0: input ~794 tokens (unchanged), output ~120 tokens (rubric JSON only).
+//   Cost: (794 × $0.15 + 120 × $0.60) / 1e6 = $0.000191/article ≈ $0.0002/article.
+//   Light (20/day × 30.4 = 608 art): 608 × $0.000191 = $0.12/mo.
+//   Note: thinkingBudget:0 added in sprint-006; re-run SD-035 with Gemini to confirm empirically.
 // gemini-2.5-pro pricing: no SD-035 eval run — not filled in.
 const ANTHROPIC_COST_PER_ARTICLE = '~$0.0018';
 const ANTHROPIC_COST_LIGHT = '~$1.07';
@@ -27,8 +30,9 @@ const OPENAI_COST_GPT5_MINI_PER_ARTICLE = '~$0.0003';
 const OPENAI_COST_GPT5_MINI_LIGHT = '~$0.17';
 const OPENAI_COST_GPT5_PER_ARTICLE = '— (no eval data)';
 const OPENAI_COST_GPT5_LIGHT = '— (no eval data)';
-const GEMINI_COST_FLASH_PER_ARTICLE = '~$0.0004';
-const GEMINI_COST_FLASH_LIGHT = '~$0.22';
+// Estimated with thinkingBudget:0 (SD-035 run used thinking; estimate assumes ~120 output tokens).
+const GEMINI_COST_FLASH_PER_ARTICLE = '~$0.0002';
+const GEMINI_COST_FLASH_LIGHT = '~$0.12';
 const GEMINI_COST_PRO_PER_ARTICLE = '— (no eval data)';
 const GEMINI_COST_PRO_LIGHT = '— (no eval data)';
 

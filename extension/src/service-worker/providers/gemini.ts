@@ -109,6 +109,9 @@ export class GeminiProvider implements LLMProvider {
         generationConfig: {
           responseMimeType: 'application/json',
           maxOutputTokens: input.maxTokens,
+          // thinkingBudget: 0 suppresses chain-of-thought tokens, cutting per-article cost ~40%.
+          // Gemini 2.5 Flash passes SD-035 parity gate (κ 0.57) without thinking enabled.
+          thinkingConfig: { thinkingBudget: 0 },
         },
       }),
       signal: AbortSignal.timeout(30_000),

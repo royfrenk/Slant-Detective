@@ -156,10 +156,12 @@ describe('HowToGetAKeyPage — cost table values (SD-035 parity eval)', () => {
     expect(screen.getByText('~$0.17')).toBeTruthy();
   });
 
-  it('Gemini flash cost rows show SD-035-derived values', () => {
+  it('Gemini flash cost rows show thinkingBudget:0 estimated values', () => {
     render(<HowToGetAKeyPage />);
-    expect(screen.getByText('~$0.0004')).toBeTruthy();
-    expect(screen.getByText('~$0.22')).toBeTruthy();
+    // Updated from SD-035 raw values (~$0.0004, ~$0.22) to thinkingBudget:0 estimates
+    // (~$0.0002 per article, ~$0.12/mo light) — thinking tokens suppressed in sprint-006.
+    expect(screen.getByText('~$0.0002')).toBeTruthy();
+    expect(screen.getByText('~$0.12')).toBeTruthy();
   });
 
   it('gpt-5 and gemini-pro cost rows show no-eval-data marker (awaiting eval run)', () => {
