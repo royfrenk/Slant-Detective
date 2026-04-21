@@ -356,6 +356,20 @@ export default function ProviderSettingsCard(): React.JSX.Element {
         onTabChange={handleTabChange}
       />
 
+      {activeTab === 'openai' && (
+        <div
+          role="note"
+          aria-label="OpenAI accuracy warning"
+          className="mt-4 flex items-start gap-2.5 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5"
+        >
+          <span aria-hidden="true" className="text-[1rem] leading-none mt-[1px] text-amber-700">⚠</span>
+          <p className="m-0 text-[0.75rem] leading-snug text-amber-900">
+            <span className="font-semibold">OpenAI scored low on accuracy</span> in our model parity test.
+            For more reliable Layer 2 analysis, use Anthropic or Gemini.
+          </p>
+        </div>
+      )}
+
       <div id="provider-panel">
         <KeyInputSubsection
           providerId={activeTab}

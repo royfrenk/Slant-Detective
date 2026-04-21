@@ -36,7 +36,7 @@ describe('PageFooterNav — Report bug link (SD-038 H.4)', () => {
 describe('PageFooterNav — showCopyright prop (SD-032)', () => {
   it('renders copyright text on left when showCopyright=true', () => {
     render(<PageFooterNav showCopyright={true} />);
-    expect(screen.getByText(/© 2026 Slant Detective Forensic Suite/)).toBeInTheDocument();
+    expect(screen.getByText(/© 2026 Slant Detective/)).toBeInTheDocument();
   });
 
   it('does NOT render copyright text when showCopyright=false (default)', () => {
