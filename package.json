@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "license-audit": "node scripts/license-audit.mjs",
-    "eval": "node eval/run.mjs",
+    "eval": "node eval/run.mjs --provider anthropic",
+    "eval:openai": "node eval/run.mjs --provider openai",
+    "eval:gemini": "node eval/run.mjs --provider gemini",
     "test:eval": "node --test eval/*.test.mjs",
     "test:providers": "node --test eval/providers/providers.test.mjs"
   },

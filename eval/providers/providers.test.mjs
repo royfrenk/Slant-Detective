@@ -146,6 +146,28 @@ test('getProvider: throws a named error listing valid provider names when given 
   )
 })
 
+// ─── Test: Gemini promptFeedback.blockReason: SAFETY throws GeminiSafetyError ─
+
+test('gemini: extractText throws GeminiSafetyError when promptFeedback.blockReason is SAFETY', () => {
+  // This shape is returned when the prompt itself is blocked (no candidates array)
+  const response = {
+    promptFeedback: {
+      blockReason: 'SAFETY',
+      safetyRatings: [
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', probability: 'HIGH', blocked: true },
+      ],
+    },
+  }
+  assert.throws(
+    () => geminiExtractText(response),
+    (err) => {
+      assert.ok(err instanceof GeminiSafetyError, `Expected GeminiSafetyError, got ${err.constructor.name}`)
+      assert.strictEqual(err.name, 'GeminiSafetyError')
+      return true
+    }
+  )
+})
+
 // ─── Bonus: getProvider returns the correct driver module ─────────────────────
 
 test('getProvider: returns driver with correct id for each valid provider name', () => {

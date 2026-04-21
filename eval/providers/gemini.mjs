@@ -24,7 +24,9 @@ export const DEFAULT_MODEL = 'gemini-2.5-flash'
 
 const ENV_VAR = 'GEMINI_API_KEY'
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models'
-const MAX_TOKENS = 1024
+// gemini-2.5-flash is a reasoning model; 1024 is too small for full rubric JSON.
+// Use 8192 to avoid truncation — actual rubric output is ~300-800 tokens.
+const MAX_TOKENS = 8192
 const MAX_BODY_WORDS = 4000
 
 /**
@@ -347,11 +349,20 @@ export function parseTokenUsage(apiResponse) {
  * @returns {string}
  */
 export function extractText(apiResponse) {
+  // Handle prompt-level safety block (response has no candidates at all)
+  const promptFeedback = apiResponse?.promptFeedback
+  if (promptFeedback?.blockReason === 'SAFETY') {
+    throw new GeminiSafetyError(
+      'Gemini blocked this prompt due to safety filters (promptFeedback.blockReason: SAFETY)'
+    )
+  }
+
   const candidate = apiResponse?.candidates?.[0]
   if (!candidate) {
     throw new Error('Unexpected Gemini response shape: no candidates')
   }
 
+  // Handle candidate-level safety block (candidate generated but truncated/blocked)
   if (candidate.finishReason === 'SAFETY') {
     throw new GeminiSafetyError(
       'Gemini blocked this sentence due to safety filters (finishReason: SAFETY)'
@@ -381,7 +392,7 @@ export function extractText(apiResponse) {
  * @returns {Promise<{ text: string, usage: { input_tokens: number, output_tokens: number } }>}
  */
 export async function complete(text, apiKey, model = DEFAULT_MODEL) {
-  const url = `${API_BASE}/${model}:generateContent?key=${apiKey}`
+  const url = `${API_BASE}/${model}:generateContent`
 
   const requestBody = {
     systemInstruction: {
@@ -401,7 +412,10 @@ export async function complete(text, apiKey, model = DEFAULT_MODEL) {
 
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: {
+      'content-type': 'application/json',
+      'x-goog-api-key': apiKey,
+    },
     signal: AbortSignal.timeout(30_000),
     body: JSON.stringify(requestBody),
   })
