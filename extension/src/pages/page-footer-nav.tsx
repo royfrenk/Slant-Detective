@@ -68,44 +68,62 @@ export default function PageFooterNav({ currentPage, showSourceCode = false, sho
     );
   }
 
-  const navLinks = (
-    <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2">
-      {navItem('how-we-measure', 'How we measure')}
-      {navItem('privacy', 'Privacy')}
-      {navItem('credits', 'Credits')}
-      {showFeedback && (
-        <a
-          role="link"
-          tabIndex={0}
-          className={baseLinkClass}
-          aria-label="Open Slant Detective feedback form in new tab"
-          onClick={() => openExternalUrl(FEEDBACK_FORM_URL)}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openExternalUrl(FEEDBACK_FORM_URL); }}
-        >
-          Feedback
-        </a>
-      )}
+  const dotClass = 'text-[0.625rem] text-on-surface-variant tracking-[0.12em]';
+  const dot = <span aria-hidden="true" className={dotClass}>·</span>;
+
+  const items: React.JSX.Element[] = [
+    navItem('how-we-measure', 'How we measure'),
+    navItem('privacy', 'Privacy'),
+    navItem('credits', 'Credits'),
+  ];
+  if (showFeedback) {
+    items.push(
       <a
         role="link"
         tabIndex={0}
         className={baseLinkClass}
-        aria-label="Report a bug"
-        onClick={openReportBugModal}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openReportBugModal(); }}
+        aria-label="Open Slant Detective feedback form in new tab"
+        onClick={() => openExternalUrl(FEEDBACK_FORM_URL)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openExternalUrl(FEEDBACK_FORM_URL); }}
       >
-        Report bug
+        Feedback
       </a>
-      {showSourceCode && (
-        <a
-          href={GITHUB_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Source code on GitHub (opens in new tab)"
-          className={baseLinkClass}
-        >
-          Source code <span aria-hidden="true">↗</span>
-        </a>
-      )}
+    );
+  }
+  items.push(
+    <a
+      role="link"
+      tabIndex={0}
+      className={baseLinkClass}
+      aria-label="Report a bug"
+      onClick={openReportBugModal}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openReportBugModal(); }}
+    >
+      Report bug
+    </a>
+  );
+  if (showSourceCode) {
+    items.push(
+      <a
+        href={GITHUB_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Source code on GitHub (opens in new tab)"
+        className={baseLinkClass}
+      >
+        Source code <span aria-hidden="true">↗</span>
+      </a>
+    );
+  }
+
+  const navLinks = (
+    <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-2">
+      {items.map((item, idx) => (
+        <React.Fragment key={idx}>
+          {idx > 0 && dot}
+          {item}
+        </React.Fragment>
+      ))}
     </div>
   );
 
@@ -116,7 +134,7 @@ export default function PageFooterNav({ currentPage, showSourceCode = false, sho
         className="mt-10 pt-6 pb-2 flex flex-wrap items-center justify-between gap-x-6 gap-y-2"
       >
         <span className="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-on-surface-variant whitespace-nowrap">
-          © 2026 Slant Detective
+          © 2026 Slant Detective Forensic Suite
         </span>
         {navLinks}
       </nav>

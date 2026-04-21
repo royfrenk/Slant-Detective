@@ -360,10 +360,10 @@ export default function ProviderSettingsCard(): React.JSX.Element {
         <div
           role="note"
           aria-label="OpenAI accuracy warning"
-          className="mt-4 flex items-start gap-2.5 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5"
+          className="mt-4 flex items-start gap-3 rounded-md border border-outline bg-surface-variant px-4 py-3"
         >
-          <span aria-hidden="true" className="text-[1rem] leading-none mt-[1px] text-amber-700">⚠</span>
-          <p className="m-0 text-[0.75rem] leading-snug text-amber-900">
+          <span aria-hidden="true" className="text-[1.5rem] leading-none mt-[1px] text-on-tertiary-container">⚠</span>
+          <p className="m-0 text-[1.125rem] leading-snug text-on-surface">
             <span className="font-semibold">OpenAI scored low on accuracy</span> in our model parity test.
             For more reliable Layer 2 analysis, use Anthropic or Gemini.
           </p>
