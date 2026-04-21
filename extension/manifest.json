@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Slant Detective",
   "version": "1.0.0",
-  "description": "Per-article media-bias analysis. Open source, AGPL-3.0. No account, no article data stored on our servers.",
+  "description": "Per-article media-bias analysis. Find the lean, loaded language, and evidence spans in what you read.",
   "minimum_chrome_version": "114",
   "action": {
     "default_icon": {
