@@ -157,9 +157,9 @@ export default function ProviderSettingsCard(): React.JSX.Element {
           chrome.storage.local.set(
             { [PROVIDERS_KEY]: promoted, [ACTIVE_PROVIDER_KEY]: 'anthropic' },
             () => {
-              if (chrome.runtime.lastError) {
-                console.warn('Legacy key migration failed:', chrome.runtime.lastError.message)
-              }
+              // Non-critical: migration failure leaves legacy key in place and user sees empty state;
+              // they can re-enter the key. No user-visible feedback path available at mount.
+              void chrome.runtime.lastError
             },
           )
           providers = promoted
@@ -316,7 +316,7 @@ export default function ProviderSettingsCard(): React.JSX.Element {
         { [PROVIDERS_KEY]: updated, [ACTIVE_PROVIDER_KEY]: providerId },
         () => {
           if (chrome.runtime.lastError) {
-            console.warn('Key persist failed:', chrome.runtime.lastError.message)
+            // User-visible: surface via error feedback state; no console log per hygiene rules.
             setFeedbackState('error')
           }
           resolve()

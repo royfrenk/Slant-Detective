@@ -209,6 +209,7 @@ function StepCard({ number, text }: Step): React.JSX.Element {
 }
 
 function openPrivacy(): void {
+  // Non-critical: privacy page open failure does not affect analysis (e.g., extension context invalidated).
   chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/privacy.html') }).catch(() => {});
 }
 
@@ -247,11 +248,11 @@ function ProviderSection({
         ))}
       </ol>
 
-      <h2
+      <h3
         className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3 mt-10"
       >
         Cost Estimate
-      </h2>
+      </h3>
       <p className="text-sm text-on-surface leading-relaxed mb-3">
         {costIntro}
       </p>
