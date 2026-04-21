@@ -123,7 +123,7 @@ export default function Credits(): React.JSX.Element {
 
   return (
     <div className="min-h-screen bg-background px-6 pt-8 pb-16">
-      <div className="max-w-[560px] mx-auto">
+      <div className="max-w-[720px] mx-auto">
 
         {/* Wordmark */}
         <p className="text-[0.875rem] font-black uppercase tracking-wordmark text-primary mb-8 m-0">

@@ -7,7 +7,7 @@ import PageFooterNav from '../pages/page-footer-nav'
 export default function OptionsPage(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-[560px] mx-auto px-4 pt-6 pb-8">
+      <div className="max-w-[720px] mx-auto px-4 pt-6 pb-8">
         <p className="text-[0.875rem] font-black uppercase tracking-wordmark text-primary m-0">
           SLANT DETECTIVE
         </p>

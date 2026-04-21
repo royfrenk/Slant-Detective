@@ -78,8 +78,8 @@ export default function ProviderTabGroup({
               onClick={() => { if (!tab.disabled) onTabChange(tab.id) }}
               onKeyDown={(e) => handleKeyDown(e, index)}
               className={[
-                'flex-1 h-9 rounded-md text-[0.875rem] font-semibold',
-                'flex flex-col items-center justify-center gap-0',
+                'flex-1 min-h-[56px] py-2 rounded-md text-[0.9375rem] font-semibold',
+                'flex flex-col items-center justify-center gap-1',
                 'transition-[background,color] duration-150 ease-out',
                 'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0',
                 isActive
@@ -95,8 +95,8 @@ export default function ProviderTabGroup({
                   aria-label={`${tab.label}: ${tab.badge.text}`}
                   title={tab.badge.tooltip ?? tab.badge.text}
                   className={[
-                    'text-[0.5rem] font-bold leading-none px-1 py-px rounded-sm',
-                    'pointer-events-none select-none',
+                    'text-[0.6875rem] font-bold leading-none px-1.5 py-0.5 rounded',
+                    'tracking-[0.04em] pointer-events-none select-none',
                     tab.badge.variant === 'recommended'
                       ? 'text-emerald-700 bg-emerald-100'
                       : 'text-amber-700 bg-amber-100',

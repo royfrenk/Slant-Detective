@@ -31,11 +31,11 @@ function handleTryIt(): void {
 
 function BulletItem({ title, body }: Bullet): React.JSX.Element {
   return (
-    <li className="bg-surface-variant rounded-lg px-4 py-3 border-l-[3px] border-l-primary list-none">
-      <p className="text-on-surface font-semibold text-sm leading-snug m-0">
+    <li className="bg-surface-variant rounded-lg px-5 py-4 border-l-[3px] border-l-primary list-none">
+      <p className="text-on-surface font-semibold text-[15px] leading-snug m-0">
         {title}
       </p>
-      <p className="text-on-surface-variant font-normal text-[13px] leading-relaxed mt-1 mb-0">
+      <p className="text-on-surface-variant font-normal text-[14px] leading-relaxed mt-1.5 mb-0">
         {body}
       </p>
     </li>
@@ -45,16 +45,26 @@ function BulletItem({ title, body }: Bullet): React.JSX.Element {
 export default function Welcome(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-16">
-      <div className="w-full max-w-[640px]">
+      <div className="w-full max-w-[720px]">
         {/* Content card */}
         <div className="bg-surface rounded-2xl p-8 md:p-12 shadow-ambient">
-          {/* Wordmark */}
-          <p className="text-primary font-bold text-[13px] tracking-wordmark uppercase mb-6 m-0">
-            Slant Detective
-          </p>
+          {/* Logo + wordmark row */}
+          <div className="flex items-center gap-3 mb-6">
+            <img
+              src={chrome.runtime.getURL('assets/icon-128.png')}
+              alt=""
+              aria-hidden="true"
+              width={40}
+              height={40}
+              className="block"
+            />
+            <p className="text-primary font-bold text-[13px] tracking-wordmark uppercase m-0">
+              Slant Detective
+            </p>
+          </div>
 
           {/* Headline */}
-          <h1 className="text-on-surface font-semibold text-[22px] md:text-[26px] leading-[1.3] mb-8 mt-0">
+          <h1 className="text-on-surface font-semibold text-[24px] md:text-[28px] leading-[1.3] mb-8 mt-0">
             Find the lean in what you read.
           </h1>
 
