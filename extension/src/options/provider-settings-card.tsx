@@ -134,6 +134,7 @@ function buildInitialProviderState(): ProviderStateMap {
 
 export default function ProviderSettingsCard(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<ProviderId>('anthropic')
+  const [activeProvider, setActiveProvider] = useState<ProviderId>('anthropic')
   const [providerState, setProviderState] = useState<ProviderStateMap>(buildInitialProviderState)
   const [isLoading, setIsLoading] = useState(false)
   const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle')
@@ -184,11 +185,15 @@ export default function ProviderSettingsCard(): React.JSX.Element {
         // Set active tab: stored activeProvider → first provider with a key → 'anthropic'
         if (storedActive && PROVIDER_IDS.includes(storedActive)) {
           setActiveTab(storedActive)
+          setActiveProvider(storedActive)
         } else {
           const firstWithKey = PROVIDER_META.find(
             (m) => providers[m.id as keyof ProvidersStorageMap]?.key,
           )
-          if (firstWithKey) setActiveTab(firstWithKey.id)
+          if (firstWithKey) {
+            setActiveTab(firstWithKey.id)
+            setActiveProvider(firstWithKey.id)
+          }
         }
       },
     )
@@ -198,6 +203,67 @@ export default function ProviderSettingsCard(): React.JSX.Element {
   function handleTabChange(id: string): void {
     const newTab = id as ProviderId
     setActiveTab(newTab)
+    setFeedbackState('idle')
+    setErrorCode(null)
+
+    // If this tab has a saved key, promote it to active provider for analysis.
+    // Saving a new key in a different tab will override this later.
+    if (providerState[newTab].hasStoredKey) {
+      chrome.storage.local.set({ [ACTIVE_PROVIDER_KEY]: newTab }, () => {
+        if (!chrome.runtime.lastError) setActiveProvider(newTab)
+      })
+    }
+  }
+
+  // ── Remove key ───────────────────────────────────────────────
+  async function handleRemoveKey(): Promise<void> {
+    if (!current.hasStoredKey) return
+    const meta = getProviderMeta(activeTab)
+    const confirmed = window.confirm(
+      `Remove your ${meta.label} API key? This cannot be undone — you'll need to paste it again to use Layer 2 analysis with ${meta.label}.`,
+    )
+    if (!confirmed) return
+
+    const existing = await new Promise<Record<string, unknown>>((resolve) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      chrome.storage.local.get([PROVIDERS_KEY, ACTIVE_PROVIDER_KEY] as any, resolve)
+    })
+    const existingProviders = (existing[PROVIDERS_KEY] as ProvidersStorageMap | undefined) ?? {}
+    const updated: ProvidersStorageMap = { ...existingProviders }
+    delete updated[activeTab]
+
+    // If we removed the active provider, pick another provider that still has a key.
+    const storedActive = existing[ACTIVE_PROVIDER_KEY] as ProviderId | undefined
+    const writes: Record<string, unknown> = { [PROVIDERS_KEY]: updated }
+    let nextActive: ProviderId | null = null
+    if (storedActive === activeTab) {
+      const fallback = PROVIDER_META.find(
+        (m) => m.id !== activeTab && updated[m.id as keyof ProvidersStorageMap]?.key,
+      )
+      nextActive = fallback?.id ?? null
+      if (nextActive !== null) writes[ACTIVE_PROVIDER_KEY] = nextActive
+    }
+
+    await new Promise<void>((resolve) => {
+      chrome.storage.local.set(writes, () => {
+        if (chrome.runtime.lastError) {
+          setFeedbackState('error')
+        }
+        resolve()
+      })
+    })
+    // If we cleared the active provider entirely, remove the storage key too.
+    if (storedActive === activeTab && nextActive === null) {
+      await new Promise<void>((resolve) => {
+        chrome.storage.local.remove(ACTIVE_PROVIDER_KEY, () => resolve())
+      })
+    }
+
+    setProviderState((prev) => ({
+      ...prev,
+      [activeTab]: defaultPerProviderState(meta),
+    }))
+    if (nextActive !== null) setActiveProvider(nextActive)
     setFeedbackState('idle')
     setErrorCode(null)
   }
@@ -318,6 +384,8 @@ export default function ProviderSettingsCard(): React.JSX.Element {
           if (chrome.runtime.lastError) {
             // User-visible: surface via error feedback state; no console log per hygiene rules.
             setFeedbackState('error')
+          } else {
+            setActiveProvider(providerId)
           }
           resolve()
         },
@@ -348,6 +416,8 @@ export default function ProviderSettingsCard(): React.JSX.Element {
     }),
   }))
 
+  const anyProviderHasKey = PROVIDER_IDS.some((id) => providerState[id].hasStoredKey)
+
   return (
     <div className="bg-surface rounded-[10px] p-6 shadow-ambient w-full">
       <ProviderTabGroup
@@ -355,6 +425,19 @@ export default function ProviderSettingsCard(): React.JSX.Element {
         activeId={activeTab}
         onTabChange={handleTabChange}
       />
+
+      {anyProviderHasKey && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="mt-4 flex items-center gap-2 text-[0.75rem] text-on-surface-variant"
+        >
+          <span aria-hidden="true" className="text-primary-fixed">●</span>
+          <span>
+            Analyses use your <span className="font-semibold text-on-surface">{getProviderMeta(activeProvider).label}</span> key. Click another tab with a saved key to switch.
+          </span>
+        </div>
+      )}
 
       {activeTab === 'openai' && (
         <div
@@ -394,6 +477,25 @@ export default function ProviderSettingsCard(): React.JSX.Element {
         isDisabled={isButtonDisabled}
         onClick={() => void handleSubmit()}
       />
+
+      {current.hasStoredKey && !current.isDirty && (
+        <button
+          type="button"
+          disabled={isLoading}
+          onClick={() => void handleRemoveKey()}
+          aria-label={`Remove saved ${activeMeta.label} key`}
+          className={[
+            'w-full h-10 rounded-md mt-2',
+            'text-[0.8125rem] font-semibold text-on-surface-variant',
+            'bg-transparent border border-outline',
+            'hover:text-tertiary hover:border-tertiary',
+            'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
+            isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer',
+          ].join(' ')}
+        >
+          Remove {activeMeta.label} key
+        </button>
+      )}
 
       <InlineFeedback
         state={feedbackState}
