@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PROVIDERS_KEY, ACTIVE_PROVIDER_KEY } from '../../shared/storage-keys';
+import { ACTIVE_PROVIDER_KEY } from '../../shared/storage-keys';
 
 interface ShimmerBlockProps {
   height: string;
@@ -36,7 +36,7 @@ export default function Layer2SkeletonView(): React.JSX.Element {
     }, PROGRESS_DELAY_MS);
 
     if (typeof chrome !== 'undefined' && chrome.storage?.local) {
-      chrome.storage.local.get([PROVIDERS_KEY, ACTIVE_PROVIDER_KEY], (result) => {
+      chrome.storage.local.get([ACTIVE_PROVIDER_KEY], (result) => {
         const id = (result[ACTIVE_PROVIDER_KEY] as string | undefined) ?? 'anthropic';
         const label = PROVIDER_LOADER_LABEL[id] ?? 'Claude';
         setProviderLabel(label);
