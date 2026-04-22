@@ -1,6 +1,22 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
+// Stub window.matchMedia — returns prefers-reduced-motion: true so exit
+// animations unmount synchronously (no 120ms delay) in tests.
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn((query: string) => ({
+    matches: query.includes('prefers-reduced-motion'),
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
 // Mock chrome extension APIs used in side-panel components and content script
 const chromeMock = {
   runtime: {

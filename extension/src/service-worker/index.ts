@@ -10,8 +10,9 @@ import { ProviderApiError } from './providers/types';
 import { GeminiSafetyError } from './providers/gemini';
 import { getProvider } from './providers/index';
 import { runLayer2Analysis } from './layer2-pipeline';
+import { resolveCanonicalUrl } from './canonical-url';
 import { RubricValidationError } from './response-validator';
-import { bump, maybeEmit } from './telemetry';
+import { bump, maybeEmit, emitScoreSample } from './telemetry';
 import { RUBRIC_MODEL } from './rubric-prompt';
 
 // Shape stored at PROVIDERS_KEY
@@ -77,6 +78,15 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
   // at query time, which may differ from the window containing tabId).
   const tab = await chrome.tabs.get(tabId).catch(() => null);
   if (!tab?.active) return;
+  const msg: InboundMessage = { action: 'tab_navigated' };
+  chrome.runtime.sendMessage(msg).catch(() => {});
+});
+
+// Auto-re-analyze when the user switches to another already-loaded tab.
+// onUpdated only fires for new navigations, so tab switches between tabs that
+// already finished loading previously would otherwise leave the panel showing
+// the old article's analysis.
+chrome.tabs.onActivated.addListener(() => {
   const msg: InboundMessage = { action: 'tab_navigated' };
   chrome.runtime.sendMessage(msg).catch(() => {});
 });
@@ -157,7 +167,7 @@ async function runAnalysis(): Promise<void> {
   const l1Msg: InboundMessage = { action: 'analyzed', payload: { ...result, layer2: null } };
   chrome.runtime.sendMessage(l1Msg).catch(() => {});
 
-  const canonicalUrl = tab.url ?? '';
+  const canonicalUrl = resolveCanonicalUrl(tab.url ?? '', result.canonicalSignals);
   const provider = getProvider(activeProviderId);
 
   try {
@@ -175,6 +185,20 @@ async function runAnalysis(): Promise<void> {
     );
 
     void bump('analyze_layer2_ok');
+
+    // SD-041: Emit anonymised score sample for empirical percentile curves.
+    // pageUrl is tab.url from the outer scope — only eTLD+1 is extracted client-side.
+    void emitScoreSample({
+      pageUrl: tab.url ?? '',
+      overall: rubricResponse.overall.intensity,
+      word_choice: rubricResponse.dimensions.word_choice.score,
+      framing: rubricResponse.dimensions.framing.score,
+      headline_slant: rubricResponse.dimensions.headline_slant.score,
+      source_mix: rubricResponse.dimensions.source_mix.score,
+      direction: rubricResponse.overall.direction,
+      provider: activeProviderId,
+      rubric_version: rubricResponse.rubric_version,
+    });
 
     const msg: InboundMessage = { action: 'layer2_result', payload: rubricResponse };
     chrome.runtime.sendMessage(msg).catch(() => {});

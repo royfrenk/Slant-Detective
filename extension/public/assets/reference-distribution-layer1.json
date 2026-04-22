@@ -1,0 +1,8 @@
+{
+  "rubric_version": "layer1-v1.0",
+  "provider": "layer1",
+  "corpus_size": 100,
+  "built_at": "2026-04-22",
+  "note": "Static reference corpus distribution for Layer 1 signal-based scores. Replace with empirical curves via SD-041.",
+  "overall": [0, 0, 1, 1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
+}

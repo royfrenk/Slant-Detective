@@ -5,6 +5,8 @@ import InvalidKeyCard from '../invalid-key-card';
 import LLMTimeoutCard from '../llm-timeout-card';
 import RateLimitCard from '../rate-limit-card';
 import TooShortCardL2 from '../too-short-card-l2';
+import NonEnglishCard from '../../non-english-card';
+import NotANewsPageCard from '../../not-a-news-page-card';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // InvalidKeyCard
@@ -191,5 +193,90 @@ describe('TooShortCardL2', () => {
     render(<TooShortCardL2 wordCount={100} />);
     // UpsellRow would contain "Unlock full analysis"
     expect(screen.queryByText(/Unlock full analysis/)).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NonEnglishCard (SD-047)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('NonEnglishCard', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('renders the ⊘ glyph', () => {
+    render(<NonEnglishCard />);
+    expect(screen.getByText('⊘')).toBeInTheDocument();
+  });
+
+  it('renders title "Slant Detective only works in English"', () => {
+    render(<NonEnglishCard />);
+    expect(
+      screen.getByRole('heading', { name: 'Slant Detective only works in English' }),
+    ).toBeInTheDocument();
+  });
+
+  it('renders body text mentioning "another language"', () => {
+    render(<NonEnglishCard />);
+    expect(screen.getByText(/another language/)).toBeInTheDocument();
+  });
+
+  it('renders "How we measure →" link with correct aria-label', () => {
+    render(<NonEnglishCard />);
+    expect(
+      screen.getByRole('link', { name: 'How we measure (opens in new tab)' }),
+    ).toBeInTheDocument();
+  });
+
+  it('has role="alert" and aria-label="Language not supported"', () => {
+    render(<NonEnglishCard />);
+    expect(screen.getByRole('alert', { name: 'Language not supported' })).toBeInTheDocument();
+  });
+
+  it('does not render a CTA button', () => {
+    render(<NonEnglishCard />);
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('"How we measure →" link click calls chrome.tabs.create', async () => {
+    const user = userEvent.setup();
+    render(<NonEnglishCard />);
+    const link = screen.getByRole('link', { name: 'How we measure (opens in new tab)' });
+    await user.click(link);
+    expect(chrome.tabs.create).toHaveBeenCalledOnce();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NotANewsPageCard (SD-047)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('NotANewsPageCard', () => {
+  it('renders the ⊘ glyph', () => {
+    render(<NotANewsPageCard />);
+    expect(screen.getByText('⊘')).toBeInTheDocument();
+  });
+
+  it('renders title "No News Detected"', () => {
+    render(<NotANewsPageCard />);
+    expect(
+      screen.getByRole('heading', { name: 'No News Detected' }),
+    ).toBeInTheDocument();
+  });
+
+  it('has role="alert" and aria-label="No news article detected"', () => {
+    render(<NotANewsPageCard />);
+    expect(screen.getByRole('alert', { name: 'No news article detected' })).toBeInTheDocument();
+  });
+
+  it('does not render a CTA button', () => {
+    render(<NotANewsPageCard />);
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('does not render any link', () => {
+    render(<NotANewsPageCard />);
+    expect(screen.queryByRole('link')).toBeNull();
   });
 });

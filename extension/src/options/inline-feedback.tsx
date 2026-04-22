@@ -44,7 +44,7 @@ function buildFeedbackMap(provider: ProviderId): Record<Exclude<FeedbackState, '
     success: {
       icon: '✓',
       iconClass: 'text-primary-fixed',
-      primaryText: 'Key saved. Layer 2 analysis is now active.',
+      primaryText: 'Key saved. In-depth analysis is now active.',
       secondaryText: '',
       textClass: 'text-primary-fixed',
     },
@@ -59,7 +59,7 @@ function buildFeedbackMap(provider: ProviderId): Record<Exclude<FeedbackState, '
       icon: '⚠',
       iconClass: 'text-on-tertiary-container',
       primaryText: `Couldn't reach ${displayName} to validate — key saved anyway.`,
-      secondaryText: 'Layer 2 will confirm connectivity when you run your first analysis.',
+      secondaryText: 'The in-depth analysis will confirm connectivity when you run your first analysis.',
       textClass: 'text-on-surface-variant',
     },
     // 429 rate-limit: key NOT saved, softer tone than error

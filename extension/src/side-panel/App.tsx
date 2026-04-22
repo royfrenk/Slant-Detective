@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PanelChrome from './panel-chrome';
 import ExtractionFailedCard from './extraction-failed-card';
+import NonEnglishCard from './non-english-card';
+import NotANewsPageCard from './not-a-news-page-card';
 import FooterNav from './footer-nav';
 import ReportBugModal from './report-bug-modal';
 import Layer1SkeletonView from './layer1/layer1-skeleton-view';
@@ -18,6 +20,7 @@ import { PROVIDERS_KEY, ACTIVE_PROVIDER_KEY } from '../shared/storage-keys';
 type Status = 'idle' | 'loading' | 'success' | 'error';
 type Layer2Status = 'idle' | 'loading' | 'done' | 'error';
 type Layer2ErrorType = 'timeout' | 'invalid_key' | 'rate_limit' | 'parse_error' | 'content_filtered' | null;
+type ExtractionErrorType = 'extraction_failed' | 'non_english' | 'not_a_news_page' | null;
 
 
 // 30s: first-run ONNX model load from HuggingFace can take 5–30s.
@@ -30,6 +33,7 @@ const LAYER2_TIMEOUT_MS = 70_000;
 
 export default function App(): React.JSX.Element {
   const [status, setStatus] = useState<Status>('idle');
+  const [extractionErrorType, setExtractionErrorType] = useState<ExtractionErrorType>(null);
   const [layer1Signals, setLayer1Signals] = useState<Layer1Signals | null>(null);
   const [layer2Status, setLayer2Status] = useState<Layer2Status>('idle');
   const [layer2Result, setLayer2Result] = useState<RubricResponse | null>(null);
@@ -87,6 +91,7 @@ export default function App(): React.JSX.Element {
     if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
     if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
     setStatus('loading');
+    setExtractionErrorType(null);
     setLayer1Signals(null);
     setLayer2Status('idle');
     setLayer2Result(null);
@@ -127,6 +132,10 @@ export default function App(): React.JSX.Element {
       } else if (message.action === 'analysis_failed') {
         if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
         if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
+        const errType = message.reason as ExtractionErrorType;
+        setExtractionErrorType(
+          errType === 'non_english' || errType === 'not_a_news_page' ? errType : 'extraction_failed',
+        );
         setStatus('error');
       } else if (message.action === 'tab_navigated') {
         setShowReportBug(false);
@@ -180,6 +189,22 @@ export default function App(): React.JSX.Element {
       return <ExtractionFailedCard onRetry={handleRetry} />;
     }
     if (status === 'error') {
+      if (extractionErrorType === 'non_english') {
+        return (
+          <>
+            <NonEnglishCard />
+            <div className="mt-4"><FooterNav /></div>
+          </>
+        );
+      }
+      if (extractionErrorType === 'not_a_news_page') {
+        return (
+          <>
+            <NotANewsPageCard />
+            <div className="mt-4"><FooterNav /></div>
+          </>
+        );
+      }
       return (
         <>
           <ExtractionFailedCard onRetry={handleRetry} />
@@ -200,6 +225,22 @@ export default function App(): React.JSX.Element {
 
     // Layer 1 failed
     if (status === 'error') {
+      if (extractionErrorType === 'non_english') {
+        return (
+          <>
+            <NonEnglishCard />
+            <div className="mt-4"><FooterNav /></div>
+          </>
+        );
+      }
+      if (extractionErrorType === 'not_a_news_page') {
+        return (
+          <>
+            <NotANewsPageCard />
+            <div className="mt-4"><FooterNav /></div>
+          </>
+        );
+      }
       return (
         <>
           <ExtractionFailedCard onRetry={handleRetry} />

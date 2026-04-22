@@ -194,4 +194,57 @@ describe('validateRubricResponse', () => {
     const result = validateRubricResponse(response)
     expect(result.spans).toHaveLength(1)
   })
+
+  // ---------------------------------------------------------------------------
+  // SD-040: rationale fields (optional for back-compat)
+  // ---------------------------------------------------------------------------
+
+  it('accepts response without rationale fields (pre-v1.1 cache back-compat)', () => {
+    const result = validateRubricResponse(makeValidResponse())
+    expect(result.overall.rationale).toBeUndefined()
+    expect(result.dimensions.word_choice.rationale).toBeUndefined()
+  })
+
+  it('parses overall_rationale when present', () => {
+    const response = {
+      ...makeValidResponse(),
+      overall_rationale: 'Word choice drives this score: seven evaluative modifiers apply asymmetrically.',
+    }
+    const result = validateRubricResponse(response)
+    expect(result.overall.rationale).toBe(
+      'Word choice drives this score: seven evaluative modifiers apply asymmetrically.',
+    )
+  })
+
+  it('parses dimension_rationales when present', () => {
+    const response = {
+      ...makeValidResponse(),
+      dimension_rationales: {
+        word_choice: 'Language skews right: 7 charged terms including radical and regime.',
+        framing: 'Story foregrounds activists as agents.',
+        headline_slant: 'Headline uses evaluative adjective absent from body.',
+        source_mix: '12 of 15 attributions use charged verbs.',
+      },
+    }
+    const result = validateRubricResponse(response)
+    expect(result.dimensions.word_choice.rationale).toContain('Language skews right')
+    expect(result.dimensions.framing.rationale).toContain('foregrounds')
+    expect(result.dimensions.headline_slant.rationale).toContain('evaluative adjective')
+    expect(result.dimensions.source_mix.rationale).toContain('charged verbs')
+  })
+
+  it('omits rationale from overall when overall_rationale is empty string', () => {
+    const response = { ...makeValidResponse(), overall_rationale: '' }
+    const result = validateRubricResponse(response)
+    expect(result.overall.rationale).toBeUndefined()
+  })
+
+  it('omits rationale from dimension when dimension_rationale value is empty string', () => {
+    const response = {
+      ...makeValidResponse(),
+      dimension_rationales: { word_choice: '', framing: '', headline_slant: '', source_mix: '' },
+    }
+    const result = validateRubricResponse(response)
+    expect(result.dimensions.word_choice.rationale).toBeUndefined()
+  })
 })
