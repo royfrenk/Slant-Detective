@@ -234,6 +234,19 @@ chrome.runtime.onMessage.addListener((message) => {
     runAnalysis();
   }
 
+  // Content-script tooltip requests an extension page to be opened. chrome.tabs
+  // is unavailable from content scripts and window.open hits a WAR check that
+  // blocks chrome-extension:// URLs opened from http/https pages
+  // (ERR_BLOCKED_BY_CLIENT). SW proxies the tab creation with an allowlist.
+  if (message?.action === 'openPage' && typeof message?.page === 'string') {
+    const ALLOWED_PAGES = ['how-we-measure', 'privacy', 'credits', 'how-to-get-a-key'] as const;
+    if ((ALLOWED_PAGES as readonly string[]).includes(message.page)) {
+      const url = chrome.runtime.getURL(`src/pages/${message.page}.html`);
+      chrome.tabs.create({ url, active: true }).catch(() => {});
+    }
+    return false;
+  }
+
   // SD-038: Capture screenshot + ensure panel open + broadcast reportBugReady.
   if (message?.action === 'openReportBugModal') {
     void (async () => {
