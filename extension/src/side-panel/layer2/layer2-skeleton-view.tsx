@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ACTIVE_PROVIDER_KEY } from '../../shared/storage-keys';
 
 interface ShimmerBlockProps {
   height: string;
@@ -17,17 +18,37 @@ function ShimmerBlock({ height }: ShimmerBlockProps): React.JSX.Element {
 
 const PROGRESS_DELAY_MS = 1000;
 
+// Display name for the loader — "Anthropic → Claude" because users know the model brand,
+// not the company; "OpenAI" and "Gemini" use their own brand names.
+const PROVIDER_LOADER_LABEL: Record<string, string> = {
+  anthropic: 'Claude',
+  openai: 'OpenAI',
+  gemini: 'Gemini',
+};
+
 export default function Layer2SkeletonView(): React.JSX.Element {
   const [showProgress, setShowProgress] = useState(false);
+  const [providerLabel, setProviderLabel] = useState<string>('Claude');
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowProgress(true);
     }, PROGRESS_DELAY_MS);
+
+    if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+      chrome.storage.local.get([ACTIVE_PROVIDER_KEY], (result) => {
+        const id = (result[ACTIVE_PROVIDER_KEY] as string | undefined) ?? 'anthropic';
+        const label = PROVIDER_LOADER_LABEL[id] ?? 'Claude';
+        setProviderLabel(label);
+      });
+    }
+
     return () => {
       clearTimeout(timer);
     };
   }, []);
+
+  const loaderText = `Analyzing with ${providerLabel}…`;
 
   return (
     <div
@@ -48,8 +69,8 @@ export default function Layer2SkeletonView(): React.JSX.Element {
       <ShimmerBlock height="h-[52px]" />
       <ShimmerBlock height="h-[52px]" />
       {showProgress && (
-        <p className="text-[0.625rem] text-on-surface-variant text-center mt-2">
-          Analyzing with Claude…
+        <p className="text-[0.875rem] font-medium text-on-surface-variant text-center mt-3">
+          {loaderText}
         </p>
       )}
     </div>

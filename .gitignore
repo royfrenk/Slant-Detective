@@ -6,6 +6,7 @@
 
 # Internal docs (not for public repo)
 docs/
+CLAUDE.md
 
 # Stitch mock downloads (reference material, re-fetchable via MCP)
 stitch_chrome_extension_blueprint/
@@ -26,6 +27,9 @@ slant-detective-*.zip
 
 # Eval harness — downloaded corpora (GPL-3.0 aggregate; re-downloadable at eval-time)
 eval/data/
+
+# Eval harness — per-run machine-generated reports (share out-of-band, not via git)
+eval/reports/
 
 # Secrets — never commit .env files (defense in depth)
 .env

@@ -6,8 +6,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 Copyright: Slant Detective Contributors, 2026
 
 File: extension/public/assets/source-bias-labels.json
-Compiled: 2026-04-18
-Dataset version: 0.1.0
+Compiled: 2026-04-20
+Dataset version: 0.2.0
 
 This dataset is originally authored by the Slant Detective project. It is NOT
 derived from, and contains NO data sourced from, AllSides Media Bias Ratings,
@@ -17,7 +17,7 @@ AGPL-3.0 redistribution and therefore excluded from this project entirely.
 
 Domain labels were assigned independently by project contributors based on
 direct reading of each publication's output, editorial line, and news framing.
-Methodology documentation will be published in SD-016.
+Methodology documentation: `docs/!project/METHODOLOGY.md`
 
 EXPLICIT DECLARATION:
 "This dataset does NOT incorporate AllSides Media Bias Ratings(TM) or Ad Fontes

@@ -25,7 +25,7 @@ export type InboundMessage =
   | { action: 'analysis_failed'; reason: string }
   | { action: 'tab_navigated' }
   | { action: 'layer2_result'; payload: RubricResponse }
-  | { action: 'layer2_failed'; errorType: 'invalid_key' | 'quota_exceeded' | 'network_error' | 'timeout' | 'unknown' }
+  | { action: 'layer2_failed'; errorType: 'invalid_key' | 'quota_exceeded' | 'network_error' | 'timeout' | 'unknown' | 'content_filtered' }
   | { action: 'highlight_hover'; spanId: string }
   | { action: 'highlight_click'; spanId: string }
   | { action: 'reportBugReady'; url: string; screenshotDataUrl: string | null };

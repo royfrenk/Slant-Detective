@@ -11,19 +11,24 @@ async function sha256Hex(input: string): Promise<string> {
 }
 
 /**
- * Build the storage key for a given article + rubric version.
- * Format: `sd_cache_${sha256(canonicalUrl)}:${sha256(body)}:${rubricVersion}`
+ * Build the storage key for a given article + rubric version + provider + model.
+ * Format: `sd_cache_${sha256(canonicalUrl)}:${sha256(body)}:${rubricVersion}:${provider}:${model}`
+ *
+ * Old 3-segment keys (pre-SD-031) never collide with new 5-segment keys and
+ * expire naturally via CACHE_MAX_ENTRIES eviction — no forced clear needed.
  */
 export async function buildCacheKey(
   canonicalUrl: string,
   body: string,
   rubricVersion: string,
+  provider: string,
+  model: string,
 ): Promise<string> {
   const [urlHash, bodyHash] = await Promise.all([
     sha256Hex(canonicalUrl),
     sha256Hex(body),
   ])
-  return `${CACHE_PREFIX}${urlHash}:${bodyHash}:${rubricVersion}`
+  return `${CACHE_PREFIX}${urlHash}:${bodyHash}:${rubricVersion}:${provider}:${model}`
 }
 
 /**

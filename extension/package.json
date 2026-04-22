@@ -11,7 +11,8 @@
     "build:alpha": "vite build --config vite.config.alpha.ts",
     "build:zip": "cd dist && zip -r ../dist-alpha.zip . && cd ..",
     "dev": "vite build --watch",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint:source-bias": "node scripts/lint-source-bias.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.5",

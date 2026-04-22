@@ -145,6 +145,41 @@ export function printGateReport(result, current, baseline) {
   }
 }
 
+// ─── Parity gate (multi-provider) ────────────────────────────────────────────
+
+const PARITY_BAND_KAPPA = 0.05
+const PARITY_BAND_F1 = 0.03
+
+/**
+ * @typedef {{
+ *   passed: boolean,
+ *   kappa_delta: number,
+ *   f1_delta: number
+ * }} ParityResult
+ */
+
+/**
+ * Compare another provider's results against the Anthropic Haiku baseline.
+ * Returns pass/fail and the kappa/F1 deltas.
+ *
+ * Parity band: ±0.05 κ and ±0.03 F1.
+ * If either delta is outside the band, the provider must ship behind beta: true.
+ *
+ * @param {AllMetrics} current
+ * @param {Baseline} baseline - Anthropic Haiku baseline (from baseline.json)
+ * @returns {ParityResult}
+ */
+export function checkParity(current, baseline) {
+  const kappa_delta = current.classification.kappa - baseline.classification.kappa
+  const f1_delta = current.classification.f1 - baseline.classification.f1
+
+  const passed =
+    Math.abs(kappa_delta) <= PARITY_BAND_KAPPA &&
+    Math.abs(f1_delta) <= PARITY_BAND_F1
+
+  return { passed, kappa_delta, f1_delta }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function round4(n) {
