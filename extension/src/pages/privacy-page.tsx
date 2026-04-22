@@ -38,6 +38,28 @@ const EXCLUDED_FIELDS: readonly string[] = [
   'No IP address — the Cloudflare Worker reads it only for in-memory rate-limiting and never writes it to Analytics Engine',
 ] as const;
 
+// SD-041: Score sample schema string (rendered in a <pre> block)
+const SCORE_SAMPLE_SCHEMA = `interface ScoreSample {
+  event: 'score_sample'
+  domain_etld1: string   // registrable domain only (e.g. "nytimes.com") — no path
+  overall: number        // 0–10 intensity score
+  word_choice: number    // 0–10 dimension score
+  framing: number        // 0–10 dimension score
+  headline_slant: number // 0–10 dimension score
+  source_mix: number     // 0–10 dimension score
+  direction: string      // "left" | "center" | "right" | ...
+  provider: string       // "anthropic" | "openai" | "gemini"
+  rubric_version: string // e.g. "v1.1"
+}` as const;
+
+const SCORE_SAMPLE_NOT_SENT: readonly string[] = [
+  'No URL path, query string, or fragment — only the registrable domain (eTLD+1)',
+  'No article title, body, or rationale text',
+  'No user identifier, device ID, install ID, or session ID',
+  'No IP address — read only for rate-limiting, never written',
+  'No subdomains (e.g. personal-blog.substack.com → substack.com)',
+] as const;
+
 const BUG_REPORT_NOT_SENT: readonly string[] = [
   'No automatic extension state (rubric results, cache entries, API key, settings, history)',
   'No IP address — the Worker reads it only for in-memory rate-limiting (5 reports/min per IP) and never writes it anywhere',
@@ -167,7 +189,56 @@ export function PrivacyPage(): React.JSX.Element {
             </ul>
           </section>
 
-          {/* Section 4 */}
+          {/* Section 4 — SD-041: Score samples */}
+          <section aria-labelledby="score-samples-heading" className="mt-10">
+            <h2
+              id="score-samples-heading"
+              className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3"
+            >
+              What Goes to Us (Score Samples — if telemetry enabled)
+            </h2>
+            <p className="text-sm text-on-surface leading-relaxed mb-3">
+              After each Layer 2 analysis completes, the extension sends a single anonymised score
+              sample to our Cloudflare Worker. This uses the same telemetry toggle as the aggregate
+              batch above — disabling telemetry stops both.
+            </p>
+            <p className="text-sm font-semibold text-on-surface mb-2">
+              Exactly 9 fields are sent per article:
+            </p>
+            <figure>
+              <figcaption className="sr-only">Score sample payload schema</figcaption>
+              <pre
+                className="bg-surface-variant rounded-lg px-4 py-3 text-xs text-on-surface font-mono overflow-x-auto"
+                aria-label="Score sample TypeScript interface"
+              >
+                <code>{SCORE_SAMPLE_SCHEMA}</code>
+              </pre>
+            </figure>
+            <p className="text-sm font-semibold text-on-surface mt-6 mb-3">
+              What is NOT sent:
+            </p>
+            <ul className="m-0 pl-0 list-none">
+              {SCORE_SAMPLE_NOT_SENT.map((item) => (
+                <li key={item} className="text-sm text-on-surface leading-relaxed mb-1 flex gap-2">
+                  <span aria-hidden="true" className="text-on-surface-variant select-none">·</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-sm text-on-surface leading-relaxed mt-4 mb-3">
+              <strong>Purpose:</strong> samples aggregate into rolling empirical percentile
+              distributions so the percentile label on the bias score card reflects real articles
+              rather than a one-time static reference corpus. Per-site distributions become
+              available once enough samples accumulate for a domain.
+            </p>
+            <p className="text-sm text-on-surface leading-relaxed mb-3">
+              <strong>Server controls:</strong> IP is stripped before any write. Any
+              (domain, day) bucket with fewer than 10 samples is excluded from published curves —
+              preventing rare-domain-to-single-user correlation.
+            </p>
+          </section>
+
+          {/* Section 5 — Bug Reports */}
           <section aria-labelledby="bug-reports-heading" className="mt-10">
             <h2
               id="bug-reports-heading"
@@ -222,7 +293,7 @@ export function PrivacyPage(): React.JSX.Element {
             </p>
           </section>
 
-          {/* Section 5 */}
+          {/* Section 6 — Domain safety */}
           <section aria-labelledby="domain-safety-heading" className="mt-10">
             <h2
               id="domain-safety-heading"

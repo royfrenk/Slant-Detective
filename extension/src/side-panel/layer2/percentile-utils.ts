@@ -1,10 +1,14 @@
 /**
  * Percentile lookup utilities for score context labels.
  *
- * The distribution array contains one score value per corpus article (100 entries),
- * sorted ascending. Binary search finds the percentile rank of a given score.
+ * The distribution array contains one score value per corpus article (sorted ascending).
+ * Binary search finds the percentile rank of a given score.
  *
- * SD-041 will extend this to prefer per-site empirical curves when available.
+ * SD-040: static corpus distributions, 5-tier global copy.
+ * SD-041: per-site copy variant ("more tilted than X% of {domain} articles").
+ *
+ * PUBLIC SIGNATURES STABLE: scoreToPercentile, percentileToLabel, getPercentileLabel
+ * are unchanged. SD-041 adds getPercentileLabelForDomain (additive, non-breaking).
  */
 
 export interface DistributionData {
@@ -61,5 +65,33 @@ export function getPercentileLabel(
 ): string | undefined {
   if (distribution == null || distribution.length === 0) return undefined
   const percentile = scoreToPercentile(score, distribution)
+  return percentileToLabel(percentile)
+}
+
+/**
+ * SD-041: Per-site copy variant.
+ *
+ * When a per-site empirical curve is available for the current article's domain,
+ * returns "more tilted than X% of {domain} articles" using the numeric percentile.
+ * Falls back to the global tier copy when domain is absent.
+ *
+ * @param score        - overall intensity score 0–10
+ * @param distribution - sorted score array (per-site or global)
+ * @param domain       - eTLD+1 domain string (e.g. "nytimes.com"), or undefined for global label
+ */
+export function getPercentileLabelForDomain(
+  score: number,
+  distribution: number[] | null | undefined,
+  domain?: string,
+): string | undefined {
+  if (distribution == null || distribution.length === 0) return undefined
+  const percentile = scoreToPercentile(score, distribution)
+
+  if (domain) {
+    // Per-site label: "more tilted than X% of nytimes.com articles"
+    // Use the raw percentile number for precision in per-site context.
+    return `more tilted than ${percentile}% of ${domain} articles`
+  }
+
   return percentileToLabel(percentile)
 }

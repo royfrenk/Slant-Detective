@@ -168,13 +168,175 @@ function buildDistributionFromResults(results, provider) {
 }
 
 // ─── Empirical mode (SD-041) ─────────────────────────────────────────────────
+//
+// Queries Analytics Engine via Cloudflare API for real-world score_sample events
+// and outputs reference-distribution-{provider}-empirical.json.
+//
+// Required environment variables:
+//   CF_ACCOUNT_ID   — Cloudflare account ID
+//   CF_API_TOKEN    — Cloudflare API token with Analytics Engine read permission
+//   CF_DATASET      — Analytics Engine dataset name (default: TELEMETRY)
+//
+// Min-count threshold: buckets with fewer than MIN_COUNT samples per (domain,day)
+// are excluded from per-site curves, but all samples contribute to the global curve.
+//
+// Per-site JSON output: reference-distribution-{provider}-{domain_etld1}-empirical.json
+// for any domain with >= MIN_SITE_SAMPLES total samples.
+
+const MIN_SITE_SAMPLES = 30 // min samples for a per-site curve to be useful
+const TOP_N_SITES = 50      // generate per-site curves for top N domains by sample count
 
 async function runEmpirical(provider) {
-  // SD-041 will implement this mode. It queries Analytics Engine for real-world
-  // score samples and outputs per-provider + per-site curves.
-  console.error('Empirical mode is not yet implemented. This will be added in SD-041.')
-  console.error('Usage: node eval/build-distribution.mjs --mode=static --provider=anthropic')
-  process.exit(1)
+  console.log(`Building empirical distribution: provider=${provider}`)
+
+  const accountId = process.env['CF_ACCOUNT_ID']
+  const apiToken = process.env['CF_API_TOKEN']
+  const dataset = process.env['CF_DATASET'] ?? 'TELEMETRY'
+
+  if (!accountId || !apiToken) {
+    console.error('Missing required env vars: CF_ACCOUNT_ID and CF_API_TOKEN')
+    console.error('Get a Cloudflare API token with Analytics Engine read permission.')
+    process.exit(1)
+  }
+
+  // Query Analytics Engine SQL API for score_sample data points
+  // Analytics Engine stores blob1=domain_etld1, blob3=provider, doubles=[overall,wc,fr,hs,sm]
+  // We filter by provider (blob3 = index field) and select all score columns.
+  const sql = `
+    SELECT
+      blob1 AS domain_etld1,
+      double1 AS overall,
+      double2 AS word_choice,
+      double3 AS framing,
+      double4 AS headline_slant,
+      double5 AS source_mix,
+      COUNT() AS sample_count
+    FROM ${dataset}
+    WHERE blob3 = '${provider}'
+    GROUP BY blob1, overall, word_choice, framing, headline_slant, source_mix
+    LIMIT 100000
+  `.trim()
+
+  let rows
+  try {
+    const resp = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/analytics_engine/sql`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `query=${encodeURIComponent(sql)}`,
+      }
+    )
+
+    if (!resp.ok) {
+      const text = await resp.text()
+      console.error(`Analytics Engine API error ${resp.status}: ${text}`)
+      process.exit(1)
+    }
+
+    const json = await resp.json()
+    rows = json.data ?? []
+  } catch (err) {
+    console.error(`Failed to query Analytics Engine: ${String(err)}`)
+    process.exit(1)
+  }
+
+  console.log(`Received ${rows.length} aggregated rows from Analytics Engine`)
+
+  if (rows.length === 0) {
+    console.log('No empirical data yet — returning empty distribution.')
+    const empty = buildEmptyCurveOutput(provider)
+    return empty
+  }
+
+  // Build global distribution from all rows
+  const allOverall = rows.map((r) => Number(r.overall)).sort((a, b) => a - b)
+  const allWordChoice = rows.map((r) => Number(r.word_choice)).sort((a, b) => a - b)
+  const allFraming = rows.map((r) => Number(r.framing)).sort((a, b) => a - b)
+  const allHeadlineSlant = rows.map((r) => Number(r.headline_slant)).sort((a, b) => a - b)
+  const allSourceMix = rows.map((r) => Number(r.source_mix)).sort((a, b) => a - b)
+
+  const globalOutput = {
+    rubric_version: RUBRIC_VERSIONS[provider],
+    provider,
+    corpus_size: rows.length,
+    source: 'empirical',
+    built_at: new Date().toISOString().slice(0, 10),
+    note: `Empirical distribution from ${rows.length} score_sample events via Analytics Engine.`,
+    overall: allOverall,
+    word_choice: allWordChoice,
+    framing: allFraming,
+    headline_slant: allHeadlineSlant,
+    source_mix: allSourceMix,
+  }
+
+  // Per-site distributions: group rows by domain_etld1
+  const byDomain = {}
+  for (const row of rows) {
+    const domain = row.domain_etld1
+    if (!domain) continue
+    if (!byDomain[domain]) byDomain[domain] = []
+    byDomain[domain].push(row)
+  }
+
+  // Sort domains by sample count descending, take top N with >= MIN_SITE_SAMPLES
+  const topDomains = Object.entries(byDomain)
+    .filter(([, domainRows]) => domainRows.length >= MIN_SITE_SAMPLES)
+    .sort(([, a], [, b]) => b.length - a.length)
+    .slice(0, TOP_N_SITES)
+
+  console.log(`Generating per-site curves for ${topDomains.length} domains (min ${MIN_SITE_SAMPLES} samples)`)
+
+  // Write per-site JSONs
+  for (const [domain, domainRows] of topDomains) {
+    const siteOverall = domainRows.map((r) => Number(r.overall)).sort((a, b) => a - b)
+    const siteWordChoice = domainRows.map((r) => Number(r.word_choice)).sort((a, b) => a - b)
+    const siteFraming = domainRows.map((r) => Number(r.framing)).sort((a, b) => a - b)
+    const siteHeadlineSlant = domainRows.map((r) => Number(r.headline_slant)).sort((a, b) => a - b)
+    const siteSourceMix = domainRows.map((r) => Number(r.source_mix)).sort((a, b) => a - b)
+
+    const safeDomainSlug = domain.replace(/[^a-z0-9.-]/g, '_')
+    const siteOutput = {
+      rubric_version: RUBRIC_VERSIONS[provider],
+      provider,
+      domain_etld1: domain,
+      corpus_size: domainRows.length,
+      source: 'empirical-site',
+      built_at: new Date().toISOString().slice(0, 10),
+      note: `Per-site empirical distribution for ${domain} (${domainRows.length} samples).`,
+      overall: siteOverall,
+      word_choice: siteWordChoice,
+      framing: siteFraming,
+      headline_slant: siteHeadlineSlant,
+      source_mix: siteSourceMix,
+    }
+
+    mkdirSync(ASSETS_DIR, { recursive: true })
+    const sitePath = join(ASSETS_DIR, `reference-distribution-${provider}-${safeDomainSlug}-empirical.json`)
+    writeFileSync(sitePath, JSON.stringify(siteOutput, null, 2), 'utf8')
+    console.log(`  Wrote per-site: ${sitePath} (${domainRows.length} samples)`)
+  }
+
+  return globalOutput
+}
+
+function buildEmptyCurveOutput(provider) {
+  return {
+    rubric_version: RUBRIC_VERSIONS[provider],
+    provider,
+    corpus_size: 0,
+    source: 'empirical',
+    built_at: new Date().toISOString().slice(0, 10),
+    note: 'No empirical data collected yet. Re-run after score_sample events are collected.',
+    overall: [],
+    word_choice: [],
+    framing: [],
+    headline_slant: [],
+    source_mix: [],
+  }
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -200,9 +362,11 @@ async function main() {
   }
 
   mkdirSync(ASSETS_DIR, { recursive: true })
-  const outPath = join(ASSETS_DIR, `reference-distribution-${provider}.json`)
+  // Empirical global curve gets a distinct filename to avoid overwriting static corpus.
+  const suffix = mode === 'empirical' ? '-empirical' : ''
+  const outPath = join(ASSETS_DIR, `reference-distribution-${provider}${suffix}.json`)
   writeFileSync(outPath, JSON.stringify(distribution, null, 2), 'utf8')
-  console.log(`Wrote: ${outPath} (${distribution.overall.length} articles)`)
+  console.log(`Wrote: ${outPath} (${distribution.overall.length} data points)`)
 }
 
 main().catch((err) => {
