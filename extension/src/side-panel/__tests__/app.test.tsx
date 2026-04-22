@@ -74,6 +74,7 @@ describe('App — Layer 2 state machine integration', () => {
           body: 'Body text.',
           word_count: 800,
           offsets: [],
+          canonicalSignals: { linkCanonical: null, jsonLdUrl: null, ogUrl: null, twitterUrl: null },
           layer1Signals: mockLayer1Signals,
           layer2: null,
         },
@@ -100,7 +101,7 @@ describe('App — Layer 2 state machine integration', () => {
     await act(async () => {
       listener({
         action: 'analyzed',
-        payload: { ok: true, title: 'T', body: 'B', word_count: 800, offsets: [], layer1Signals: mockLayer1Signals, layer2: null },
+        payload: { ok: true, title: 'T', body: 'B', word_count: 800, offsets: [], canonicalSignals: { linkCanonical: null, jsonLdUrl: null, ogUrl: null, twitterUrl: null }, layer1Signals: mockLayer1Signals, layer2: null },
       });
     });
     await act(async () => {
@@ -117,7 +118,7 @@ describe('App — Layer 2 state machine integration', () => {
     await act(async () => {
       listener({
         action: 'analyzed',
-        payload: { ok: true, title: 'T', body: 'B', word_count: 800, offsets: [], layer1Signals: mockLayer1Signals, layer2: null },
+        payload: { ok: true, title: 'T', body: 'B', word_count: 800, offsets: [], canonicalSignals: { linkCanonical: null, jsonLdUrl: null, ogUrl: null, twitterUrl: null }, layer1Signals: mockLayer1Signals, layer2: null },
       });
     });
     await act(async () => {

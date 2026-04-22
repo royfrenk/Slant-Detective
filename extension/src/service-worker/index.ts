@@ -10,6 +10,7 @@ import { ProviderApiError } from './providers/types';
 import { GeminiSafetyError } from './providers/gemini';
 import { getProvider } from './providers/index';
 import { runLayer2Analysis } from './layer2-pipeline';
+import { resolveCanonicalUrl } from './canonical-url';
 import { RubricValidationError } from './response-validator';
 import { bump, maybeEmit } from './telemetry';
 import { RUBRIC_MODEL } from './rubric-prompt';
@@ -157,7 +158,7 @@ async function runAnalysis(): Promise<void> {
   const l1Msg: InboundMessage = { action: 'analyzed', payload: { ...result, layer2: null } };
   chrome.runtime.sendMessage(l1Msg).catch(() => {});
 
-  const canonicalUrl = tab.url ?? '';
+  const canonicalUrl = resolveCanonicalUrl(tab.url ?? '', result.canonicalSignals);
   const provider = getProvider(activeProviderId);
 
   try {

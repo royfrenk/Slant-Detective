@@ -1,5 +1,5 @@
 import { Readability } from '@mozilla/readability';
-import type { ExtractionResult } from '../shared/types';
+import type { CanonicalSignals, ExtractionResult } from '../shared/types';
 
 const BODY_CHAR_MIN = 50;
 const PARA_TEXT_MIN = 20; // skip captions / short labels in fallback
@@ -35,9 +35,60 @@ function cleanTitle(raw: string): string {
   return raw.replace(PUBLICATION_SUFFIX_RE, '').trim();
 }
 
-function makeResult(title: string, body: string): ExtractionResult {
+function resolveHref(href: string | null | undefined, baseUri: string): string | null {
+  if (!href) return null;
+  try {
+    return new URL(href, baseUri).href;
+  } catch {
+    return null;
+  }
+}
+
+function extractJsonLdUrl(doc: Document, baseUri: string): string | null {
+  const ARTICLE_TYPES = new Set(['NewsArticle', 'Article', 'BlogPosting']);
+  for (const script of doc.querySelectorAll('script[type="application/ld+json"]')) {
+    try {
+      const parsed = JSON.parse(script.textContent ?? '') as Record<string, unknown>;
+      const type = parsed['@type'];
+      const types = Array.isArray(type) ? type : [type];
+      if (!types.some((t) => typeof t === 'string' && ARTICLE_TYPES.has(t))) continue;
+      // Try mainEntityOfPage first, then url
+      const mep = parsed['mainEntityOfPage'];
+      if (typeof mep === 'string' && mep.length > 0) return resolveHref(mep, baseUri);
+      if (mep && typeof mep === 'object' && typeof (mep as Record<string, unknown>)['@id'] === 'string') {
+        return resolveHref((mep as Record<string, unknown>)['@id'] as string, baseUri);
+      }
+      const url = parsed['url'];
+      if (typeof url === 'string' && url.length > 0) return resolveHref(url, baseUri);
+    } catch {
+      // Malformed JSON-LD — skip
+    }
+  }
+  return null;
+}
+
+export function extractCanonicalSignals(doc: Document): CanonicalSignals {
+  const baseUri = doc.baseURI ?? '';
+  return {
+    linkCanonical: resolveHref(
+      doc.querySelector('link[rel="canonical"]')?.getAttribute('href'),
+      baseUri,
+    ),
+    jsonLdUrl: extractJsonLdUrl(doc, baseUri),
+    ogUrl: resolveHref(
+      doc.querySelector('meta[property="og:url"]')?.getAttribute('content'),
+      baseUri,
+    ),
+    twitterUrl: resolveHref(
+      doc.querySelector('meta[name="twitter:url"]')?.getAttribute('content'),
+      baseUri,
+    ),
+  };
+}
+
+function makeResult(title: string, body: string, canonicalSignals: CanonicalSignals): ExtractionResult {
   if (body.length < BODY_CHAR_MIN) return { ok: false, error: 'extraction_failed' };
-  return { ok: true, title, body, word_count: countWords(body), offsets: [{ start: 0, end: body.length }] };
+  return { ok: true, title, body, word_count: countWords(body), offsets: [{ start: 0, end: body.length }], canonicalSignals };
 }
 
 function tryReadability(doc: Document): ExtractionResult {
@@ -46,7 +97,7 @@ function tryReadability(doc: Document): ExtractionResult {
     const reader = new Readability(cloned, { charThreshold: 0 });
     const article = reader.parse();
     if (article === null) return { ok: false, error: 'extraction_failed' };
-    return makeResult(cleanTitle((article.title ?? '').trim()), stripHtml(article.content ?? ''));
+    return makeResult(cleanTitle((article.title ?? '').trim()), stripHtml(article.content ?? ''), extractCanonicalSignals(doc));
   } catch {
     return { ok: false, error: 'extraction_failed' };
   }
@@ -77,13 +128,14 @@ function extractTextFromElement(el: Element): string {
 // Selector-based fallback: walks common article containers and extracts text.
 function tryFallback(doc: Document): ExtractionResult {
   const title = cleanTitle(doc.title ?? '');
+  const signals = extractCanonicalSignals(doc);
 
   for (const sel of FALLBACK_SELECTORS) {
     const el = doc.querySelector(sel);
     if (!el) continue;
 
     const body = extractTextFromElement(el);
-    const result = makeResult(title, body);
+    const result = makeResult(title, body, signals);
     if (result.ok) return result;
   }
 
@@ -97,7 +149,7 @@ function tryFallback(doc: Document): ExtractionResult {
     .replace(/\s+/g, ' ')
     .trim();
 
-  const whole = makeResult(title, allParas);
+  const whole = makeResult(title, allParas, signals);
   if (whole.ok) return whole;
 
   return { ok: false, error: 'extraction_failed' };

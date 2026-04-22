@@ -1,5 +1,12 @@
+export interface CanonicalSignals {
+  linkCanonical: string | null      // <link rel="canonical" href="..."> resolved to absolute URL
+  jsonLdUrl: string | null          // JSON-LD mainEntityOfPage.@id or url field, absolute
+  ogUrl: string | null              // <meta property="og:url"> content, absolute
+  twitterUrl: string | null         // <meta name="twitter:url"> content, absolute
+}
+
 export type ExtractionResult =
-  | { ok: true; title: string; body: string; word_count: number; offsets: { start: number; end: number }[] }
+  | { ok: true; title: string; body: string; word_count: number; offsets: { start: number; end: number }[]; canonicalSignals: CanonicalSignals }
   | { ok: false; error: 'extraction_failed' }
   | { ok: false; error: 'non_english' }
   | { ok: false; error: 'not_a_news_page' };

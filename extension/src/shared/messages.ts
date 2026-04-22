@@ -1,4 +1,4 @@
-import type { Layer1Signals, RubricResponse, RubricSpan } from './types';
+import type { CanonicalSignals, Layer1Signals, RubricResponse, RubricSpan } from './types';
 
 // Panel → service worker
 export type OutboundMessage =
@@ -18,6 +18,7 @@ export type ContentScriptResult =
       body: string
       word_count: number
       offsets: { start: number; end: number }[]
+      canonicalSignals: CanonicalSignals
       layer1Signals: Layer1Signals | null
     };
 

@@ -238,6 +238,7 @@ async function runAnalysis(): Promise<ContentScriptResult> {
     body: extraction.body,
     word_count: extraction.word_count,
     offsets: extraction.offsets,
+    canonicalSignals: extraction.canonicalSignals,
     layer1Signals,
   };
 }
