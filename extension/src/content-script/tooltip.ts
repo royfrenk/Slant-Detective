@@ -40,6 +40,12 @@ const TILT_MAP: Record<EvidenceSpan['tilt'], TiltConfig> = {
   unclear: { glyph: '\u2013', label: 'Unclear', isHighSignal: false }, // –
 }
 
+// Grace period after the cursor leaves a highlighted span before the tooltip
+// hides, giving the user time to reach the tooltip's footer links. A shorter
+// 150ms often hid the tooltip before the cursor crossed the 8px span->tooltip gap.
+const SPAN_LEAVE_HIDE_DELAY_MS = 3000
+const TOOLTIP_LEAVE_HIDE_DELAY_MS = 150
+
 // ---------------------------------------------------------------------------
 // Full Shadow DOM stylesheet
 // ---------------------------------------------------------------------------
@@ -322,13 +328,13 @@ function buildTooltipDOM(shadow: ShadowRoot): {
 
   hwLink.addEventListener('click', () => {
     try {
-      const url = chrome.runtime.getURL('src/pages/how-we-measure.html')
-      if (url) {
-        window.open(url, '_blank')
-      }
+      // Route through the service worker via chrome.tabs.create. window.open
+      // from a content script hits a web_accessible_resources check that
+      // refuses chrome-extension:// URLs opened from http/https pages
+      // (ERR_BLOCKED_BY_CLIENT).
+      chrome.runtime.sendMessage({ action: 'openPage', page: 'how-we-measure' })
     } catch {
-      // Non-critical: link click failed (e.g., chrome API unavailable in test env).
-      // Do not surface this error to the user.
+      // Non-critical: message send failed (e.g., chrome API unavailable in test env).
     }
   })
 
@@ -435,7 +441,7 @@ export function initTooltip(options: InitTooltipOptions = {}): void {
   tooltipEl.addEventListener('mouseleave', () => {
     clearTimeout(showTimer ?? undefined)
     showTimer = null
-    hideTimer = setTimeout(() => hideTooltip(), 150)
+    hideTimer = setTimeout(() => hideTooltip(), TOOLTIP_LEAVE_HIDE_DELAY_MS)
   })
 }
 
@@ -485,7 +491,7 @@ export function wireTooltipEvents(spans: AnchoredSpan[]): void {
     spanEl.addEventListener('mouseleave', () => {
       clearTimeout(showTimer ?? undefined)
       showTimer = null
-      hideTimer = setTimeout(() => hideTooltip(), 150)
+      hideTimer = setTimeout(() => hideTooltip(), SPAN_LEAVE_HIDE_DELAY_MS)
     }, { signal })
 
     spanEl.addEventListener('focusin', () => {
