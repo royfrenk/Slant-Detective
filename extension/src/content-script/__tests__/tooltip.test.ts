@@ -525,7 +525,7 @@ describe('destroyTooltip()', () => {
 // ---------------------------------------------------------------------------
 
 describe('"How we measure" link', () => {
-  it('clicking hw-link calls chrome.runtime.getURL with src/pages/how-we-measure.html', () => {
+  it('clicking hw-link sends openPage message so SW can open the extension page', () => {
     initTooltip({ shadowMode: 'open' })
     const evidence = makeSpan()
     const { anchored, spanEl } = makeAnchoredSpan(evidence)
@@ -537,9 +537,13 @@ describe('"How we measure" link', () => {
     const hwLink = host.shadowRoot!.querySelector<HTMLElement>('.hw-link')
     expect(hwLink).not.toBeNull()
 
+    vi.mocked(chrome.runtime.sendMessage).mockClear()
     hwLink!.click()
 
-    expect(chrome.runtime.getURL).toHaveBeenCalledWith('src/pages/how-we-measure.html')
+    expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({
+      action: 'openPage',
+      page: 'how-we-measure',
+    })
   })
 })
 
