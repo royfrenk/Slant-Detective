@@ -28,13 +28,34 @@ function attributionTierLabel(signals: Layer1Signals): InterpretationTier {
 
 /**
  * Generate overall Layer 1 rationale.
- * Format: "{N} loaded words detected; headline drift: {tier}; attribution assertiveness: {tier}."
+ * Three short plain-English sentences: loaded-word count, headline-vs-body tone,
+ * reporting-verb charge. No jargon exposed to the reader.
  */
 export function getLayer1OverallRationale(signals: Layer1Signals): string {
   const loaded = signals.loadedWords.count
   const drift = mapHeadlineTier(signals.headlineDrift.interpretation)
   const attribution = attributionTierLabel(signals)
-  return `${loaded} loaded ${loaded === 1 ? 'word' : 'words'} detected; headline drift: ${drift}; attribution assertiveness: ${attribution}.`
+
+  const countPhrase =
+    loaded === 0
+      ? 'No loaded words detected.'
+      : `Found ${loaded} loaded ${loaded === 1 ? 'word' : 'words'}.`
+
+  const driftPhrase =
+    drift === 'low'
+      ? "The headline stays close to the article's tone."
+      : drift === 'moderate'
+        ? 'The headline pushes a bit past the article.'
+        : 'The headline pushes well past the article.'
+
+  const attributionPhrase =
+    attribution === 'low'
+      ? 'Quotes mostly use neutral reporting verbs.'
+      : attribution === 'moderate'
+        ? 'Quotes use a mix of neutral and charged reporting verbs.'
+        : 'Quotes often use charged reporting verbs.'
+
+  return `${countPhrase} ${driftPhrase} ${attributionPhrase}`
 }
 
 /**

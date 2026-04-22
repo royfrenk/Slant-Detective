@@ -28,15 +28,16 @@ describe('getLayer1OverallRationale', () => {
     expect(rationale).toContain('18')
   })
 
-  it('includes headline drift tier (moderate for medium)', () => {
+  it('describes a moderate headline without exposing the "drift" term', () => {
     const rationale = getLayer1OverallRationale(baseSignals)
-    expect(rationale).toContain('moderate')
+    expect(rationale).toContain('The headline pushes a bit past the article.')
+    expect(rationale).not.toMatch(/headline drift/i)
   })
 
-  it('includes attribution assertiveness tier', () => {
+  it('describes attribution without exposing "assertiveness" jargon', () => {
     const rationale = getLayer1OverallRationale(baseSignals)
-    expect(typeof rationale).toBe('string')
-    expect(rationale.length).toBeGreaterThan(20)
+    expect(rationale).toContain('charged reporting verbs')
+    expect(rationale).not.toMatch(/assertiveness/i)
   })
 
   it('ends with a period', () => {
@@ -47,24 +48,48 @@ describe('getLayer1OverallRationale', () => {
   it('uses "word" singular when count=1', () => {
     const signals = { ...baseSignals, loadedWords: { ...baseSignals.loadedWords, count: 1 } }
     const rationale = getLayer1OverallRationale(signals)
-    expect(rationale).toContain('1 loaded word detected')
+    expect(rationale).toContain('Found 1 loaded word.')
   })
 
   it('uses "words" plural when count>1', () => {
     const rationale = getLayer1OverallRationale(baseSignals)
-    expect(rationale).toContain('loaded words detected')
+    expect(rationale).toContain('Found 18 loaded words.')
   })
 
-  it('low headline drift → "low"', () => {
+  it('says "no loaded words detected" when count=0', () => {
+    const signals = { ...baseSignals, loadedWords: { hits: [], uniqueSurfaces: [], count: 0 } }
+    const rationale = getLayer1OverallRationale(signals)
+    expect(rationale).toContain('No loaded words detected.')
+  })
+
+  it('low headline drift → "stays close to"', () => {
     const signals = { ...baseSignals, headlineDrift: { score: 0.1, interpretation: 'low' as const } }
     const rationale = getLayer1OverallRationale(signals)
-    expect(rationale).toContain('headline drift: low')
+    expect(rationale).toContain("The headline stays close to the article's tone.")
   })
 
-  it('high headline drift → "high"', () => {
+  it('high headline drift → "pushes well past"', () => {
     const signals = { ...baseSignals, headlineDrift: { score: 0.9, interpretation: 'high' as const } }
     const rationale = getLayer1OverallRationale(signals)
-    expect(rationale).toContain('headline drift: high')
+    expect(rationale).toContain('The headline pushes well past the article.')
+  })
+
+  it('low attribution → "mostly use neutral"', () => {
+    const signals = {
+      ...baseSignals,
+      attribution: { totalAttributions: 10, tierCounts: [7, 2, 1, 0] as [number, number, number, number], byActor: {} },
+    }
+    const rationale = getLayer1OverallRationale(signals)
+    expect(rationale).toContain('Quotes mostly use neutral reporting verbs.')
+  })
+
+  it('high attribution → "often use charged"', () => {
+    const signals = {
+      ...baseSignals,
+      attribution: { totalAttributions: 10, tierCounts: [1, 1, 5, 3] as [number, number, number, number], byActor: {} },
+    }
+    const rationale = getLayer1OverallRationale(signals)
+    expect(rationale).toContain('Quotes often use charged reporting verbs.')
   })
 })
 
