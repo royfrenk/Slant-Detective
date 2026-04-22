@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Slant Detective",
   "version": "1.0.0",
-  "description": "Per-article media-bias analysis. Open source, AGPL-3.0. No account, no article data stored on our servers.",
+  "description": "Per-article media-bias analysis. See tilt direction, loaded language, and evidence spans in the article you're reading.",
   "minimum_chrome_version": "114",
   "action": {
     "default_icon": {
@@ -34,6 +34,8 @@
   "permissions": ["sidePanel", "tabs", "activeTab", "storage", "scripting", "alarms"],
   "host_permissions": [
     "https://api.anthropic.com/*",
+    "https://api.openai.com/*",
+    "https://generativelanguage.googleapis.com/*",
     "https://sd-telemetry.rabbit-factory.workers.dev/*"
   ],
   "web_accessible_resources": [
@@ -45,6 +47,10 @@
         "src/pages/how-to-get-a-key.html"
       ],
       "matches": ["chrome-extension://*/*"]
+    },
+    {
+      "resources": ["assets/babe-lexicon.json"],
+      "matches": ["http://*/*", "https://*/*"]
     }
   ],
   "icons": {

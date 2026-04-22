@@ -21,7 +21,7 @@ export default function TestAndSaveButton({
       aria-label="Test and save API key"
       onClick={onClick}
       className={[
-        'w-full h-11 rounded-md mt-3',
+        'w-full h-11 rounded-md mt-4',
         'text-[0.875rem] font-semibold text-on-primary',
         'bg-gradient-to-br from-primary to-primary-container',
         'hover:brightness-96 active:brightness-92',

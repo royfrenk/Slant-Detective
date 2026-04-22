@@ -1,9 +1,61 @@
 import type { ContentScriptResult, InboundMessage } from '../shared/messages';
-import { ANTHROPIC_API_KEY, TELEMETRY_ENABLED } from '../shared/storage-keys';
+import {
+  ANTHROPIC_API_KEY,
+  PROVIDERS_KEY,
+  ACTIVE_PROVIDER_KEY,
+  TELEMETRY_ENABLED,
+} from '../shared/storage-keys';
+import type { ProviderId } from './providers/types';
+import { ProviderApiError } from './providers/types';
+import { GeminiSafetyError } from './providers/gemini';
+import { getProvider } from './providers/index';
 import { runLayer2Analysis } from './layer2-pipeline';
-import { AnthropicApiError } from './anthropic-client';
 import { RubricValidationError } from './response-validator';
 import { bump, maybeEmit } from './telemetry';
+import { RUBRIC_MODEL } from './rubric-prompt';
+
+// Shape stored at PROVIDERS_KEY
+interface ProviderConfig {
+  key: string
+  model: string
+}
+interface ProvidersConfig {
+  anthropic?: ProviderConfig
+  openai?: ProviderConfig
+  gemini?: ProviderConfig
+}
+
+/**
+ * One-time idempotent migration from the old flat `anthropicApiKey` storage key
+ * to the new nested `providers` / `activeProvider` schema.
+ *
+ * Runs on every SW startup (cheap no-op after first run) and on `onInstalled`.
+ */
+async function runStorageMigration(): Promise<void> {
+  const stored = await chrome.storage.local.get([ANTHROPIC_API_KEY, PROVIDERS_KEY]);
+  const oldKey = stored[ANTHROPIC_API_KEY] as string | undefined;
+  const providers = stored[PROVIDERS_KEY] as ProvidersConfig | undefined;
+
+  // Already migrated — nothing to do.
+  if (providers?.anthropic) return;
+
+  // Fresh install with no old key — nothing to do.
+  if (!oldKey) return;
+
+  // Migrate: write new schema and delete old flat key.
+  const newProviders: ProvidersConfig = {
+    ...(providers ?? {}),
+    anthropic: { key: oldKey, model: RUBRIC_MODEL },
+  };
+  await chrome.storage.local.set({
+    [PROVIDERS_KEY]: newProviders,
+    [ACTIVE_PROVIDER_KEY]: 'anthropic' as ProviderId,
+  });
+  await chrome.storage.local.remove(ANTHROPIC_API_KEY);
+}
+
+// Run migration before any message listeners register.
+void runStorageMigration();
 
 // Open the panel on toolbar click. If the panel is already open, send
 // tab_navigated so it resets and re-analyzes the current page.
@@ -87,8 +139,11 @@ async function runAnalysis(): Promise<void> {
   void bump('analyze_layer1_ok');
 
   // Check for API key and attempt Layer 2
-  const stored = await chrome.storage.local.get(ANTHROPIC_API_KEY);
-  const apiKey = stored[ANTHROPIC_API_KEY] as string | undefined;
+  const stored = await chrome.storage.local.get([PROVIDERS_KEY, ACTIVE_PROVIDER_KEY]);
+  const activeProviderId = (stored[ACTIVE_PROVIDER_KEY] as ProviderId | undefined) ?? 'anthropic';
+  const providers = stored[PROVIDERS_KEY] as ProvidersConfig | undefined;
+  const apiKey = providers?.[activeProviderId]?.key;
+  const model = providers?.[activeProviderId]?.model ?? RUBRIC_MODEL;
 
   if (!apiKey) {
     const msg: InboundMessage = { action: 'analyzed', payload: { ...result, layer2: null } };
@@ -96,7 +151,14 @@ async function runAnalysis(): Promise<void> {
     return;
   }
 
+  // Emit Layer 1 immediately so the panel can render while Layer 2 runs.
+  // Layer 2 completion is announced separately via layer2_result or layer2_failed,
+  // so an LLM error no longer wipes the Layer 1 view into "Couldn't read this page".
+  const l1Msg: InboundMessage = { action: 'analyzed', payload: { ...result, layer2: null } };
+  chrome.runtime.sendMessage(l1Msg).catch(() => {});
+
   const canonicalUrl = tab.url ?? '';
+  const provider = getProvider(activeProviderId);
 
   try {
     const rubricResponse = await runLayer2Analysis(
@@ -105,13 +167,16 @@ async function runAnalysis(): Promise<void> {
         body: result.body,
         canonicalUrl,
         rubricVersion: __RUBRIC_VERSION__,
+        provider: activeProviderId,
+        model,
       },
+      provider,
       apiKey,
     );
 
     void bump('analyze_layer2_ok');
 
-    const msg: InboundMessage = { action: 'analyzed', payload: { ...result, layer2: rubricResponse } };
+    const msg: InboundMessage = { action: 'layer2_result', payload: rubricResponse };
     chrome.runtime.sendMessage(msg).catch(() => {});
 
     // Send highlights to the content script
@@ -120,25 +185,26 @@ async function runAnalysis(): Promise<void> {
       spans: rubricResponse.spans,
     }).catch(() => {});
   } catch (err) {
-    if (err instanceof AnthropicApiError && (err.statusCode === 401 || err.statusCode === 403)) {
+    let errorType: 'invalid_key' | 'quota_exceeded' | 'network_error' | 'timeout' | 'unknown' | 'content_filtered' = 'unknown';
+    if (err instanceof GeminiSafetyError) {
+      errorType = 'content_filtered';
+    } else if (err instanceof ProviderApiError && (err.statusCode === 400 || err.statusCode === 401 || err.statusCode === 403)) {
+      // 400 maps to invalid key for Gemini (its invalid-key HTTP status).
       void bump('analyze_invalid_key');
-      const msg: InboundMessage = { action: 'analysis_failed', reason: 'invalid_api_key' };
-      chrome.runtime.sendMessage(msg).catch(() => {});
-    } else if (err instanceof AnthropicApiError && err.statusCode === 429) {
+      errorType = 'invalid_key';
+    } else if (err instanceof ProviderApiError && err.statusCode === 429) {
       void bump('analyze_rate_limit');
-      const msg: InboundMessage = { action: 'analysis_failed', reason: 'rate_limited' };
-      chrome.runtime.sendMessage(msg).catch(() => {});
-    } else if (err instanceof RubricValidationError) {
-      const msg: InboundMessage = { action: 'analysis_failed', reason: 'rubric_validation_failed' };
-      chrome.runtime.sendMessage(msg).catch(() => {});
+      errorType = 'quota_exceeded';
     } else if (err instanceof DOMException && err.name === 'TimeoutError') {
       void bump('analyze_llm_timeout');
-      const msg: InboundMessage = { action: 'analysis_failed', reason: 'network_error' };
-      chrome.runtime.sendMessage(msg).catch(() => {});
+      errorType = 'timeout';
+    } else if (err instanceof RubricValidationError) {
+      errorType = 'unknown';
     } else {
-      const msg: InboundMessage = { action: 'analysis_failed', reason: 'network_error' };
-      chrome.runtime.sendMessage(msg).catch(() => {});
+      errorType = 'network_error';
     }
+    const msg: InboundMessage = { action: 'layer2_failed', errorType };
+    chrome.runtime.sendMessage(msg).catch(() => {});
   }
 }
 
@@ -164,7 +230,7 @@ chrome.runtime.onMessage.addListener((message) => {
     return false;
   }
 
-  if (message?.action === 'analyze') {
+  if (message?.action === 'analyze' || message?.action === 'retry_layer2') {
     runAnalysis();
   }
 
@@ -211,6 +277,10 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 // Extension update (reason === 'update') and browser reload (reason === 'chrome_update')
 // must NOT open the tab.
 chrome.runtime.onInstalled.addListener((details) => {
+  // Run migration on install/update so existing users get migrated
+  // even if the SW was already active (onInstalled fires for updates too).
+  void runStorageMigration();
+
   if (details.reason === 'install') {
     try {
       chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') });

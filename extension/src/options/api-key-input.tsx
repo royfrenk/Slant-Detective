@@ -8,6 +8,7 @@ interface ApiKeyInputProps {
   onChange: (value: string) => void
   state: InputState
   disabled: boolean
+  placeholder?: string
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
   onPaste?: (e: React.ClipboardEvent<HTMLInputElement>) => void
 }
@@ -31,6 +32,7 @@ export default function ApiKeyInput({
   onChange,
   state,
   disabled,
+  placeholder = 'sk-ant-api03-...',
   onKeyDown,
   onPaste,
 }: ApiKeyInputProps): React.JSX.Element {
@@ -42,7 +44,7 @@ export default function ApiKeyInput({
       spellCheck={false}
       value={value}
       disabled={disabled}
-      placeholder="sk-ant-api03-..."
+      placeholder={placeholder}
       aria-invalid={state === 'error' ? 'true' : 'false'}
       aria-describedby="api-key-feedback"
       onChange={(e) => onChange(e.target.value)}

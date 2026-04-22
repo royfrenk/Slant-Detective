@@ -66,10 +66,10 @@ function ExternalLink({ href, children }: { href: string; children: React.ReactN
   );
 }
 
-function PrivacyPage(): React.JSX.Element {
+export function PrivacyPage(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-background px-6 pt-8 pb-16">
-      <div className="max-w-[560px] mx-auto">
+      <div className="max-w-[720px] mx-auto">
 
         {/* Wordmark */}
         <header>
@@ -93,7 +93,7 @@ function PrivacyPage(): React.JSX.Element {
               What Stays on Your Device
             </h2>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              Your Anthropic API key is stored in <code className="font-mono text-xs">chrome.storage.local</code> on
+              Your API key is stored in <code className="font-mono text-xs">chrome.storage.local</code> on
               your device only. It is never transmitted to our servers.
             </p>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
@@ -107,27 +107,28 @@ function PrivacyPage(): React.JSX.Element {
           </section>
 
           {/* Section 2 */}
-          <section aria-labelledby="to-anthropic-heading" className="mt-10">
+          <section aria-labelledby="to-provider-heading" className="mt-10">
             <h2
-              id="to-anthropic-heading"
+              id="to-provider-heading"
               className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3"
             >
-              What Goes Directly to Anthropic
+              What Goes Directly to Your Provider
             </h2>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
               When you trigger a Layer 2 analysis, the article title and body are sent
-              to Anthropic's API (<code className="font-mono text-xs">api.anthropic.com</code>) using your own API key.
+              directly to your chosen provider's API — Anthropic (<code className="font-mono text-xs">api.anthropic.com</code>),
+              OpenAI (<code className="font-mono text-xs">api.openai.com</code>), or Google (<code className="font-mono text-xs">generativelanguage.googleapis.com</code>) —
+              using your own API key.
             </p>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              This request is made directly from your browser to Anthropic. It does not
+              This request is made directly from your browser to the chosen provider. It does not
               pass through our servers.
             </p>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              Anthropic's own{' '}
-              <ExternalLink href="https://www.anthropic.com/privacy">
-                privacy policy
-              </ExternalLink>{' '}
-              governs this data.
+              Your key goes directly to the chosen provider. We never see it.
+            </p>
+            <p className="text-sm text-on-surface leading-relaxed mb-3">
+              Each provider's own privacy policy governs data sent through their API.
             </p>
           </section>
 

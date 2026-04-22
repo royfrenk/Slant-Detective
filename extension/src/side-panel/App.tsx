@@ -10,17 +10,23 @@ import Layer2View from './layer2/layer2-view';
 import InvalidKeyCard from './layer2/invalid-key-card';
 import LLMTimeoutCard from './layer2/llm-timeout-card';
 import RateLimitCard from './layer2/rate-limit-card';
+import ContentFilteredCard from './layer2/content-filtered-card';
 import type { InboundMessage } from '../shared/messages';
 import type { Layer1Signals, RubricResponse } from '../shared/types';
-import { ANTHROPIC_API_KEY } from '../shared/storage-keys';
+import { PROVIDERS_KEY, ACTIVE_PROVIDER_KEY } from '../shared/storage-keys';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 type Layer2Status = 'idle' | 'loading' | 'done' | 'error';
-type Layer2ErrorType = 'timeout' | 'invalid_key' | 'rate_limit' | 'parse_error' | null;
+type Layer2ErrorType = 'timeout' | 'invalid_key' | 'rate_limit' | 'parse_error' | 'content_filtered' | null;
 
 
 // 30s: first-run ONNX model load from HuggingFace can take 5–30s.
 const ANALYSIS_TIMEOUT_MS = 30_000;
+// Layer 2 watchdog. Provider-side fetch has a 30s AbortSignal; pipeline retries
+// once on validation failure, so worst-case provider flow is ~60s. Add headroom
+// over that so the skeleton can't spin forever if the service worker is
+// terminated mid-request or drops its message.
+const LAYER2_TIMEOUT_MS = 70_000;
 
 export default function App(): React.JSX.Element {
   const [status, setStatus] = useState<Status>('idle');
@@ -32,11 +38,16 @@ export default function App(): React.JSX.Element {
   const [showReportBug, setShowReportBug] = useState(false);
   const [reportBugData, setReportBugData] = useState<{ url: string; screenshotDataUrl: string | null } | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const layer2TimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Check API key presence on mount and listen for changes
+  // Check API key presence on mount and listen for changes.
+  // Derive hasApiKey from providers[activeProvider].key in the new storage schema.
   useEffect(() => {
-    chrome.storage.local.get(ANTHROPIC_API_KEY, (result) => {
-      setHasApiKey(typeof result[ANTHROPIC_API_KEY] === 'string' && result[ANTHROPIC_API_KEY].length > 0);
+    chrome.storage.local.get([PROVIDERS_KEY, ACTIVE_PROVIDER_KEY], (result) => {
+      const activeProvider = (result[ACTIVE_PROVIDER_KEY] as string | undefined) ?? 'anthropic';
+      const providers = result[PROVIDERS_KEY] as Record<string, { key?: string }> | undefined;
+      const key = providers?.[activeProvider]?.key;
+      setHasApiKey(typeof key === 'string' && key.length > 0);
     });
 
     function handleStorageChange(
@@ -44,9 +55,14 @@ export default function App(): React.JSX.Element {
       area: string,
     ): void {
       if (area !== 'local') return;
-      if (ANTHROPIC_API_KEY in changes) {
-        const newVal = changes[ANTHROPIC_API_KEY]?.newValue;
-        setHasApiKey(typeof newVal === 'string' && newVal.length > 0);
+      if (PROVIDERS_KEY in changes || ACTIVE_PROVIDER_KEY in changes) {
+        // Re-read both keys to derive hasApiKey correctly.
+        chrome.storage.local.get([PROVIDERS_KEY, ACTIVE_PROVIDER_KEY], (result) => {
+          const activeProvider = (result[ACTIVE_PROVIDER_KEY] as string | undefined) ?? 'anthropic';
+          const providers = result[PROVIDERS_KEY] as Record<string, { key?: string }> | undefined;
+          const key = providers?.[activeProvider]?.key;
+          setHasApiKey(typeof key === 'string' && key.length > 0);
+        });
       }
     }
 
@@ -56,8 +72,20 @@ export default function App(): React.JSX.Element {
     };
   }, []);
 
+  const armLayer2Watchdog = useCallback(() => {
+    if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
+    layer2TimeoutRef.current = setTimeout(() => {
+      setLayer2Status((s) => {
+        if (s === 'done' || s === 'error') return s;
+        setLayer2ErrorType('timeout');
+        return 'error';
+      });
+    }, LAYER2_TIMEOUT_MS);
+  }, []);
+
   const startFreshAnalysis = useCallback(() => {
     if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
+    if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
     setStatus('loading');
     setLayer1Signals(null);
     setLayer2Status('idle');
@@ -73,8 +101,9 @@ export default function App(): React.JSX.Element {
     setLayer2Status('loading');
     setLayer2Result(null);
     setLayer2ErrorType(null);
+    armLayer2Watchdog();
     chrome.runtime.sendMessage({ action: 'retry_layer2' }).catch(() => {});
-  }, []);
+  }, [armLayer2Watchdog]);
 
   useEffect(() => {
     startFreshAnalysis();
@@ -88,9 +117,16 @@ export default function App(): React.JSX.Element {
         if (message.payload.layer2 != null) {
           setLayer2Result(message.payload.layer2);
           setLayer2Status('done');
+          if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
+        } else {
+          // Layer 2 runs asynchronously after L1 — arm the watchdog so the
+          // skeleton can't spin forever if the SW is terminated or drops its
+          // message.
+          armLayer2Watchdog();
         }
       } else if (message.action === 'analysis_failed') {
         if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
+        if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
         setStatus('error');
       } else if (message.action === 'tab_navigated') {
         setShowReportBug(false);
@@ -100,15 +136,18 @@ export default function App(): React.JSX.Element {
         setReportBugData({ url: message.url, screenshotDataUrl: message.screenshotDataUrl });
         setShowReportBug(true);
       } else if (message.action === 'layer2_result') {
+        if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
         setLayer2Result(message.payload);
         setLayer2Status('done');
       } else if (message.action === 'layer2_failed') {
+        if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
         const errorTypeMap: Record<string, Layer2ErrorType> = {
           invalid_key: 'invalid_key',
           timeout: 'timeout',
           quota_exceeded: 'rate_limit',
           network_error: 'timeout',
           unknown: null,
+          content_filtered: 'content_filtered',
         };
         setLayer2ErrorType(errorTypeMap[message.errorType] ?? null);
         setLayer2Status('error');
@@ -119,8 +158,9 @@ export default function App(): React.JSX.Element {
     return () => {
       chrome.runtime.onMessage.removeListener(listener);
       if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
+      if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
     };
-  }, [startFreshAnalysis]);
+  }, [startFreshAnalysis, armLayer2Watchdog]);
 
   const handleRetry = startFreshAnalysis;
 
@@ -187,6 +227,7 @@ export default function App(): React.JSX.Element {
           {layer2ErrorType === 'invalid_key' && <InvalidKeyCard />}
           {layer2ErrorType === 'timeout' && <LLMTimeoutCard onRetry={handleRetryLayer2} />}
           {layer2ErrorType === 'rate_limit' && <RateLimitCard onRetry={handleRetryLayer2} />}
+          {layer2ErrorType === 'content_filtered' && <ContentFilteredCard />}
           {(layer2ErrorType == null || layer2ErrorType === 'parse_error') && (
             <LLMTimeoutCard onRetry={handleRetryLayer2} />
           )}

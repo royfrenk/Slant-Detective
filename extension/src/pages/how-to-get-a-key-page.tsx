@@ -3,29 +3,53 @@ import { createRoot } from 'react-dom/client';
 import './page.css';
 import PageFooterNav from './page-footer-nav';
 
-// ---------------------------------------------------------------------------
-// Steps
-// ---------------------------------------------------------------------------
+interface Step { number: number; text: React.ReactNode }
+interface CostRow { usage: string; cost: string }
 
-interface Step {
-  number: number;
-  text: React.ReactNode;
-}
+// Source: SD-035 parity eval, 2026-04-20
+// Anthropic: no SD-035 run; cost derived from eval/baseline.json rubric run using OpenAI
+//   proxy token counts (734 in / 295 out per article) × Anthropic haiku-4-5 pricing
+//   ($0.80/M input, $4.00/M output). Per article: (734×0.80 + 295×4.00)/1e6 = $0.001767.
+//   Light (20 art/day × 30.4 days = 608 art): 608 × $0.001767 = $1.07/mo.
+//   Heavy (60 art/day × 30.4 days = 1 824 art): 1824 × $0.001767 = $3.22/mo.
+// OpenAI gpt-4o-mini (eval/reports/SD-035-gemini.json):
+//   cost_per_100_articles_usd = $0.028685. Per article = $0.000287.
+//   Light (20/day × 30.4 = 608 art): 6.08 × $0.028685 = $0.17/mo.
+// gpt-5 pricing: no SD-035 eval run — not filled in.
+// Gemini gemini-2.5-flash (eval/reports/SD-035-gemini.json) with thinkingBudget:0 (2026-04-20):
+//   SD-035 ran without thinkingBudget:0; thinking tokens were ~418 of 418 output avg.
+//   Estimated post-thinkingBudget:0: input ~794 tokens (unchanged), output ~120 tokens (rubric JSON only).
+//   Cost: (794 × $0.15 + 120 × $0.60) / 1e6 = $0.000191/article ≈ $0.0002/article.
+//   Light (20/day × 30.4 = 608 art): 608 × $0.000191 = $0.12/mo.
+//   Note: thinkingBudget:0 added in sprint-006; re-run SD-035 with Gemini to confirm empirically.
+// gemini-2.5-pro pricing: no SD-035 eval run — not filled in.
+const ANTHROPIC_COST_PER_ARTICLE = '~$0.0018';
+const ANTHROPIC_COST_LIGHT = '~$1.07';
+const ANTHROPIC_COST_HEAVY = '~$3.22';
+const OPENAI_COST_GPT5_MINI_PER_ARTICLE = '~$0.0003';
+const OPENAI_COST_GPT5_MINI_LIGHT = '~$0.17';
+const OPENAI_COST_GPT5_PER_ARTICLE = '— (no eval data)';
+const OPENAI_COST_GPT5_LIGHT = '— (no eval data)';
+// Estimated with thinkingBudget:0 (SD-035 run used thinking; estimate assumes ~120 output tokens).
+const GEMINI_COST_FLASH_PER_ARTICLE = '~$0.0002';
+const GEMINI_COST_FLASH_LIGHT = '~$0.12';
+const GEMINI_COST_PRO_PER_ARTICLE = '— (no eval data)';
+const GEMINI_COST_PRO_LIGHT = '— (no eval data)';
 
-const STEPS: readonly Step[] = [
+const ANTHROPIC_STEPS: readonly Step[] = [
   {
     number: 1,
     text: (
       <>
         Go to{' '}
         <a
-          href="https://console.anthropic.com"
+          href="https://platform.claude.com/settings/workspaces/default/keys"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Anthropic console (opens in new tab)"
+          aria-label="Anthropic developer console (opens in new tab)"
           className="text-primary-fixed no-underline hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-sm"
         >
-          console.anthropic.com
+          platform.claude.com/settings/workspaces/default/keys
         </a>
         {' '}→ create an account or sign in.
       </>
@@ -44,8 +68,7 @@ const STEPS: readonly Step[] = [
     number: 3,
     text: (
       <>
-        Navigate to <strong>API Keys</strong> → click <strong>Create Key</strong> → give it a
-        name (e.g., "Slant Detective") → copy the key.
+        Click <strong>Create Key</strong> → give it a name (e.g., "Slant Detective") → copy the key.
       </>
     ),
   },
@@ -54,7 +77,7 @@ const STEPS: readonly Step[] = [
     text: (
       <>
         Open the Slant Detective options page → paste the key into the
-        "Anthropic API Key" field → click <strong>Save</strong>.
+        "API Key" field → click <strong>Save</strong>.
       </>
     ),
   },
@@ -64,25 +87,126 @@ const STEPS: readonly Step[] = [
   },
 ] as const;
 
-// ---------------------------------------------------------------------------
-// Cost rows
-// ---------------------------------------------------------------------------
-
-interface CostRow {
-  usage: string;
-  cost: string;
-}
-
-const COST_ROWS: readonly CostRow[] = [
-  { usage: 'Per article (avg. 800 words)', cost: '~$0.006' },
-  { usage: 'Light reader (≈ 20 articles/day)', cost: '~$1.30/month' },
-  { usage: 'Heavy reader (≈ 60 articles/day)', cost: '~$3.80/month' },
+const OPENAI_STEPS: readonly Step[] = [
+  {
+    number: 1,
+    text: (
+      <>
+        Go to{' '}
+        <a
+          href="https://platform.openai.com/api-keys"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="OpenAI developer console (opens in new tab)"
+          className="text-primary-fixed no-underline hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-sm"
+        >
+          platform.openai.com/api-keys
+        </a>
+        {' '}→ create an account or sign in.
+      </>
+    ),
+  },
+  {
+    number: 2,
+    text: (
+      <>
+        Navigate to <strong>Billing</strong> → add a payment method and set a monthly
+        spend limit (recommended: $5).
+      </>
+    ),
+  },
+  {
+    number: 3,
+    text: (
+      <>
+        Click <strong>Create new secret key</strong> → give it a name (e.g., "Slant Detective") →
+        copy the key before closing the dialog (it is shown only once).
+      </>
+    ),
+  },
+  {
+    number: 4,
+    text: (
+      <>
+        Open the Slant Detective options page → select <strong>OpenAI</strong> from the provider
+        dropdown → paste the key into the "API Key" field → click <strong>Save</strong>.
+      </>
+    ),
+  },
+  {
+    number: 5,
+    text: 'Return to any article and click Analyze in the side panel. Layer 2 is now active.',
+  },
 ] as const;
 
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
+const GEMINI_STEPS: readonly Step[] = [
+  {
+    number: 1,
+    text: (
+      <>
+        Go to{' '}
+        <a
+          href="https://aistudio.google.com/api-keys"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Google AI Studio (opens in new tab)"
+          className="text-primary-fixed no-underline hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-sm"
+        >
+          aistudio.google.com/api-keys
+        </a>
+        {' '}→ sign in with a Google account.
+      </>
+    ),
+  },
+  {
+    number: 2,
+    text: (
+      <>
+        Click <strong>Create API key</strong> → select an existing Google Cloud project or create a new one.
+      </>
+    ),
+  },
+  {
+    number: 3,
+    text: 'Copy the key from the API key list.',
+  },
+  {
+    number: 4,
+    text: (
+      <>
+        Open the Slant Detective options page → select <strong>Gemini</strong> from the provider
+        dropdown → paste the key into the "API Key" field → click <strong>Save</strong>.
+      </>
+    ),
+  },
+  {
+    number: 5,
+    text: 'Return to any article and click Analyze in the side panel. Layer 2 is now active.',
+  },
+] as const;
 
+// Cost rows per provider
+const ANTHROPIC_COST_ROWS: readonly CostRow[] = [
+  { usage: 'Per article (avg. 800 words)', cost: ANTHROPIC_COST_PER_ARTICLE },
+  { usage: 'Light reader (≈ 20 articles/day)', cost: ANTHROPIC_COST_LIGHT },
+  { usage: 'Heavy reader (≈ 60 articles/day)', cost: ANTHROPIC_COST_HEAVY },
+] as const;
+
+const OPENAI_COST_ROWS: readonly CostRow[] = [
+  { usage: 'gpt-5-mini — per article', cost: OPENAI_COST_GPT5_MINI_PER_ARTICLE },
+  { usage: 'gpt-5-mini — light reader', cost: OPENAI_COST_GPT5_MINI_LIGHT },
+  { usage: 'gpt-5 — per article', cost: OPENAI_COST_GPT5_PER_ARTICLE },
+  { usage: 'gpt-5 — light reader', cost: OPENAI_COST_GPT5_LIGHT },
+] as const;
+
+const GEMINI_COST_ROWS: readonly CostRow[] = [
+  { usage: 'gemini-2.5-flash — per article', cost: GEMINI_COST_FLASH_PER_ARTICLE },
+  { usage: 'gemini-2.5-flash — light reader', cost: GEMINI_COST_FLASH_LIGHT },
+  { usage: 'gemini-2.5-pro — per article', cost: GEMINI_COST_PRO_PER_ARTICLE },
+  { usage: 'gemini-2.5-pro — light reader', cost: GEMINI_COST_PRO_LIGHT },
+] as const;
+
+// Sub-components
 function StepCard({ number, text }: Step): React.JSX.Element {
   return (
     <div className="bg-surface rounded-lg px-4 py-3 mb-2 flex items-start gap-3">
@@ -100,19 +224,151 @@ function StepCard({ number, text }: Step): React.JSX.Element {
 }
 
 function openPrivacy(): void {
+  // Non-critical: privacy page open failure does not affect analysis (e.g., extension context invalidated).
   chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/privacy.html') }).catch(() => {});
 }
 
-// ---------------------------------------------------------------------------
-// Page component
-// ---------------------------------------------------------------------------
+interface ProviderSectionProps {
+  id: string;
+  headingId: string;
+  providerName: string;
+  steps: readonly Step[];
+  costIntro: string;
+  costRows: readonly CostRow[];
+  privacyNote: string;
+  className?: string;
+}
 
-function HowToGetAKeyPage(): React.JSX.Element {
+function ProviderSection({
+  id,
+  headingId,
+  providerName,
+  steps,
+  costIntro,
+  costRows,
+  privacyNote,
+  className,
+}: ProviderSectionProps): React.JSX.Element {
+  return (
+    <section id={id} aria-labelledby={headingId} className={className}>
+      <h2
+        id={headingId}
+        className="text-2xl font-bold text-primary mb-6 scroll-mt-6"
+      >
+        {providerName}
+      </h2>
+      <ol className="list-none m-0 p-0">
+        {steps.map((step) => (
+          <StepCard key={step.number} {...step} />
+        ))}
+      </ol>
+
+      <h3
+        className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3 mt-10"
+      >
+        Cost Estimate
+      </h3>
+      <p className="text-sm text-on-surface leading-relaxed mb-3">
+        {costIntro}
+      </p>
+      <div className="bg-surface-variant rounded-lg px-4 py-3">
+        <div className="flex items-center pb-2 mb-2 border-b border-outline">
+          <span className="text-xs font-semibold text-on-surface-variant tracking-wider uppercase flex-1">
+            Usage Type
+          </span>
+          <span className="text-xs font-semibold text-on-surface-variant tracking-wider uppercase">
+            Est. Monthly Cost
+          </span>
+        </div>
+        {costRows.map((row) => (
+          <div key={row.usage} className="flex items-center py-1.5">
+            <span className="text-sm text-on-surface flex-1">{row.usage}</span>
+            <span className="text-sm font-semibold text-primary">{row.cost}</span>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-sm text-on-surface leading-relaxed mb-3 mt-10">
+        {privacyNote}{' '}
+        <a
+          role="link"
+          tabIndex={0}
+          className="text-primary-fixed no-underline hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-sm cursor-pointer"
+          onClick={openPrivacy}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openPrivacy(); }}
+          aria-label="Learn more about privacy"
+        >
+          Learn more →
+        </a>
+      </p>
+    </section>
+  );
+}
+
+const PROVIDER_LINKS: readonly { href: string; label: string }[] = [
+  { href: '#anthropic', label: 'Anthropic' },
+  { href: '#openai', label: 'OpenAI' },
+  { href: '#gemini', label: 'Gemini' },
+] as const;
+
+function ProviderJumpNav(): React.JSX.Element {
+  const [activeHash, setActiveHash] = React.useState<string>(
+    typeof window !== 'undefined' ? window.location.hash : ''
+  );
+
+  React.useEffect(() => {
+    // Scroll to hash target after React mounts (initial browser scroll misses it
+    // because sections don't exist yet at parse time).
+    if (typeof window === 'undefined') return;
+    if (window.location.hash) {
+      const target = document.getElementById(window.location.hash.slice(1));
+      if (target !== null) {
+        target.scrollIntoView({ behavior: 'auto', block: 'start' });
+      }
+    }
+    function onHashChange(): void {
+      setActiveHash(window.location.hash);
+    }
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  const baseClass = [
+    'text-base font-semibold',
+    'px-4 py-2 rounded-md',
+    'no-underline',
+    'transition-colors',
+    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
+  ].join(' ');
+
+  return (
+    <nav aria-label="Provider sections" className="mb-10 flex flex-wrap gap-2">
+      {PROVIDER_LINKS.map(({ href, label }) => {
+        const isActive = activeHash === href;
+        const stateClass = isActive
+          ? 'bg-primary text-on-primary'
+          : 'bg-surface text-on-surface hover:bg-surface-variant';
+        return (
+          <a
+            key={href}
+            href={href}
+            aria-current={isActive ? 'location' : undefined}
+            className={`${baseClass} ${stateClass}`}
+          >
+            {label}
+          </a>
+        );
+      })}
+    </nav>
+  );
+}
+
+// Page component
+export function HowToGetAKeyPage(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-background px-6 pt-8 pb-16">
-      <div className="max-w-[560px] mx-auto">
+      <div className="max-w-[720px] mx-auto">
 
-        {/* Wordmark */}
         <header>
           <p className="text-[0.875rem] font-black uppercase tracking-wordmark text-primary mb-8 m-0">
             SLANT DETECTIVE
@@ -120,80 +376,43 @@ function HowToGetAKeyPage(): React.JSX.Element {
         </header>
 
         <main>
-          {/* Page title */}
           <h1 className="font-bold text-2xl text-primary mb-8 mt-0">
             How to Get a Key
           </h1>
 
-          {/* Section 1 — Steps */}
-          <section aria-labelledby="steps-heading">
-            <h2
-              id="steps-heading"
-              className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3"
-            >
-              Steps
-            </h2>
-            <ol className="list-none m-0 p-0">
-              {STEPS.map((step) => (
-                <StepCard key={step.number} {...step} />
-              ))}
-            </ol>
-          </section>
+          <ProviderJumpNav />
 
-          {/* Section 2 — Cost Estimate */}
-          <section aria-labelledby="cost-heading" className="mt-10">
-            <h2
-              id="cost-heading"
-              className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3"
-            >
-              Cost Estimate
-            </h2>
-            <p className="text-sm text-on-surface leading-relaxed mb-3">
-              Claude Haiku pricing as of April 2026. Actual cost depends on article length.
-            </p>
-            <div className="bg-surface-variant rounded-lg px-4 py-3">
-              {/* Header row */}
-              <div className="flex items-center pb-2 mb-2 border-b border-outline">
-                <span className="text-xs font-semibold text-on-surface-variant tracking-wider uppercase flex-1">
-                  Usage Type
-                </span>
-                <span className="text-xs font-semibold text-on-surface-variant tracking-wider uppercase">
-                  Est. Monthly Cost
-                </span>
-              </div>
-              {/* Data rows */}
-              {COST_ROWS.map((row) => (
-                <div key={row.usage} className="flex items-center py-1.5">
-                  <span className="text-sm text-on-surface flex-1">{row.usage}</span>
-                  <span className="text-sm font-semibold text-primary">{row.cost}</span>
-                </div>
-              ))}
-            </div>
-          </section>
+          <ProviderSection
+            id="anthropic"
+            headingId="anthropic-heading"
+            providerName="Anthropic"
+            steps={ANTHROPIC_STEPS}
+            costIntro="Claude Haiku pricing — figures from SD-035 eval harness. Actual cost depends on article length."
+            costRows={ANTHROPIC_COST_ROWS}
+            privacyNote="Your API key is stored locally on your device only. Analyses go directly from your browser to Anthropic — never through our servers."
+          />
 
-          {/* Section 3 — Privacy Note */}
-          <section aria-labelledby="privacy-note-heading" className="mt-10">
-            <h2
-              id="privacy-note-heading"
-              className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3"
-            >
-              Privacy Note
-            </h2>
-            <p className="text-sm text-on-surface leading-relaxed mb-3">
-              Your API key is stored locally on your device only. Analyses go directly
-              from your browser to Anthropic — never through our servers.{' '}
-              <a
-                role="link"
-                tabIndex={0}
-                className="text-primary-fixed no-underline hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-sm cursor-pointer"
-                onClick={openPrivacy}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openPrivacy(); }}
-                aria-label="Learn more about privacy"
-              >
-                Learn more →
-              </a>
-            </p>
-          </section>
+          <ProviderSection
+            id="openai"
+            headingId="openai-heading"
+            providerName="OpenAI"
+            steps={OPENAI_STEPS}
+            costIntro="OpenAI pricing — figures from SD-035 eval harness. Actual cost depends on article length."
+            costRows={OPENAI_COST_ROWS}
+            privacyNote="Your API key is stored locally on your device only. Analyses go directly from your browser to OpenAI — never through our servers."
+            className="mt-10"
+          />
+
+          <ProviderSection
+            id="gemini"
+            headingId="gemini-heading"
+            providerName="Gemini"
+            steps={GEMINI_STEPS}
+            costIntro="Gemini pricing — figures from SD-035 eval harness. Free-tier limits apply for unpaid accounts. Actual cost depends on article length."
+            costRows={GEMINI_COST_ROWS}
+            privacyNote="Your API key is stored locally on your device only. Analyses go directly from your browser to Google — never through our servers."
+            className="mt-10"
+          />
         </main>
 
         <PageFooterNav showSourceCode={true} />
