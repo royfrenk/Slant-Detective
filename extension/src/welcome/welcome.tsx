@@ -1,25 +1,15 @@
 import React from "react";
 import { FEEDBACK_FORM_URL } from "../shared/urls";
+import { DIMENSIONS } from "../shared/dimension-copy";
+import type { DimensionCopy } from "../shared/dimension-copy";
 
-interface Bullet {
-  title: string;
-  body: string;
+// ---------------------------------------------------------------------------
+// CTA handlers
+// ---------------------------------------------------------------------------
+
+function handleAddApiKey(): void {
+  chrome.runtime.openOptionsPage();
 }
-
-const BULLETS: readonly Bullet[] = [
-  {
-    title: "Per-article bias analysis",
-    body: "Slant Detective reads the article you have open and scores it across four dimensions.",
-  },
-  {
-    title: "Works immediately, no setup needed",
-    body: "Source labels and language-intensity signals run entirely in your browser, no account required.",
-  },
-  {
-    title: "Add an API key later — Anthropic, OpenAI, or Gemini",
-    body: "Unlock tilt direction, four-dimension breakdown, evidence spans, and inline highlights.",
-  },
-] as const;
 
 function handleTryIt(): void {
   chrome.tabs.getCurrent((tab) => {
@@ -29,120 +19,211 @@ function handleTryIt(): void {
   });
 }
 
-function BulletItem({ title, body }: Bullet): React.JSX.Element {
+// ---------------------------------------------------------------------------
+// Dimension preview chip (2x2 grid)
+// ---------------------------------------------------------------------------
+
+function DimensionChip({ label, glyph, description }: DimensionCopy): React.JSX.Element {
   return (
-    <li className="bg-surface-variant rounded-lg px-5 py-4 border-l-[3px] border-l-primary list-none">
-      <p className="text-on-surface font-semibold text-[15px] leading-snug m-0">
-        {title}
+    <div
+      className="rounded-[12px] px-4 py-3"
+      style={{ background: "linear-gradient(135deg, #f2f4f6, #ffffff)" }}
+    >
+      <p className="text-primary font-semibold text-[12px] uppercase tracking-[0.08em] m-0">
+        <span aria-hidden="true" className="mr-2">{glyph}</span>
+        {label}
       </p>
-      <p className="text-on-surface-variant font-normal text-[14px] leading-relaxed mt-1.5 mb-0">
-        {body}
+      <p className="text-[#334155] font-normal text-[13px] leading-snug mt-1 mb-0">
+        {description}
       </p>
-    </li>
+    </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Footer nav (unchanged from current implementation)
+// ---------------------------------------------------------------------------
+
+function FooterNav(): React.JSX.Element {
+  return (
+    <nav
+      className="mt-8 flex items-center justify-center gap-0 text-xs text-on-surface-variant"
+      aria-label="Footer navigation"
+    >
+      <a
+        role="link"
+        tabIndex={0}
+        aria-label="How we measure bias"
+        className="text-on-surface-variant no-underline hover:underline cursor-pointer"
+        onClick={() => { chrome.tabs.create({ url: chrome.runtime.getURL("src/pages/how-we-measure.html") }).catch(() => {}); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") chrome.tabs.create({ url: chrome.runtime.getURL("src/pages/how-we-measure.html") }).catch(() => {}); }}
+      >
+        How we measure
+      </a>
+      <span className="mx-2 select-none" aria-hidden="true">·</span>
+      <a
+        role="link"
+        tabIndex={0}
+        aria-label="Privacy policy"
+        className="text-on-surface-variant no-underline hover:underline cursor-pointer"
+        onClick={() => { chrome.tabs.create({ url: chrome.runtime.getURL("src/pages/privacy.html") }).catch(() => {}); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") chrome.tabs.create({ url: chrome.runtime.getURL("src/pages/privacy.html") }).catch(() => {}); }}
+      >
+        Privacy
+      </a>
+      <span className="mx-2 select-none" aria-hidden="true">·</span>
+      <a
+        role="link"
+        tabIndex={0}
+        aria-label="Credits and attributions"
+        className="text-on-surface-variant no-underline hover:underline cursor-pointer"
+        onClick={() => { chrome.tabs.create({ url: chrome.runtime.getURL("src/pages/credits.html") }).catch(() => {}); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") chrome.tabs.create({ url: chrome.runtime.getURL("src/pages/credits.html") }).catch(() => {}); }}
+      >
+        Credits
+      </a>
+      <span className="mx-2 select-none" aria-hidden="true">·</span>
+      <a
+        role="link"
+        tabIndex={0}
+        aria-label="Open Slant Detective feedback form in new tab"
+        className="text-on-surface-variant no-underline hover:underline cursor-pointer"
+        onClick={() => { chrome.tabs.create({ url: FEEDBACK_FORM_URL, active: true }).catch(() => {}); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") chrome.tabs.create({ url: FEEDBACK_FORM_URL, active: true }).catch(() => {}); }}
+      >
+        Feedback
+      </a>
+    </nav>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Welcome page
+// ---------------------------------------------------------------------------
 
 export default function Welcome(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-[720px]">
+
         {/* Content card */}
-        <div className="bg-surface rounded-2xl p-8 md:p-12 shadow-ambient">
-          {/* Logo + wordmark row */}
-          <div className="flex items-center gap-3 mb-6">
-            <img
-              src={chrome.runtime.getURL('assets/icon-128.png')}
-              alt=""
-              aria-hidden="true"
-              width={40}
-              height={40}
-              className="block"
-            />
-            <p className="text-primary font-bold text-[13px] tracking-wordmark uppercase m-0">
-              Slant Detective
+        <div className="bg-surface rounded-2xl shadow-ambient overflow-hidden">
+
+          {/* Top zone — centered lockup + headline + sub-headline + dimension grid */}
+          <div className="px-8 pt-8 pb-0 md:px-12 md:pt-12 text-center">
+
+            {/* Monogram icon (wordmark omitted per SD-043 design spec § 10) */}
+            <div className="flex justify-center mb-6">
+              <img
+                src={chrome.runtime.getURL("assets/icon-128.png")}
+                alt=""
+                aria-hidden="true"
+                width={40}
+                height={40}
+                className="block"
+              />
+            </div>
+
+            {/* Headline */}
+            <h1 className="text-on-surface font-semibold text-[24px] md:text-[28px] leading-[1.3] mb-3 mt-0">
+              Welcome to Slant Detective
+            </h1>
+
+            {/* Sub-headline */}
+            <p className="text-on-surface-variant font-normal text-[14px] leading-relaxed mb-8 mt-0">
+              Per-article bias analysis — four dimensions, evidence-backed, privacy-first.
             </p>
+
+            {/* Dimension preview grid (2x2) */}
+            <div className="grid grid-cols-2 gap-3 text-left mb-8">
+              {DIMENSIONS.map((dim) => (
+                <DimensionChip key={dim.key} {...dim} />
+              ))}
+            </div>
           </div>
 
-          {/* Headline */}
-          <h1 className="text-on-surface font-semibold text-[24px] md:text-[28px] leading-[1.3] mb-8 mt-0">
-            Find the lean in what you read.
-          </h1>
+          {/* Bottom zone — tinted surface band with "Why" block + CTAs */}
+          <div className="bg-surface-variant px-8 py-6 md:px-12">
+            <div className="md:flex md:items-start md:gap-8">
 
-          {/* Three bullet items */}
-          <ul className="flex flex-col gap-5 p-0 m-0 mb-10">
-            {BULLETS.map((bullet) => (
-              <BulletItem key={bullet.title} title={bullet.title} body={bullet.body} />
-            ))}
-          </ul>
+              {/* "Why bring your own key?" explainer */}
+              <div className="flex-1 mb-6 md:mb-0">
+                <p className="text-on-surface font-semibold text-[15px] mb-2 mt-0">
+                  Why bring your own key?
+                </p>
+                <p className="text-on-surface-variant font-normal text-[14px] leading-relaxed m-0">
+                  Unlocking full analysis requires an API key. Choose your preferred provider —
+                  Anthropic, OpenAI, or Gemini — pay them directly for usage, and ensure we
+                  process no data ourselves.
+                </p>
+              </div>
 
-          {/* Try it button */}
-          <button
-            type="button"
-            onClick={handleTryIt}
-            aria-label="Try it — close this tab and start using Slant Detective"
-            className={[
-              "bg-gradient-to-br from-primary to-primary-container",
-              "text-on-primary font-medium text-sm",
-              "px-8 py-3 rounded-md border-0 cursor-pointer",
-              "transition-transform duration-75",
-              "hover:brightness-[0.96]",
-              "focus:outline focus:outline-2 focus:outline-primary focus:outline-offset-2",
-              "active:scale-[0.98]",
-            ].join(" ")}
-          >
-            Try it
-          </button>
+              {/* CTA column */}
+              <div className="flex-shrink-0">
+                {/* Primary CTA */}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleAddApiKey}
+                    aria-label="Add API key — open the Slant Detective options page"
+                    className={[
+                      "bg-gradient-to-br from-primary to-primary-container",
+                      "text-on-primary font-medium text-sm",
+                      "px-6 py-3 rounded-md border-0 cursor-pointer",
+                      "hover:brightness-[0.96]",
+                      "focus:outline focus:outline-2 focus:outline-primary focus:outline-offset-2",
+                      "active:scale-[0.98] transition-transform duration-75",
+                    ].join(" ")}
+                  >
+                    Add API key
+                  </button>
+
+                  {/* Secondary CTA */}
+                  <button
+                    type="button"
+                    onClick={handleTryIt}
+                    aria-label="Try it — close this tab and start using Slant Detective"
+                    className={[
+                      "bg-transparent text-primary font-medium text-sm",
+                      "px-3 py-3 rounded-md border-0 cursor-pointer",
+                      "hover:underline",
+                      "focus:outline focus:outline-2 focus:outline-primary focus:outline-offset-2",
+                    ].join(" ")}
+                  >
+                    Try it
+                  </button>
+                </div>
+
+                {/* Caption under CTAs */}
+                <p className="text-on-surface-variant font-normal text-[12px] mt-2 mb-0">
+                  No key needed for &apos;Try it&apos; — runs locally, reduced signals.
+                </p>
+              </div>
+            </div>
+
+            {/* Lock-icon microcopy */}
+            <div className="flex items-center gap-2 mt-4">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+                className="flex-shrink-0 text-on-surface-variant"
+              >
+                <rect x="1.5" y="5" width="9" height="6.5" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+                <path d="M3.5 5V3.5a2.5 2.5 0 0 1 5 0V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+              </svg>
+              <p className="text-on-surface-variant text-[12px] m-0">
+                Nothing is uploaded without your key. No account. No tracking.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Footer nav quad */}
-        <nav
-          className="mt-8 flex items-center justify-center gap-0 text-xs text-on-surface-variant"
-          aria-label="Footer navigation"
-        >
-          <a
-            role="link"
-            tabIndex={0}
-            aria-label="How we measure bias"
-            className="text-on-surface-variant no-underline hover:underline cursor-pointer"
-            onClick={() => { chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/how-we-measure.html') }).catch(() => {}); }}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/how-we-measure.html') }).catch(() => {}); }}
-          >
-            How we measure
-          </a>
-          <span className="mx-2 select-none" aria-hidden="true">·</span>
-          <a
-            role="link"
-            tabIndex={0}
-            aria-label="Privacy policy"
-            className="text-on-surface-variant no-underline hover:underline cursor-pointer"
-            onClick={() => { chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/privacy.html') }).catch(() => {}); }}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/privacy.html') }).catch(() => {}); }}
-          >
-            Privacy
-          </a>
-          <span className="mx-2 select-none" aria-hidden="true">·</span>
-          <a
-            role="link"
-            tabIndex={0}
-            aria-label="Credits and attributions"
-            className="text-on-surface-variant no-underline hover:underline cursor-pointer"
-            onClick={() => { chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/credits.html') }).catch(() => {}); }}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/credits.html') }).catch(() => {}); }}
-          >
-            Credits
-          </a>
-          <span className="mx-2 select-none" aria-hidden="true">·</span>
-          <a
-            role="link"
-            tabIndex={0}
-            aria-label="Open Slant Detective feedback form in new tab"
-            className="text-on-surface-variant no-underline hover:underline cursor-pointer"
-            onClick={() => { chrome.tabs.create({ url: FEEDBACK_FORM_URL, active: true }).catch(() => {}); }}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') chrome.tabs.create({ url: FEEDBACK_FORM_URL, active: true }).catch(() => {}); }}
-          >
-            Feedback
-          </a>
-        </nav>
+        <FooterNav />
       </div>
     </div>
   );
