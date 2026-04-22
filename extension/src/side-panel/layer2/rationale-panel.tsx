@@ -44,7 +44,7 @@ export default function RationalePanel({
         aria-label="Score rationale"
         className={`bg-surface-variant rounded-[6px] p-3 ${marginTop}`}
       >
-        <p className="text-[0.75rem] font-normal text-on-surface leading-[1.5] m-0">
+        <p className="text-[0.875rem] font-normal text-on-surface leading-[1.5] m-0">
           {text}
         </p>
       </div>
@@ -59,11 +59,9 @@ export default function RationalePanel({
       className={`grid transition-[grid-template-rows] duration-[160ms] ease-out ${marginTop} ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
     >
       <div className="overflow-hidden">
-        <div className="bg-surface-variant rounded-[6px] p-3">
-          <p className="text-[0.75rem] font-normal text-on-surface leading-[1.5] m-0">
-            {text}
-          </p>
-        </div>
+        <p className="text-[0.875rem] font-normal text-on-surface leading-[1.5] m-0">
+          {text}
+        </p>
       </div>
     </div>
   );
