@@ -47,6 +47,10 @@
         "src/pages/how-to-get-a-key.html"
       ],
       "matches": ["chrome-extension://*/*"]
+    },
+    {
+      "resources": ["assets/babe-lexicon.json"],
+      "matches": ["http://*/*", "https://*/*"]
     }
   ],
   "icons": {

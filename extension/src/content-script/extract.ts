@@ -9,11 +9,13 @@ const FALLBACK_SELECTORS = [
   'article',
   '[role="article"]',
   '[itemprop="articleBody"]',
+  'section[name="articleBody"]',
   'main',
   '[data-testid="article-body"]',
   '[class*="article-body"]',
   '[class*="story-body"]',
   '[class*="post-content"]',
+  '[class*="StoryBodyCompanion"]',
 ] as const;
 
 function stripHtml(html: string): string {
@@ -84,6 +86,19 @@ function tryFallback(doc: Document): ExtractionResult {
     const result = makeResult(title, body);
     if (result.ok) return result;
   }
+
+  // Last resort: sites that don't match any known container (JS-hydrated NYT
+  // subsections, custom publication shells, etc). Walk every <p> in the doc,
+  // keep only those substantial enough to be prose (skip captions and nav).
+  const allParas = Array.from(doc.querySelectorAll('p'))
+    .map((p) => (p.textContent ?? '').trim())
+    .filter((t) => t.length >= PARA_TEXT_MIN)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const whole = makeResult(title, allParas);
+  if (whole.ok) return whole;
 
   return { ok: false, error: 'extraction_failed' };
 }
