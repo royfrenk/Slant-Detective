@@ -82,8 +82,14 @@ const FALLBACK_ATTRIBUTION: AttributionReport = {
 // Score helpers (mirror IntensityBars scoring)
 // ---------------------------------------------------------------------------
 
-function computeLanguageIntensity(loadedWordCount: number): number {
-  return Math.min(10, loadedWordCount / 3);
+// Density-based — normalizes by article length so long articles don't
+// auto-saturate at the 30-hit ceiling. Saturates at ~50 hits per 1000 words
+// (5% density), which aligns with far-right / far-left outlet P75 after
+// recalibration against the BABE corpus. See scripts/calibrate-intensity.mjs.
+function computeLanguageIntensity(loadedWordCount: number, wordCount: number): number {
+  if (wordCount === 0) return 0;
+  const hitsPerKiloword = (loadedWordCount / wordCount) * 1000;
+  return Math.min(10, hitsPerKiloword / 5);
 }
 
 // ---------------------------------------------------------------------------
@@ -225,7 +231,7 @@ async function runAnalysis(): Promise<ContentScriptResult> {
   const layer1Signals: Layer1Signals = {
     domain,
     wordCount: extraction.word_count,
-    languageIntensity: computeLanguageIntensity(totalCount),
+    languageIntensity: computeLanguageIntensity(totalCount, extraction.word_count),
     loadedWords: mergedLoadedWords,
     hedges,
     attribution,

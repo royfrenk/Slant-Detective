@@ -82,6 +82,25 @@ describe('ChevronToggle', () => {
     expect(onToggle).toHaveBeenCalledOnce()
   })
 
+  it('stops click propagation so parent row onClick does not double-fire', async () => {
+    const user = userEvent.setup()
+    const onToggle = vi.fn()
+    const parentClick = vi.fn()
+    render(
+      <div onClick={parentClick}>
+        <ChevronToggle
+          isOpen={false}
+          onToggle={onToggle}
+          ariaControls="test-panel"
+          ariaLabel="Show rationale"
+        />
+      </div>,
+    )
+    await user.click(screen.getByRole('button'))
+    expect(onToggle).toHaveBeenCalledOnce()
+    expect(parentClick).not.toHaveBeenCalled()
+  })
+
   it('applies rotate-90 class when isOpen=true', () => {
     render(
       <ChevronToggle

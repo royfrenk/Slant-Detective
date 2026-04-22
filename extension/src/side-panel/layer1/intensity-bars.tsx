@@ -46,9 +46,14 @@ function filledBlockCount(score: number): number {
 }
 
 function attributionScore(signals: Layer1Signals): number {
-  const { tierCounts } = signals.attribution;
-  // Assertive (index 2) + assertive-plus (index 3) weighted double, then scaled
-  return Math.min(10, (tierCounts[2] + tierCounts[3] * 2) * 2);
+  const { tierCounts, totalAttributions } = signals.attribution;
+  if (totalAttributions === 0) return 0;
+  // Fraction of attributions using evaluative (tier 2) or assertive (tier 3) verbs;
+  // tier-3 weighted double. Saturates at 50% weighted-evaluative fraction so
+  // long articles with many "said" verbs don't inflate the score.
+  const weightedEvaluative = tierCounts[2] + tierCounts[3] * 2;
+  const fraction = weightedEvaluative / totalAttributions;
+  return Math.min(10, fraction * 20);
 }
 
 function headlineDriftScore(signals: Layer1Signals): number {

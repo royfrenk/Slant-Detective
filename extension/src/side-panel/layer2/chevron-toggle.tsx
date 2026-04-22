@@ -21,13 +21,20 @@ export default function ChevronToggle({
   ariaControls,
   ariaLabel,
 }: ChevronToggleProps): React.JSX.Element {
+  // stopPropagation prevents the parent row's onClick from double-toggling state
+  // when the user clicks the chevron directly (the row also listens for clicks).
+  function handleClick(e: React.MouseEvent<HTMLButtonElement>): void {
+    e.stopPropagation();
+    onToggle();
+  }
+
   return (
     <button
       type="button"
       aria-expanded={isOpen}
       aria-controls={ariaControls}
       aria-label={ariaLabel}
-      onClick={onToggle}
+      onClick={handleClick}
       className={[
         'flex items-center justify-center',
         'w-5 h-5 rounded',
