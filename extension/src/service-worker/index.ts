@@ -151,6 +151,12 @@ async function runAnalysis(): Promise<void> {
     return;
   }
 
+  // Emit Layer 1 immediately so the panel can render while Layer 2 runs.
+  // Layer 2 completion is announced separately via layer2_result or layer2_failed,
+  // so an LLM error no longer wipes the Layer 1 view into "Couldn't read this page".
+  const l1Msg: InboundMessage = { action: 'analyzed', payload: { ...result, layer2: null } };
+  chrome.runtime.sendMessage(l1Msg).catch(() => {});
+
   const canonicalUrl = tab.url ?? '';
   const provider = getProvider(activeProviderId);
 
@@ -170,7 +176,7 @@ async function runAnalysis(): Promise<void> {
 
     void bump('analyze_layer2_ok');
 
-    const msg: InboundMessage = { action: 'analyzed', payload: { ...result, layer2: rubricResponse } };
+    const msg: InboundMessage = { action: 'layer2_result', payload: rubricResponse };
     chrome.runtime.sendMessage(msg).catch(() => {});
 
     // Send highlights to the content script
@@ -179,31 +185,26 @@ async function runAnalysis(): Promise<void> {
       spans: rubricResponse.spans,
     }).catch(() => {});
   } catch (err) {
+    let errorType: 'invalid_key' | 'quota_exceeded' | 'network_error' | 'timeout' | 'unknown' | 'content_filtered' = 'unknown';
     if (err instanceof GeminiSafetyError) {
-      // Layer 2 safety block — Layer 1 results remain visible.
-      // Send layer2_failed (not analysis_failed) so the panel only replaces the L2 area.
-      const msg: InboundMessage = { action: 'layer2_failed', errorType: 'content_filtered' };
-      chrome.runtime.sendMessage(msg).catch(() => {});
+      errorType = 'content_filtered';
     } else if (err instanceof ProviderApiError && (err.statusCode === 400 || err.statusCode === 401 || err.statusCode === 403)) {
       // 400 maps to invalid key for Gemini (its invalid-key HTTP status).
       void bump('analyze_invalid_key');
-      const msg: InboundMessage = { action: 'analysis_failed', reason: 'invalid_api_key' };
-      chrome.runtime.sendMessage(msg).catch(() => {});
+      errorType = 'invalid_key';
     } else if (err instanceof ProviderApiError && err.statusCode === 429) {
       void bump('analyze_rate_limit');
-      const msg: InboundMessage = { action: 'analysis_failed', reason: 'rate_limited' };
-      chrome.runtime.sendMessage(msg).catch(() => {});
-    } else if (err instanceof RubricValidationError) {
-      const msg: InboundMessage = { action: 'analysis_failed', reason: 'rubric_validation_failed' };
-      chrome.runtime.sendMessage(msg).catch(() => {});
+      errorType = 'quota_exceeded';
     } else if (err instanceof DOMException && err.name === 'TimeoutError') {
       void bump('analyze_llm_timeout');
-      const msg: InboundMessage = { action: 'analysis_failed', reason: 'network_error' };
-      chrome.runtime.sendMessage(msg).catch(() => {});
+      errorType = 'timeout';
+    } else if (err instanceof RubricValidationError) {
+      errorType = 'unknown';
     } else {
-      const msg: InboundMessage = { action: 'analysis_failed', reason: 'network_error' };
-      chrome.runtime.sendMessage(msg).catch(() => {});
+      errorType = 'network_error';
     }
+    const msg: InboundMessage = { action: 'layer2_failed', errorType };
+    chrome.runtime.sendMessage(msg).catch(() => {});
   }
 }
 
