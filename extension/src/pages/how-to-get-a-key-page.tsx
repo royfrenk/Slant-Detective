@@ -253,7 +253,7 @@ function ProviderSection({
     <section id={id} aria-labelledby={headingId} className={className}>
       <h2
         id={headingId}
-        className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3"
+        className="text-2xl font-bold text-primary mb-6 scroll-mt-6"
       >
         {providerName}
       </h2>
@@ -305,6 +305,64 @@ function ProviderSection({
   );
 }
 
+const PROVIDER_LINKS: readonly { href: string; label: string }[] = [
+  { href: '#anthropic', label: 'Anthropic' },
+  { href: '#openai', label: 'OpenAI' },
+  { href: '#gemini', label: 'Gemini' },
+] as const;
+
+function ProviderJumpNav(): React.JSX.Element {
+  const [activeHash, setActiveHash] = React.useState<string>(
+    typeof window !== 'undefined' ? window.location.hash : ''
+  );
+
+  React.useEffect(() => {
+    // Scroll to hash target after React mounts (initial browser scroll misses it
+    // because sections don't exist yet at parse time).
+    if (typeof window === 'undefined') return;
+    if (window.location.hash) {
+      const target = document.getElementById(window.location.hash.slice(1));
+      if (target !== null) {
+        target.scrollIntoView({ behavior: 'auto', block: 'start' });
+      }
+    }
+    function onHashChange(): void {
+      setActiveHash(window.location.hash);
+    }
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  const baseClass = [
+    'text-base font-semibold',
+    'px-4 py-2 rounded-md',
+    'no-underline',
+    'transition-colors',
+    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
+  ].join(' ');
+
+  return (
+    <nav aria-label="Provider sections" className="mb-10 flex flex-wrap gap-2">
+      {PROVIDER_LINKS.map(({ href, label }) => {
+        const isActive = activeHash === href;
+        const stateClass = isActive
+          ? 'bg-primary text-on-primary'
+          : 'bg-surface text-on-surface hover:bg-surface-variant';
+        return (
+          <a
+            key={href}
+            href={href}
+            aria-current={isActive ? 'location' : undefined}
+            className={`${baseClass} ${stateClass}`}
+          >
+            {label}
+          </a>
+        );
+      })}
+    </nav>
+  );
+}
+
 // Page component
 export function HowToGetAKeyPage(): React.JSX.Element {
   return (
@@ -322,28 +380,7 @@ export function HowToGetAKeyPage(): React.JSX.Element {
             How to Get a Key
           </h1>
 
-          <nav aria-label="Provider sections" className="mb-8">
-            <a
-              href="#anthropic"
-              className="text-xs text-on-surface-variant no-underline hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-sm"
-            >
-              Anthropic
-            </a>
-            <span className="mx-2 text-xs text-on-surface-variant select-none" aria-hidden="true">·</span>
-            <a
-              href="#openai"
-              className="text-xs text-on-surface-variant no-underline hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-sm"
-            >
-              OpenAI
-            </a>
-            <span className="mx-2 text-xs text-on-surface-variant select-none" aria-hidden="true">·</span>
-            <a
-              href="#gemini"
-              className="text-xs text-on-surface-variant no-underline hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-sm"
-            >
-              Gemini
-            </a>
-          </nav>
+          <ProviderJumpNav />
 
           <ProviderSection
             id="anthropic"
