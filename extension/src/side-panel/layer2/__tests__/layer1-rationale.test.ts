@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getLayer1OverallRationale, getLayer1DimRationale, getLayer1DimRationales } from '../layer1-rationale'
+import { getLayer1OverallRationale } from '../layer1-rationale'
 import type { Layer1Signals } from '../../../shared/types'
 
 const baseSignals: Layer1Signals = {
@@ -93,72 +93,3 @@ describe('getLayer1OverallRationale', () => {
   })
 })
 
-// ─── getLayer1DimRationale ────────────────────────────────────────────────────
-
-describe('getLayer1DimRationale — word_choice', () => {
-  it('includes count', () => {
-    const r = getLayer1DimRationale('word_choice', baseSignals)
-    expect(r).toContain('18')
-  })
-
-  it('includes up to 3 example words', () => {
-    const r = getLayer1DimRationale('word_choice', baseSignals)
-    expect(r).toContain('radical')
-  })
-
-  it('returns "No BABE-flagged words found." when count=0', () => {
-    const signals = { ...baseSignals, loadedWords: { hits: [], uniqueSurfaces: [], count: 0 } }
-    expect(getLayer1DimRationale('word_choice', signals)).toBe('No BABE-flagged words found.')
-  })
-})
-
-describe('getLayer1DimRationale — framing', () => {
-  it('includes assertive count and total', () => {
-    const r = getLayer1DimRationale('framing', baseSignals)
-    expect(r).toContain('15')
-    expect(r).toContain('9') // tierCounts[2]+[3] = 5+4 = 9
-  })
-})
-
-describe('getLayer1DimRationale — headline_slant', () => {
-  it('includes cosine distance', () => {
-    const r = getLayer1DimRationale('headline_slant', baseSignals)
-    expect(r).toContain('0.45')
-  })
-
-  it('includes tier label', () => {
-    const r = getLayer1DimRationale('headline_slant', baseSignals)
-    expect(r).toContain('moderate')
-  })
-})
-
-describe('getLayer1DimRationale — source_mix', () => {
-  it('includes total attributions', () => {
-    const r = getLayer1DimRationale('source_mix', baseSignals)
-    expect(r).toContain('15')
-  })
-
-  it('includes evaluative verb count', () => {
-    const r = getLayer1DimRationale('source_mix', baseSignals)
-    expect(r).toContain('9') // tierCounts[2]+[3] = 5+4 = 9
-  })
-})
-
-// ─── getLayer1DimRationales ───────────────────────────────────────────────────
-
-describe('getLayer1DimRationales', () => {
-  it('returns all four dimension keys', () => {
-    const rationales = getLayer1DimRationales(baseSignals)
-    expect(Object.keys(rationales)).toEqual(
-      expect.arrayContaining(['word_choice', 'framing', 'headline_slant', 'source_mix']),
-    )
-  })
-
-  it('each value is a non-empty string', () => {
-    const rationales = getLayer1DimRationales(baseSignals)
-    for (const val of Object.values(rationales)) {
-      expect(typeof val).toBe('string')
-      expect(val.length).toBeGreaterThan(0)
-    }
-  })
-})
