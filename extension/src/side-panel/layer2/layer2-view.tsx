@@ -37,14 +37,6 @@ export default function Layer2View({
     distribution?.overall ?? null,
   );
 
-  // Build dims with rationale for DimensionBreakdown
-  const dimsWithRationale = {
-    word_choice: result.dimensions.word_choice,
-    framing: result.dimensions.framing,
-    headline_slant: result.dimensions.headline_slant,
-    source_mix: result.dimensions.source_mix,
-  };
-
   return (
     <div data-testid="layer2-view" className="flex flex-col gap-2">
       <SourceStrip domain={layer1Signals.domain} />
@@ -60,7 +52,7 @@ export default function Layer2View({
             percentileLabel={percentileLabel}
             rationale={result.overall.rationale}
           />
-          <DimensionBreakdown dims={dimsWithRationale} />
+          <DimensionBreakdown dims={result.dimensions} />
           <EvidenceList items={result.spans} />
         </>
       )}

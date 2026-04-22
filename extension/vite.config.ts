@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import { resolve } from "path";
 import react from "@vitejs/plugin-react";
 import { crx } from "@crxjs/vite-plugin";
@@ -36,14 +36,24 @@ function crxWorkerUrlFixPlugin(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  // Load .env before the define block so VITE_RUBRIC_VERSION is available at
+  // config-eval time (Vite does not populate process.env from .env until after
+  // config resolution, so we must load it ourselves here).
+  const env = loadEnv(mode, process.cwd(), '');
+  const rubricVersion = process.env['VITE_RUBRIC_VERSION'] ?? env['VITE_RUBRIC_VERSION'];
+  if (!rubricVersion) {
+    throw new Error('VITE_RUBRIC_VERSION must be set (see extension/.env.example)');
+  }
+
+  return {
   plugins: [
     react(),
     crx({ manifest }),
     crxWorkerUrlFixPlugin(),
   ],
   define: {
-    __RUBRIC_VERSION__: JSON.stringify(process.env['VITE_RUBRIC_VERSION'] ?? 'v1.0'),
+    __RUBRIC_VERSION__: JSON.stringify(rubricVersion),
   },
   // Vite copies everything in publicDir verbatim to outDir at build time.
   // extension/public/assets/ → dist/assets/ (icons, JSON datasets, ONNX model)
@@ -79,4 +89,5 @@ export default defineConfig({
       },
     },
   },
+  };
 });

@@ -10,6 +10,7 @@ import RationalePanel from '../layer2/rationale-panel';
 import { getLayer1OverallRationale } from '../layer2/layer1-rationale';
 import { useDistribution } from '../layer2/use-distribution';
 import { getPercentileLabel } from '../layer2/percentile-utils';
+import Layer1DimRationales from './layer1-dim-rationales';
 
 const MIN_WORDS_FOR_ANALYSIS = 400;
 
@@ -65,6 +66,7 @@ export default function Layer1View({ signals, hasApiKey }: Layer1ViewProps): Rea
         <>
           <Layer1OverallCard signals={signals} />
           <IntensityBars signals={signals} />
+          <Layer1DimRationales signals={signals} />
           <LoadedWords loadedWords={signals.loadedWords} />
         </>
       )}

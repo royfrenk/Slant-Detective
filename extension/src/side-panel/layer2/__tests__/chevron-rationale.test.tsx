@@ -149,11 +149,12 @@ describe('RationalePanel — animated (dim rows)', () => {
     expect(screen.getByText('Language skews right.')).toBeInTheDocument()
   })
 
-  it('has aria-live="polite" on animated panel', () => {
+  it('has aria-label="Dimension rationale" and no aria-live on animated panel', () => {
     const { container } = render(
       <RationalePanel text="Rationale." id="dim-rationale-framing" animated isOpen />,
     )
-    expect(container.firstChild).toHaveAttribute('aria-live', 'polite')
+    expect(container.firstChild).toHaveAttribute('aria-label', 'Dimension rationale')
+    expect(container.firstChild).not.toHaveAttribute('aria-live')
   })
 
   it('still renders inner content when isOpen=false (CSS hides it via grid-rows)', () => {

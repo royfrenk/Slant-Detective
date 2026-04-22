@@ -61,7 +61,7 @@ export default function OverallScoreCard({
         text={rationale}
         id="overall-rationale-panel"
         animated={false}
-        marginTop="mt-2"
+        marginTop="mt-0"
       />
     </div>
   );

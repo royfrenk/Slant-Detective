@@ -65,7 +65,7 @@ export function getLayer1DimRationale(
     case 'source_mix': {
       const { totalAttributions, tierCounts } = signals.attribution
       const evaluative = tierCounts[2] + tierCounts[3]
-      return `Source attribution: ${totalAttributions} total; ${evaluative} use evaluative verbs.`
+      return `Source attribution: ${totalAttributions} attributions; ${evaluative} use evaluative verbs.`
     }
   }
 }

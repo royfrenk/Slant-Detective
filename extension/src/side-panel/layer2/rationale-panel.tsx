@@ -10,7 +10,7 @@ interface RationalePanelProps {
    */
   animated?: boolean;
   isOpen?: boolean;
-  marginTop?: 'mt-1' | 'mt-2';
+  marginTop?: 'mt-0' | 'mt-1' | 'mt-2';
 }
 
 /**
@@ -55,7 +55,7 @@ export default function RationalePanel({
     <div
       id={id}
       role="region"
-      aria-live="polite"
+      aria-label="Dimension rationale"
       className={`grid transition-[grid-template-rows] duration-[160ms] ease-out ${marginTop} ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
     >
       <div className="overflow-hidden">

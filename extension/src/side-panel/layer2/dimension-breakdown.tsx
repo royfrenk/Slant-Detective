@@ -108,7 +108,10 @@ function DimensionRow({ config, score, direction, rationale }: DimensionRowProps
 
   return (
     <div role="group" aria-label={ariaLabel} className="flex flex-col gap-[6px]">
-      <div className="flex items-center justify-between">
+      <div
+        className="flex items-center justify-between cursor-pointer"
+        onClick={rationale != null && rationale.trim() !== '' ? handleToggle : undefined}
+      >
         <div className="flex items-center gap-1">
           <span className="text-[0.75rem] font-semibold text-primary uppercase">
             {config.label}
