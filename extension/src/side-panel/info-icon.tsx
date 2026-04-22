@@ -23,7 +23,6 @@ export default function InfoIcon({
 
   return (
     <span
-      role="img"
       tabIndex={0}
       aria-label={ariaLabel}
       aria-describedby={tooltipVisible ? tooltipId : undefined}

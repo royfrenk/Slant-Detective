@@ -60,6 +60,15 @@ body,
   }
 }
 
+@keyframes sd-info-tooltip-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(4px); }
+}
+
+.sd-info-tooltip-exit {
+  animation: sd-info-tooltip-out 120ms ease-in forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   [id^="sd-info-tooltip-"] {
     animation: none !important;

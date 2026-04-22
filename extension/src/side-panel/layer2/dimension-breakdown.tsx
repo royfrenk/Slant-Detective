@@ -118,7 +118,7 @@ function DimensionRow({ config, score, direction }: DimensionRowProps): React.JS
           </span>
         )}
       </div>
-      {tooltip.tooltipVisible && dimensionCopy != null && (
+      {dimensionCopy != null && (
         <InfoTooltip
           id={tooltipId}
           description={dimensionCopy.description}

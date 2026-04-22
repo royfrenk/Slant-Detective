@@ -122,14 +122,16 @@ function BarGroup({ config, score }: BarGroupProps): React.JSX.Element {
   return (
     <div role="group" aria-label={ariaLabel} className="flex flex-col gap-[6px]">
       <div className="flex items-center gap-[6px]">
-        <span aria-hidden="true" className={`text-[0.75rem] ${config.glyphClass}`}>
-          {config.glyph}
-        </span>
-        <span className="text-[0.75rem] text-on-surface">
-          {config.label}
+        <span className="flex items-center gap-[6px]">
+          <span aria-hidden="true" className={`text-[0.75rem] ${config.glyphClass}`}>
+            {config.glyph}
+          </span>
+          <span className="text-[0.75rem] text-on-surface">
+            {config.label}
+          </span>
         </span>
         {signalCopy != null && (
-          <span ref={iconRef}>
+          <span ref={iconRef} className="ml-1">
             <InfoIcon
               dimensionKey={config.key}
               ariaLabel={`${config.label} — what this means`}
@@ -148,7 +150,7 @@ function BarGroup({ config, score }: BarGroupProps): React.JSX.Element {
           </span>
         )}
       </div>
-      {tooltip.tooltipVisible && signalCopy != null && (
+      {signalCopy != null && (
         <InfoTooltip
           id={tooltipId}
           description={signalCopy.definition}

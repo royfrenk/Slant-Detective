@@ -3,6 +3,13 @@ import ReactDOM from 'react-dom';
 
 const SHOW_DELAY_MS = 300;
 const HIDE_DELAY_MS = 150;
+const EXIT_ANIMATION_MS = 120;
+
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 interface InfoTooltipState {
   visible: boolean;
@@ -20,15 +27,31 @@ interface InfoTooltipProps {
   onDismiss: () => void;
 }
 
+// ---------------------------------------------------------------------------
+// TooltipBubble — renders the tooltip DOM, drives enter/exit animation
+// ---------------------------------------------------------------------------
+
+interface BubbleProps {
+  id: string;
+  description: string;
+  example?: string;
+  anchorRect: DOMRect | null;
+  exiting: boolean;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onDismiss: () => void;
+}
+
 function TooltipBubble({
   id,
   description,
   example,
   anchorRect,
+  exiting,
   onMouseEnter,
   onMouseLeave,
   onDismiss,
-}: InfoTooltipProps): React.JSX.Element | null {
+}: BubbleProps): React.JSX.Element | null {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipHeight, setTooltipHeight] = useState(0);
 
@@ -86,6 +109,10 @@ function TooltipBubble({
     };
   }, [anchorRect, tooltipHeight]);
 
+  const animationStyle: React.CSSProperties = exiting
+    ? { animation: 'sd-info-tooltip-out 120ms ease-in forwards' }
+    : { animation: 'sd-info-tooltip-in 160ms ease-out' };
+
   return ReactDOM.createPortal(
     <div
       ref={tooltipRef}
@@ -95,6 +122,7 @@ function TooltipBubble({
       onMouseLeave={onMouseLeave}
       style={{
         ...positionStyle,
+        ...animationStyle,
         background: 'rgba(247, 249, 251, 0.92)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
@@ -104,7 +132,6 @@ function TooltipBubble({
         padding: '16px',
         zIndex: 2147483647,
         fontFamily: 'Inter, system-ui, sans-serif',
-        animation: 'sd-info-tooltip-in 160ms ease-out',
       }}
     >
       <p
@@ -135,6 +162,50 @@ function TooltipBubble({
     </div>,
     document.body,
   );
+}
+
+// ---------------------------------------------------------------------------
+// InfoTooltip — public component; manages mount/unmount with exit animation
+// ---------------------------------------------------------------------------
+
+export default function InfoTooltip({
+  visible,
+  ...rest
+}: InfoTooltipProps): React.JSX.Element | null {
+  const [mounted, setMounted] = useState(visible);
+  const [exiting, setExiting] = useState(false);
+  const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (visible) {
+      if (exitTimer.current != null) {
+        clearTimeout(exitTimer.current);
+        exitTimer.current = null;
+      }
+      setExiting(false);
+      setMounted(true);
+    } else if (mounted) {
+      if (prefersReducedMotion()) {
+        setMounted(false);
+      } else {
+        setExiting(true);
+        exitTimer.current = setTimeout(() => {
+          setMounted(false);
+          setExiting(false);
+        }, EXIT_ANIMATION_MS);
+      }
+    }
+    return () => {
+      if (exitTimer.current != null) {
+        clearTimeout(exitTimer.current);
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
+
+  if (!mounted) return null;
+
+  return <TooltipBubble {...rest} exiting={exiting} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -210,4 +281,3 @@ export function useInfoTooltip(): UseInfoTooltipReturn {
 }
 
 export { SHOW_DELAY_MS, HIDE_DELAY_MS };
-export default TooltipBubble;
