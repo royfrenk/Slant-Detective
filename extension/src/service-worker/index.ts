@@ -230,7 +230,7 @@ chrome.runtime.onMessage.addListener((message) => {
     return false;
   }
 
-  if (message?.action === 'analyze') {
+  if (message?.action === 'analyze' || message?.action === 'retry_layer2') {
     runAnalysis();
   }
 

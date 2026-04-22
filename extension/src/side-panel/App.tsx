@@ -22,6 +22,11 @@ type Layer2ErrorType = 'timeout' | 'invalid_key' | 'rate_limit' | 'parse_error' 
 
 // 30s: first-run ONNX model load from HuggingFace can take 5–30s.
 const ANALYSIS_TIMEOUT_MS = 30_000;
+// Layer 2 watchdog. Provider-side fetch has a 30s AbortSignal; pipeline retries
+// once on validation failure, so worst-case provider flow is ~60s. Add headroom
+// over that so the skeleton can't spin forever if the service worker is
+// terminated mid-request or drops its message.
+const LAYER2_TIMEOUT_MS = 70_000;
 
 export default function App(): React.JSX.Element {
   const [status, setStatus] = useState<Status>('idle');
@@ -33,6 +38,7 @@ export default function App(): React.JSX.Element {
   const [showReportBug, setShowReportBug] = useState(false);
   const [reportBugData, setReportBugData] = useState<{ url: string; screenshotDataUrl: string | null } | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const layer2TimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Check API key presence on mount and listen for changes.
   // Derive hasApiKey from providers[activeProvider].key in the new storage schema.
@@ -66,8 +72,20 @@ export default function App(): React.JSX.Element {
     };
   }, []);
 
+  const armLayer2Watchdog = useCallback(() => {
+    if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
+    layer2TimeoutRef.current = setTimeout(() => {
+      setLayer2Status((s) => {
+        if (s === 'done' || s === 'error') return s;
+        setLayer2ErrorType('timeout');
+        return 'error';
+      });
+    }, LAYER2_TIMEOUT_MS);
+  }, []);
+
   const startFreshAnalysis = useCallback(() => {
     if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
+    if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
     setStatus('loading');
     setLayer1Signals(null);
     setLayer2Status('idle');
@@ -83,8 +101,9 @@ export default function App(): React.JSX.Element {
     setLayer2Status('loading');
     setLayer2Result(null);
     setLayer2ErrorType(null);
+    armLayer2Watchdog();
     chrome.runtime.sendMessage({ action: 'retry_layer2' }).catch(() => {});
-  }, []);
+  }, [armLayer2Watchdog]);
 
   useEffect(() => {
     startFreshAnalysis();
@@ -98,9 +117,16 @@ export default function App(): React.JSX.Element {
         if (message.payload.layer2 != null) {
           setLayer2Result(message.payload.layer2);
           setLayer2Status('done');
+          if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
+        } else {
+          // Layer 2 runs asynchronously after L1 — arm the watchdog so the
+          // skeleton can't spin forever if the SW is terminated or drops its
+          // message.
+          armLayer2Watchdog();
         }
       } else if (message.action === 'analysis_failed') {
         if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
+        if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
         setStatus('error');
       } else if (message.action === 'tab_navigated') {
         setShowReportBug(false);
@@ -110,9 +136,11 @@ export default function App(): React.JSX.Element {
         setReportBugData({ url: message.url, screenshotDataUrl: message.screenshotDataUrl });
         setShowReportBug(true);
       } else if (message.action === 'layer2_result') {
+        if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
         setLayer2Result(message.payload);
         setLayer2Status('done');
       } else if (message.action === 'layer2_failed') {
+        if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
         const errorTypeMap: Record<string, Layer2ErrorType> = {
           invalid_key: 'invalid_key',
           timeout: 'timeout',
@@ -130,8 +158,9 @@ export default function App(): React.JSX.Element {
     return () => {
       chrome.runtime.onMessage.removeListener(listener);
       if (timeoutRef.current !== null) clearTimeout(timeoutRef.current);
+      if (layer2TimeoutRef.current !== null) clearTimeout(layer2TimeoutRef.current);
     };
-  }, [startFreshAnalysis]);
+  }, [startFreshAnalysis, armLayer2Watchdog]);
 
   const handleRetry = startFreshAnalysis;
 
