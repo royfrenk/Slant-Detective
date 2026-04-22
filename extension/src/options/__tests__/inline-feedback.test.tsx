@@ -60,7 +60,7 @@ describe('InlineFeedback — provider-specific error copy (SD-032)', () => {
 describe('InlineFeedback — existing states still work (parity)', () => {
   it('success state shows checkmark and green text', () => {
     render(<InlineFeedback state="success" />)
-    expect(screen.getByText(/Key saved\. Layer 2 analysis is now active\./i)).toBeInTheDocument()
+    expect(screen.getByText(/Key saved\. In-depth analysis is now active\./i)).toBeInTheDocument()
     const status = screen.getByRole('status')
     expect(status.textContent).toContain('✓')
   })

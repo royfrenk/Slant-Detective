@@ -20,7 +20,8 @@ import {
   TELEMETRY_DAILY_SALT,
   TELEMETRY_SALT_DATE,
 } from '../shared/storage-keys'
-import { TELEMETRY_INGEST_URL } from '../shared/telemetry-constants'
+import { TELEMETRY_INGEST_URL, TELEMETRY_SCORE_SAMPLE_URL } from '../shared/telemetry-constants'
+import { getEtld1 } from '../shared/etld'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -231,6 +232,94 @@ export async function maybeEmit(): Promise<void> {
     await maybeEmitInternal()
   } catch {
     // Telemetry errors are non-fatal — swallow silently
+  }
+}
+
+// ── SD-041: Score sample types ────────────────────────────────────────────────
+
+export interface ScoreSamplePayload {
+  event: 'score_sample'
+  domain_etld1: string
+  overall: number
+  word_choice: number
+  framing: number
+  headline_slant: number
+  source_mix: number
+  direction: string
+  provider: string
+  rubric_version: string
+}
+
+/**
+ * SD-041: Emits a single score_sample event to the Worker after a Layer 2
+ * analysis completes. No-op when telemetry is disabled. Silently swallows
+ * errors — score sample emission must never break the main analysis flow.
+ *
+ * Privacy invariants:
+ *   ✅ No raw URL — only eTLD+1 derived from page URL
+ *   ✅ No PII — no distinct_id, no user agent, no key material
+ *   ✅ Exactly 9 fields per the SD-041 payload schema
+ *   ✅ Respects existing TELEMETRY_ENABLED toggle
+ */
+export async function emitScoreSample(params: {
+  pageUrl: string
+  overall: number
+  word_choice: number
+  framing: number
+  headline_slant: number
+  source_mix: number
+  direction: string
+  provider: string
+  rubric_version: string
+}): Promise<void> {
+  try {
+    await emitScoreSampleInternal(params)
+  } catch {
+    // Telemetry errors are non-fatal — swallow silently
+  }
+}
+
+async function emitScoreSampleInternal(params: {
+  pageUrl: string
+  overall: number
+  word_choice: number
+  framing: number
+  headline_slant: number
+  source_mix: number
+  direction: string
+  provider: string
+  rubric_version: string
+}): Promise<void> {
+  const stored = await chrome.storage.local.get(TELEMETRY_ENABLED)
+  const enabled = stored[TELEMETRY_ENABLED] as boolean | undefined
+  // Default true (matches bump() gate); treat undefined as true until onInstalled fires
+  if (enabled === false) return
+
+  const domain_etld1 = getEtld1(params.pageUrl)
+  if (!domain_etld1) return // Skip if domain cannot be resolved (localhost, IP, etc.)
+
+  const payload: ScoreSamplePayload = {
+    event: 'score_sample',
+    domain_etld1,
+    overall: params.overall,
+    word_choice: params.word_choice,
+    framing: params.framing,
+    headline_slant: params.headline_slant,
+    source_mix: params.source_mix,
+    direction: params.direction,
+    provider: params.provider,
+    rubric_version: params.rubric_version,
+  }
+
+  try {
+    await fetch(TELEMETRY_SCORE_SAMPLE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    // Non-2xx responses are silently dropped — score sample is best-effort
+  } catch {
+    // Network failure — silently drop
   }
 }
 

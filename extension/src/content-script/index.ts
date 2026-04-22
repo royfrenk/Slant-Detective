@@ -1,3 +1,4 @@
+import { francAll } from 'franc-min';
 import type { ContentScriptResult } from '../shared/messages';
 import type {
   Layer1Signals,
@@ -81,8 +82,47 @@ const FALLBACK_ATTRIBUTION: AttributionReport = {
 // Score helpers (mirror IntensityBars scoring)
 // ---------------------------------------------------------------------------
 
-function computeLanguageIntensity(loadedWordCount: number): number {
-  return Math.min(10, loadedWordCount / 3);
+// Density-based — normalizes by article length so long articles don't
+// auto-saturate at the 30-hit ceiling. Saturates at ~50 hits per 1000 words
+// (5% density), which aligns with far-right / far-left outlet P75 after
+// recalibration against the BABE corpus. See scripts/calibrate-intensity.mjs.
+function computeLanguageIntensity(loadedWordCount: number, wordCount: number): number {
+  if (wordCount === 0) return 0;
+  const hitsPerKiloword = (loadedWordCount / wordCount) * 1000;
+  return Math.min(10, hitsPerKiloword / 5);
+}
+
+// ---------------------------------------------------------------------------
+// SD-047: News-page heuristic + language detection
+// ---------------------------------------------------------------------------
+
+const NEWS_JSONLD_TYPES = new Set(['NewsArticle', 'Article', 'BlogPosting']);
+
+export function isNewsPage(doc: Document, wordCount: number): boolean {
+  if (doc.querySelector('article') !== null) return true;
+  const ogType = doc.querySelector('meta[property="og:type"]')?.getAttribute('content');
+  if (ogType === 'article') return true;
+  for (const script of doc.querySelectorAll('script[type="application/ld+json"]')) {
+    try {
+      const parsed = JSON.parse(script.textContent ?? '') as Record<string, unknown>;
+      const type = parsed['@type'];
+      const types = Array.isArray(type) ? (type as unknown[]) : [type];
+      if (types.some((t) => typeof t === 'string' && NEWS_JSONLD_TYPES.has(t))) return true;
+    } catch {
+      // Malformed JSON-LD — skip this block
+    }
+  }
+  return wordCount >= 400;
+}
+
+const LANG_CONFIDENCE_THRESHOLD = 0.5;
+
+export function isNonEnglish(body: string): boolean {
+  const sample = body.slice(0, 2000);
+  const results = francAll(sample);
+  if (results.length === 0) return false;
+  const [topLang, topScore] = results[0];
+  return topLang !== 'eng' && topScore >= LANG_CONFIDENCE_THRESHOLD;
 }
 
 // ---------------------------------------------------------------------------
@@ -126,6 +166,16 @@ async function runAnalysis(): Promise<ContentScriptResult> {
 
   if (!extraction.ok) {
     return extraction;
+  }
+
+  // SD-047: news-page gate (synchronous DOM check + word count)
+  if (!isNewsPage(document, extraction.word_count)) {
+    return { ok: false, error: 'not_a_news_page' };
+  }
+
+  // SD-047: language gate (trigram-based, runs on extracted body text)
+  if (isNonEnglish(extraction.body)) {
+    return { ok: false, error: 'non_english' };
   }
 
   // Extract domain from current page URL.
@@ -181,7 +231,7 @@ async function runAnalysis(): Promise<ContentScriptResult> {
   const layer1Signals: Layer1Signals = {
     domain,
     wordCount: extraction.word_count,
-    languageIntensity: computeLanguageIntensity(totalCount),
+    languageIntensity: computeLanguageIntensity(totalCount, extraction.word_count),
     loadedWords: mergedLoadedWords,
     hedges,
     attribution,
@@ -194,6 +244,7 @@ async function runAnalysis(): Promise<ContentScriptResult> {
     body: extraction.body,
     word_count: extraction.word_count,
     offsets: extraction.offsets,
+    canonicalSignals: extraction.canonicalSignals,
     layer1Signals,
   };
 }

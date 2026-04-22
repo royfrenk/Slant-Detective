@@ -53,7 +53,7 @@ export default function Layer2SkeletonView(): React.JSX.Element {
   return (
     <div
       role="status"
-      aria-label="Analyzing article with full rubric…"
+      aria-label="Running in-depth analysis on this article…"
       aria-busy="true"
       data-testid="layer2-skeleton"
       className="flex flex-col gap-2"

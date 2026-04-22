@@ -62,6 +62,47 @@ interface TelemetryBatch {
 
 ---
 
+## What Goes to Us (Score Samples — if telemetry enabled)
+
+After each Layer 2 analysis completes, the extension sends a single anonymised score sample to our Cloudflare Worker. This is subject to the same telemetry toggle as the aggregate batch (see "How to Turn It Off" below).
+
+**Exactly 9 fields are sent per article:**
+
+```ts
+interface ScoreSample {
+  event: 'score_sample'
+  domain_etld1: string   // registrable domain only (e.g. "nytimes.com") — no subdomain, no path
+  overall: number        // 0–10 intensity score
+  word_choice: number    // 0–10 dimension score
+  framing: number        // 0–10 dimension score
+  headline_slant: number // 0–10 dimension score
+  source_mix: number     // 0–10 dimension score
+  direction: string      // "left" | "left-center" | "center" | "right-center" | "right" | "mixed"
+  provider: string       // "anthropic" | "openai" | "gemini"
+  rubric_version: string // e.g. "v1.1" or "rubric_v1.1-openai"
+}
+```
+
+**What is NOT sent:**
+
+- No URL path, query string, or fragment — only the registrable domain (eTLD+1)
+- No article title, body, or rubric rationale text
+- No span evidence or quoted text
+- No user identifier, device ID, install ID, or session ID
+- No IP address — the Worker reads it only for in-memory rate-limiting and never writes it
+- No timestamp finer than the day bucket (Analytics Engine aggregates by day)
+- No subdomains (e.g. `personal-blog.substack.com` → `substack.com`)
+
+**Purpose:** samples aggregate into rolling empirical percentile distributions, so the "more tilted than most" label on the bias score card reflects real-world articles rather than a one-time static reference corpus. Per-site distributions (e.g., "more tilted than 60% of Breitbart articles") become available once enough samples accumulate for a domain.
+
+**Privacy controls on the server:**
+
+- IP is stripped before any Analytics Engine write (existing SD-030 behaviour, unchanged)
+- Any (domain, day) bucket with fewer than 10 samples is excluded from published curves — prevents rare-domain-to-single-user correlation
+- Access logs do not capture the payload body
+
+---
+
 ## What Goes to Us (Bug Reports)
 
 The extension has a **Report bug** affordance in the evidence tooltip and in the side-panel footer. Nothing is sent unless you click **Send** in the confirmation modal.

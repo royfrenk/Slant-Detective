@@ -304,7 +304,7 @@ describe('ProviderSettingsCard — feedback states (SD-032)', () => {
     await act(async () => { fireEvent.click(button) })
 
     await waitFor(() => {
-      expect(screen.getByText(/Key saved\. Layer 2 analysis is now active\./i)).toBeInTheDocument()
+      expect(screen.getByText(/Key saved\. In-depth analysis is now active\./i)).toBeInTheDocument()
     })
     expect(storageMock.set).toHaveBeenCalled()
   })

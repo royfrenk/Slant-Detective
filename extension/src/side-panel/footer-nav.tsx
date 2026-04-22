@@ -5,13 +5,14 @@ type PageKey = 'how-we-measure' | 'privacy' | 'credits' | 'how-to-get-a-key';
 
 interface FooterNavProps {
   currentPage?: PageKey;
+  showChangeModel?: boolean;
 }
 
 const LINK_CLASS = 'text-[0.625rem] text-on-surface-variant font-normal no-underline hover:underline cursor-pointer';
 const ACTIVE_CLASS = 'text-[0.625rem] text-primary font-semibold no-underline';
 const DOT_CLASS = 'text-[0.625rem] text-on-surface-variant';
 
-export default function FooterNav({ currentPage }: FooterNavProps): React.JSX.Element {
+export default function FooterNav({ currentPage, showChangeModel = false }: FooterNavProps): React.JSX.Element {
   function openPage(pageName: string): void {
     chrome.tabs.create({ url: chrome.runtime.getURL(`src/pages/${pageName}.html`) }).catch(() => {});
   }
@@ -25,6 +26,14 @@ export default function FooterNav({ currentPage }: FooterNavProps): React.JSX.El
       chrome.runtime.sendMessage({ action: 'openReportBugModal' });
     } catch {
       // Non-critical: message send failed (e.g., chrome API unavailable in test env).
+    }
+  }
+
+  function openOptions(): void {
+    try {
+      chrome.runtime.openOptionsPage();
+    } catch {
+      // Non-critical: chrome API unavailable (e.g., test env).
     }
   }
 
@@ -53,7 +62,7 @@ export default function FooterNav({ currentPage }: FooterNavProps): React.JSX.El
   const dot = <span aria-hidden="true" className={DOT_CLASS}>·</span>;
 
   return (
-    <nav aria-label="Extension pages" className="flex items-center justify-center gap-[6px] pb-6">
+    <nav aria-label="Extension pages" className="flex flex-wrap items-center justify-center gap-x-[6px] gap-y-1 pb-6">
       {navItem('how-we-measure', 'How we measure', 'How we measure bias')}
       {dot}
       {navItem('privacy', 'Privacy', 'Privacy policy')}
@@ -81,6 +90,21 @@ export default function FooterNav({ currentPage }: FooterNavProps): React.JSX.El
       >
         Report bug
       </a>
+      {showChangeModel && (
+        <>
+          {dot}
+          <a
+            role="link"
+            tabIndex={0}
+            aria-label="Change analysis model — opens Slant Detective settings"
+            className={LINK_CLASS}
+            onClick={openOptions}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openOptions(); }}
+          >
+            Change model
+          </a>
+        </>
+      )}
     </nav>
   );
 }

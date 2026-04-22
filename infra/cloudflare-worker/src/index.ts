@@ -5,8 +5,9 @@
  * Strips the IP before any write — it is used only for in-memory rate-limiting.
  * Source: public (AGPL-3.0). Audit trail: grep for writeDataPoint — IP never appears.
  *
- * POST /v1/ingest      → 204 (valid) | 400 (invalid schema) | 413 (too large) | 405 (wrong method)
- * POST /v1/report-bug  → 204 (forwarded) | 400 (invalid) | 413 (too large) | 429 (rate-limited) | 502 (Resend error)
+ * POST /v1/ingest        → 204 (valid) | 400 (invalid schema) | 413 (too large) | 405 (wrong method)
+ * POST /v1/score-sample  → 204 (accepted) | 400 (invalid schema) | 413 (too large) | 429 (rate-limited) [SD-041]
+ * POST /v1/report-bug    → 204 (forwarded) | 400 (invalid) | 413 (too large) | 429 (rate-limited) | 502 (Resend error)
  */
 
 export interface Env {
@@ -45,6 +46,20 @@ interface BugReport {
   description?: string
 }
 
+// SD-041: Score sample event
+interface ScoreSample {
+  event: 'score_sample'
+  domain_etld1: string
+  overall: number
+  word_choice: number
+  framing: number
+  headline_slant: number
+  source_mix: number
+  direction: string
+  provider: string
+  rubric_version: string
+}
+
 // ── Rate-limit (in-memory, best-effort abuse guard) ───────────────────────────
 
 interface RateLimitEntry {
@@ -60,10 +75,15 @@ const INGEST_RATE_LIMIT_MAX = 1
 const BUG_RATE_LIMIT_WINDOW_MS = 60_000
 const BUG_RATE_LIMIT_MAX = 5
 
+// Score samples: 120 per minute per IP (one per article analysis, generous headroom)
+const SCORE_SAMPLE_RATE_LIMIT_WINDOW_MS = 60_000
+const SCORE_SAMPLE_RATE_LIMIT_MAX = 120
+
 // LRU is overkill for an abuse guard; simple Maps are fine.
 // Workers are single-threaded and short-lived — Maps reset on cold start.
 const ingestRateLimitMap = new Map<string, RateLimitEntry>()
 const bugRateLimitMap = new Map<string, RateLimitEntry>()
+const scoreSampleRateLimitMap = new Map<string, RateLimitEntry>()
 
 function isRateLimited(
   map: Map<string, RateLimitEntry>,
@@ -88,6 +108,16 @@ function isIngestRateLimited(ip: string, now: number): boolean {
 
 function isBugRateLimited(ip: string, now: number): boolean {
   return isRateLimited(bugRateLimitMap, BUG_RATE_LIMIT_WINDOW_MS, BUG_RATE_LIMIT_MAX, ip, now)
+}
+
+function isScoreSampleRateLimited(ip: string, now: number): boolean {
+  return isRateLimited(
+    scoreSampleRateLimitMap,
+    SCORE_SAMPLE_RATE_LIMIT_WINDOW_MS,
+    SCORE_SAMPLE_RATE_LIMIT_MAX,
+    ip,
+    now,
+  )
 }
 
 // ── Validation ────────────────────────────────────────────────────────────────
@@ -164,6 +194,69 @@ function validateBugReport(raw: unknown): BugReport | null {
   return obj as BugReport
 }
 
+// SD-041: score_sample validation ─────────────────────────────────────────────
+
+// Accepts: "v1.1" (Anthropic), "rubric_v1.1-openai", "rubric_v1.1-gemini"
+// Loose regex — must NOT exact-match; provider version strings vary.
+const RUBRIC_VERSION_RE = /^(rubric_)?v\d+\.\d+(-\w+)?$/
+
+const VALID_DIRECTIONS = new Set([
+  'left', 'left-center', 'center', 'right-center', 'right', 'mixed',
+])
+
+const VALID_PROVIDERS = new Set(['anthropic', 'openai', 'gemini'])
+
+// Known extra fields that must NOT appear in the payload
+const SCORE_SAMPLE_ALLOWED_KEYS = new Set([
+  'event', 'domain_etld1', 'overall', 'word_choice', 'framing',
+  'headline_slant', 'source_mix', 'direction', 'provider', 'rubric_version',
+])
+
+function isScore(v: unknown): boolean {
+  return typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 10
+}
+
+function validateScoreSample(raw: unknown): ScoreSample | null {
+  if (typeof raw !== 'object' || raw === null) return null
+
+  const obj = raw as Record<string, unknown>
+
+  // Reject extra fields (privacy: ensure client sends exactly 9 fields)
+  for (const key of Object.keys(obj)) {
+    if (!SCORE_SAMPLE_ALLOWED_KEYS.has(key)) return null
+  }
+
+  if (obj['event'] !== 'score_sample') return null
+
+  // domain_etld1: non-empty string, no slashes/paths, max 253 chars (DNS limit)
+  if (
+    typeof obj['domain_etld1'] !== 'string' ||
+    obj['domain_etld1'].length === 0 ||
+    obj['domain_etld1'].length > 253 ||
+    obj['domain_etld1'].includes('/') ||
+    obj['domain_etld1'].includes('?') ||
+    obj['domain_etld1'].includes('#')
+  ) return null
+
+  // Score fields: integer 0–10
+  if (!isScore(obj['overall'])) return null
+  if (!isScore(obj['word_choice'])) return null
+  if (!isScore(obj['framing'])) return null
+  if (!isScore(obj['headline_slant'])) return null
+  if (!isScore(obj['source_mix'])) return null
+
+  // direction: one of the known values
+  if (typeof obj['direction'] !== 'string' || !VALID_DIRECTIONS.has(obj['direction'])) return null
+
+  // provider: one of the known providers
+  if (typeof obj['provider'] !== 'string' || !VALID_PROVIDERS.has(obj['provider'])) return null
+
+  // rubric_version: loose regex (accepts all 3 provider formats)
+  if (typeof obj['rubric_version'] !== 'string' || !RUBRIC_VERSION_RE.test(obj['rubric_version'])) return null
+
+  return obj as unknown as ScoreSample
+}
+
 // ── Analytics Engine write ────────────────────────────────────────────────────
 
 function writeTelemetryRow(env: Env, batch: TelemetryBatch): void {
@@ -192,6 +285,29 @@ function writeTelemetryRow(env: Env, batch: TelemetryBatch): void {
       c.key_rejected,
     ],
     indexes: [batch.extension_version],
+  })
+}
+
+// SD-041: Write score sample to Analytics Engine ──────────────────────────────
+
+function writeScoreSampleDataPoint(env: Env, sample: ScoreSample): void {
+  // IP is NOT included — used only for in-memory rate-limiting above.
+  // All 9 payload fields are written; nothing beyond that.
+  env.TELEMETRY.writeDataPoint({
+    blobs: [
+      sample.domain_etld1,   // blob1: eTLD+1 domain (e.g. "nytimes.com")
+      sample.direction,       // blob2: bias direction
+      sample.provider,        // blob3: provider id
+      sample.rubric_version,  // blob4: rubric version string
+    ],
+    doubles: [
+      sample.overall,         // double1
+      sample.word_choice,     // double2
+      sample.framing,         // double3
+      sample.headline_slant,  // double4
+      sample.source_mix,      // double5
+    ],
+    indexes: [sample.provider], // index1: provider (grouping key per SD-041 drift audit)
   })
 }
 
@@ -323,6 +439,61 @@ async function handleReportBug(request: Request, env: Env, clientIp: string, now
   return new Response(null, { status: 204 })
 }
 
+// SD-041: Min-count threshold for (domain_etld1, day) bucket
+// The Worker logs dropped-bucket counts so the threshold can be tuned without redeployment.
+// Actual per-(domain,day) aggregation and threshold enforcement happen in Analytics Engine
+// queries (read side). The Worker writes every valid sample — the read side applies N=10.
+// We log a note here so that the query author can filter accordingly.
+const SCORE_SAMPLE_MIN_COUNT_NOTE =
+  'min_count_threshold=10: filter (domain_etld1,day) buckets with count < 10 on the read side.'
+
+async function handleScoreSample(
+  request: Request,
+  env: Env,
+  clientIp: string,
+  now: number,
+): Promise<Response> {
+  // 2 KB cap — score_sample payload is tiny (9 scalar fields)
+  const BODY_LIMIT = 2048
+  const contentLength = parseInt(request.headers.get('Content-Length') ?? '0', 10)
+  if (contentLength > BODY_LIMIT) {
+    return new Response('Payload Too Large', { status: 413 })
+  }
+
+  if (request.headers.get('Content-Type') !== 'application/json') {
+    return new Response('Bad Request: Content-Type must be application/json', { status: 400 })
+  }
+
+  const bodyBytes = await request.arrayBuffer()
+  if (bodyBytes.byteLength > BODY_LIMIT) {
+    return new Response('Payload Too Large', { status: 413 })
+  }
+
+  if (isScoreSampleRateLimited(clientIp, now)) {
+    return new Response('Too Many Requests', { status: 429 })
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(new TextDecoder().decode(bodyBytes))
+  } catch {
+    return new Response('Bad Request: invalid JSON', { status: 400 })
+  }
+
+  const sample = validateScoreSample(parsed)
+  if (sample === null) {
+    return new Response('Bad Request: schema validation failed', { status: 400 })
+  }
+
+  // Write to Analytics Engine — IP is NOT included per privacy invariants
+  writeScoreSampleDataPoint(env, sample)
+
+  // Log threshold note for query authors (no payload fields logged)
+  console.log(`score_sample accepted: provider=${sample.provider} ${SCORE_SAMPLE_MIN_COUNT_NOTE}`)
+
+  return new Response(null, { status: 204 })
+}
+
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -353,6 +524,10 @@ export default {
 
     if (path === '/v1/ingest') {
       return handleIngest(request, env, clientIp, now)
+    }
+
+    if (path === '/v1/score-sample') {
+      return handleScoreSample(request, env, clientIp, now)
     }
 
     if (path === '/v1/report-bug') {

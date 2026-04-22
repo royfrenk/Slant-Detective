@@ -1,4 +1,4 @@
-import type { Layer1Signals, RubricResponse, RubricSpan } from './types';
+import type { CanonicalSignals, Layer1Signals, RubricResponse, RubricSpan } from './types';
 
 // Panel → service worker
 export type OutboundMessage =
@@ -10,12 +10,15 @@ export type OutboundMessage =
 // Content script analysis result — extraction result extended with Layer 1 signals.
 export type ContentScriptResult =
   | { ok: false; error: 'extraction_failed' }
+  | { ok: false; error: 'non_english' }
+  | { ok: false; error: 'not_a_news_page' }
   | {
       ok: true
       title: string
       body: string
       word_count: number
       offsets: { start: number; end: number }[]
+      canonicalSignals: CanonicalSignals
       layer1Signals: Layer1Signals | null
     };
 

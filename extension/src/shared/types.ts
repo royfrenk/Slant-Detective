@@ -1,6 +1,15 @@
+export interface CanonicalSignals {
+  linkCanonical: string | null      // <link rel="canonical" href="..."> resolved to absolute URL
+  jsonLdUrl: string | null          // JSON-LD mainEntityOfPage.@id or url field, absolute
+  ogUrl: string | null              // <meta property="og:url"> content, absolute
+  twitterUrl: string | null         // <meta name="twitter:url"> content, absolute
+}
+
 export type ExtractionResult =
-  | { ok: true; title: string; body: string; word_count: number; offsets: { start: number; end: number }[] }
-  | { ok: false; error: 'extraction_failed' };
+  | { ok: true; title: string; body: string; word_count: number; offsets: { start: number; end: number }[]; canonicalSignals: CanonicalSignals }
+  | { ok: false; error: 'extraction_failed' }
+  | { ok: false; error: 'non_english' }
+  | { ok: false; error: 'not_a_news_page' };
 
 // --- Layer 1 signal types ---
 
@@ -112,6 +121,7 @@ export interface RubricDimension {
   score: number         // 0–10
   direction?: RubricDirection
   confidence?: number   // 0–1
+  rationale?: string    // SD-040: LLM-generated or signal-derived explanation (optional for back-compat)
 }
 
 export interface RubricDimensions {
@@ -125,6 +135,7 @@ export interface RubricOverall {
   intensity: number     // 0–10
   direction: RubricDirection
   confidence: number    // 0–1
+  rationale?: string    // SD-040: LLM-generated or signal-derived explanation (optional for back-compat)
 }
 
 export interface RubricResponse {

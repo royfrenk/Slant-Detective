@@ -341,7 +341,7 @@ describe('Layer2SkeletonView', () => {
     render(<Layer2SkeletonView />);
     expect(screen.getByRole('status')).toHaveAttribute(
       'aria-label',
-      'Analyzing article with full rubric…',
+      'Running in-depth analysis on this article…',
     );
   });
 });

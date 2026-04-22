@@ -92,7 +92,7 @@ describe('ProviderTabGroup — recommendation badges (SD-032)', () => {
       badge: {
         text: 'NOT RECOMMENDED',
         variant: 'warning',
-        tooltip: 'Lower accuracy in our parity eval (κ 0.32 vs 0.58 baseline). Use Anthropic or Gemini for more reliable Layer 2 analysis.',
+        tooltip: 'Lower accuracy in our parity eval (κ 0.32 vs 0.58 baseline). Use Anthropic or Gemini for a more reliable in-depth analysis.',
       },
     },
     { id: 'gemini', label: 'Gemini' },

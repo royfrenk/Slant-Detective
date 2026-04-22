@@ -1,0 +1,6 @@
+{
+  "version": "1.0",
+  "description": "Reference corpus for percentile distribution building. ~100 articles with ideological spread (AP/Reuters center-left, Fox/Breitbart right, Jacobin left). Calibration target: AP reads ~40th percentile, Breitbart reads ~85th percentile.",
+  "built_at": "2026-04-22",
+  "articles": []
+}
