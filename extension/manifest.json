@@ -51,6 +51,15 @@
     {
       "resources": ["assets/babe-lexicon.json"],
       "matches": ["http://*/*", "https://*/*"]
+    },
+    {
+      "resources": [
+        "assets/reference-distribution-anthropic.json",
+        "assets/reference-distribution-openai.json",
+        "assets/reference-distribution-gemini.json",
+        "assets/reference-distribution-layer1.json"
+      ],
+      "matches": ["chrome-extension://*/*"]
     }
   ],
   "icons": {

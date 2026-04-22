@@ -8,7 +8,7 @@ import { validateRubricResponse } from '../../src/service-worker/response-valida
 
 // Inject __RUBRIC_VERSION__ global for rubric-prompt module.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-;(globalThis as any).__RUBRIC_VERSION__ = 'rubric_v1.0'
+;(globalThis as any).__RUBRIC_VERSION__ = 'v1.1'
 
 import { getRubricPrompt, fillUserTemplate } from '../../src/service-worker/rubric-prompt'
 
@@ -50,7 +50,7 @@ describe.skipIf(skip)('OpenAIProvider — live integration (requires OPENAI_API_
     // validateRubricResponse will throw RubricValidationError if the response
     // does not conform to the schema — this verifies schema compliance end-to-end.
     const rubricResponse = validateRubricResponse(text, FIXTURE_ARTICLE.body)
-    expect(rubricResponse.rubric_version).toBe('rubric_v1.0-openai')
+    expect(rubricResponse.rubric_version).toBe('rubric_v1.1-openai')
     expect(typeof rubricResponse.overall.intensity).toBe('number')
     expect(['left', 'center', 'right']).toContain(rubricResponse.overall.direction)
   }, 60_000) // 60s timeout for real API call

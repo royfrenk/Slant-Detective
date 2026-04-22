@@ -121,6 +121,7 @@ export interface RubricDimension {
   score: number         // 0–10
   direction?: RubricDirection
   confidence?: number   // 0–1
+  rationale?: string    // SD-040: LLM-generated or signal-derived explanation (optional for back-compat)
 }
 
 export interface RubricDimensions {
@@ -134,6 +135,7 @@ export interface RubricOverall {
   intensity: number     // 0–10
   direction: RubricDirection
   confidence: number    // 0–1
+  rationale?: string    // SD-040: LLM-generated or signal-derived explanation (optional for back-compat)
 }
 
 export interface RubricResponse {

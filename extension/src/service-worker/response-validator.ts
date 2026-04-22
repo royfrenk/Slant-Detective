@@ -85,7 +85,10 @@ function parseRawInput(raw: unknown): Record<string, unknown> {
   throw new RubricValidationError(`Expected string or object, got: ${typeof raw}`)
 }
 
-function validateDimensions(raw: unknown): RubricDimensions {
+function validateDimensions(
+  raw: unknown,
+  dimensionRationales?: Record<string, unknown>,
+): RubricDimensions {
   if (typeof raw !== 'object' || raw === null) {
     throw new RubricValidationError('Missing or invalid "dimensions" field')
   }
@@ -106,7 +109,17 @@ function validateDimensions(raw: unknown): RubricDimensions {
     const confidence = typeof d['confidence'] === 'number' && d['confidence'] >= 0 && d['confidence'] <= 1
       ? d['confidence']
       : undefined
-    result[key] = { score, ...(direction !== undefined && { direction }), ...(confidence !== undefined && { confidence }) }
+    // SD-040: rationale from top-level dimension_rationales object (optional — absent in pre-v1.1 responses)
+    const rationaleRaw = dimensionRationales?.[key]
+    const rationale = typeof rationaleRaw === 'string' && rationaleRaw.trim() !== ''
+      ? rationaleRaw.trim()
+      : undefined
+    result[key] = {
+      score,
+      ...(direction !== undefined && { direction }),
+      ...(confidence !== undefined && { confidence }),
+      ...(rationale !== undefined && { rationale }),
+    }
   }
   return result
 }
@@ -157,7 +170,19 @@ export function validateRubricResponse(raw: unknown, body?: string): RubricRespo
   const direction = assertInSet(o['direction'], 'overall.direction', VALID_DIRECTIONS) as RubricDirection
   const confidence = assertNumber(o['confidence'], 'overall.confidence', 0, 1)
 
-  const dimensions = validateDimensions(obj['dimensions'])
+  // SD-040: overall_rationale is a top-level field (optional — absent in pre-v1.1 responses)
+  const overallRationaleRaw = obj['overall_rationale']
+  const overallRationale = typeof overallRationaleRaw === 'string' && overallRationaleRaw.trim() !== ''
+    ? overallRationaleRaw.trim()
+    : undefined
+
+  // SD-040: dimension_rationales is a top-level object (optional — absent in pre-v1.1 responses)
+  const dimensionRationalesRaw = obj['dimension_rationales']
+  const dimensionRationales = typeof dimensionRationalesRaw === 'object' && dimensionRationalesRaw !== null
+    ? (dimensionRationalesRaw as Record<string, unknown>)
+    : undefined
+
+  const dimensions = validateDimensions(obj['dimensions'], dimensionRationales)
 
   if (!Array.isArray(obj['spans'])) {
     throw new RubricValidationError('Missing or invalid "spans" field — expected an array')
@@ -176,7 +201,12 @@ export function validateRubricResponse(raw: unknown, body?: string): RubricRespo
 
   return {
     rubric_version,
-    overall: { intensity, direction, confidence },
+    overall: {
+      intensity,
+      direction,
+      confidence,
+      ...(overallRationale !== undefined && { rationale: overallRationale }),
+    },
     dimensions,
     spans,
   }

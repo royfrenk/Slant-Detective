@@ -38,7 +38,14 @@ Return this exact JSON structure:
       "reason": "<one sentence explaining why this specific word or phrase signals bias — include context from the surrounding sentence>",
       "dimension": <"word_choice"|"framing"|"headline_slant"|"source_mix">
     }
-  ]
+  ],
+  "overall_rationale": "<1-2 sentences citing the strongest signals across all dimensions — must cite specific quoted terms or numeric counts, no hedging, no score number repetition>",
+  "dimension_rationales": {
+    "word_choice": "<exactly 1 sentence citing the most concrete evidence for this dimension>",
+    "framing": "<exactly 1 sentence citing the most concrete evidence for this dimension>",
+    "headline_slant": "<exactly 1 sentence citing the most concrete evidence for this dimension>",
+    "source_mix": "<exactly 1 sentence citing the most concrete evidence for this dimension>"
+  }
 }
 
 Dimension definitions:
@@ -55,7 +62,9 @@ Rules:
 - Do NOT create spans for text inside direct quotations from named sources (text enclosed in quotation marks attributed to a person, e.g. "...", said Name). Focus on editorial language, not source statements.
 - offset_start and offset_end are character offsets of that exact word in the body text (not the title)
 - Do NOT reference the publication name, domain, or brand in your reasoning
-- Analyze the text content only — treat the article as anonymous`
+- Analyze the text content only — treat the article as anonymous
+- overall_rationale MUST cite specific quoted terms or numeric counts from the article; do not hedge ("may suggest", "could indicate"); do not repeat the score number; maximum 2 sentences
+- dimension_rationales: each value MUST be exactly 1 sentence citing the most concrete evidence for that dimension; cite quoted terms or counts; no hedging; no score number repetition`
 
 // User template — placeholders filled by the caller at request time.
 // {ARTICLE_TITLE} and {ARTICLE_BODY} are the only placeholders here.
@@ -114,12 +123,12 @@ export function getRubricPrompt(providerId: ProviderId): RubricPrompt {
     // which satisfies this requirement. The suffix below reinforces schema compliance
     // (JSON mode guarantees valid JSON structure, not schema adherence).
     const openaiSystem =
-      SYSTEM_PROMPT.replaceAll('{RUBRIC_VERSION}', 'rubric_v1.0-openai') +
+      SYSTEM_PROMPT.replaceAll('{RUBRIC_VERSION}', 'rubric_v1.1-openai') +
       '\n\nRespond with a JSON object only — no explanation, no code fences. Your entire response must be valid JSON matching the schema above.'
     return {
       system: openaiSystem,
       user: USER_TEMPLATE,
-      version: 'rubric_v1.0-openai',
+      version: 'rubric_v1.1-openai',
     }
   }
 
@@ -129,12 +138,12 @@ export function getRubricPrompt(providerId: ProviderId): RubricPrompt {
   // with an explicit JSON-only reinforcement and a distinct version string for
   // cache isolation.
   const geminiSystem =
-    SYSTEM_PROMPT.replaceAll('{RUBRIC_VERSION}', 'rubric_v1.0-gemini') +
+    SYSTEM_PROMPT.replaceAll('{RUBRIC_VERSION}', 'rubric_v1.1-gemini') +
     '\n\nRespond with a JSON object only — no explanation, no code fences. Your entire response must be valid JSON matching the schema above.'
   return {
     system: geminiSystem,
     user: USER_TEMPLATE,
-    version: 'rubric_v1.0-gemini',
+    version: 'rubric_v1.1-gemini',
   }
 }
 

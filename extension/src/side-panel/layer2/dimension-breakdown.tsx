@@ -1,9 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import type { RubricDimensions, RubricDirection } from '../../shared/types';
 import { DIMENSIONS } from '../../shared/dimension-copy';
 import DirectionChip from './direction-chip';
 import InfoIcon from '../info-icon';
 import InfoTooltip, { useInfoTooltip } from '../info-tooltip';
+import ChevronToggle from './chevron-toggle';
+import RationalePanel from './rationale-panel';
 
 const TOTAL_BLOCKS = 10;
 
@@ -75,9 +77,12 @@ interface DimensionRowProps {
   config: DimensionConfig;
   score: number;
   direction?: RubricDirection;
+  /** SD-040: LLM-generated or signal-derived rationale. Chevron hidden when absent. */
+  rationale?: string;
 }
 
-function DimensionRow({ config, score, direction }: DimensionRowProps): React.JSX.Element {
+function DimensionRow({ config, score, direction, rationale }: DimensionRowProps): React.JSX.Element {
+  const [isOpen, setIsOpen] = useState(false);
   const ariaLabel = direction
     ? `${config.label}: score ${score.toFixed(0)} out of 10, ${direction}`
     : `${config.label}: score ${score.toFixed(0)} out of 10`;
@@ -85,6 +90,7 @@ function DimensionRow({ config, score, direction }: DimensionRowProps): React.JS
   const iconRef = useRef<HTMLSpanElement>(null);
   const tooltip = useInfoTooltip();
   const tooltipId = `sd-info-tooltip-${config.key}`;
+  const rationaleId = `dim-rationale-${config.key}`;
 
   const dimensionCopy = DIMENSIONS.find((d) => d.key === config.key);
 
@@ -92,30 +98,48 @@ function DimensionRow({ config, score, direction }: DimensionRowProps): React.JS
     return iconRef.current?.getBoundingClientRect() ?? null;
   }
 
+  function handleToggle(): void {
+    setIsOpen((prev) => !prev);
+  }
+
+  const chevronAriaLabel = isOpen
+    ? `Hide rationale for ${config.label}`
+    : `Show rationale for ${config.label}`;
+
   return (
     <div role="group" aria-label={ariaLabel} className="flex flex-col gap-[6px]">
-      <div className="flex items-center gap-1">
-        <span className="text-[0.75rem] font-semibold text-primary uppercase">
-          {config.label}
-        </span>
-        {dimensionCopy != null && (
-          <span ref={iconRef}>
-            <InfoIcon
-              dimensionKey={config.key}
-              ariaLabel={`${config.label} — what this means`}
-              onMouseEnter={() => {
-                const rect = getIconRect();
-                if (rect != null) tooltip.handleIconMouseEnter(rect);
-              }}
-              onMouseLeave={tooltip.handleIconMouseLeave}
-              onFocus={() => {
-                const rect = getIconRect();
-                if (rect != null) tooltip.handleIconFocus(rect);
-              }}
-              onBlur={tooltip.handleIconBlur}
-              tooltipVisible={tooltip.tooltipVisible}
-            />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          <span className="text-[0.75rem] font-semibold text-primary uppercase">
+            {config.label}
           </span>
+          {dimensionCopy != null && (
+            <span ref={iconRef}>
+              <InfoIcon
+                dimensionKey={config.key}
+                ariaLabel={`${config.label} — what this means`}
+                onMouseEnter={() => {
+                  const rect = getIconRect();
+                  if (rect != null) tooltip.handleIconMouseEnter(rect);
+                }}
+                onMouseLeave={tooltip.handleIconMouseLeave}
+                onFocus={() => {
+                  const rect = getIconRect();
+                  if (rect != null) tooltip.handleIconFocus(rect);
+                }}
+                onBlur={tooltip.handleIconBlur}
+                tooltipVisible={tooltip.tooltipVisible}
+              />
+            </span>
+          )}
+        </div>
+        {rationale != null && rationale.trim() !== '' && (
+          <ChevronToggle
+            isOpen={isOpen}
+            onToggle={handleToggle}
+            ariaControls={rationaleId}
+            ariaLabel={chevronAriaLabel}
+          />
         )}
       </div>
       {dimensionCopy != null && (
@@ -142,6 +166,13 @@ function DimensionRow({ config, score, direction }: DimensionRowProps): React.JS
           <DirectionChip direction={direction} />
         )}
       </div>
+      <RationalePanel
+        text={rationale}
+        id={rationaleId}
+        animated={true}
+        isOpen={isOpen}
+        marginTop="mt-1"
+      />
     </div>
   );
 }
@@ -169,6 +200,7 @@ export default function DimensionBreakdown({ dims }: DimensionBreakdownProps): R
               config={config}
               score={dim.score}
               direction={dim.direction}
+              rationale={dim.rationale}
             />
           );
         })}

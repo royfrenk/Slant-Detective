@@ -2,14 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Inject __RUBRIC_VERSION__ global (normally provided by Vite's define plugin).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-(globalThis as any).__RUBRIC_VERSION__ = 'rubric_v1.0'
+(globalThis as any).__RUBRIC_VERSION__ = 'v1.1'
 
 import { getRubricPrompt, fillUserTemplate } from '../src/service-worker/rubric-prompt'
 
 describe('getRubricPrompt("anthropic")', () => {
   it('version is the injected rubric version', () => {
     const prompt = getRubricPrompt('anthropic')
-    expect(prompt.version).toBe('rubric_v1.0')
+    expect(prompt.version).toBe('v1.1')
   })
 
   it('system contains "analyst"', () => {
@@ -49,9 +49,9 @@ describe('getRubricPrompt("anthropic")', () => {
 })
 
 describe('getRubricPrompt("openai")', () => {
-  it('version is rubric_v1.0-openai', () => {
+  it('version is rubric_v1.1-openai', () => {
     const prompt = getRubricPrompt('openai')
-    expect(prompt.version).toBe('rubric_v1.0-openai')
+    expect(prompt.version).toBe('rubric_v1.1-openai')
   })
 
   it('system contains "Return ONLY a JSON object" (activates OpenAI JSON mode)', () => {
@@ -91,9 +91,9 @@ describe('getRubricPrompt("openai")', () => {
 })
 
 describe('getRubricPrompt("gemini")', () => {
-  it('version is rubric_v1.0-gemini', () => {
+  it('version is rubric_v1.1-gemini', () => {
     const prompt = getRubricPrompt('gemini')
-    expect(prompt.version).toBe('rubric_v1.0-gemini')
+    expect(prompt.version).toBe('rubric_v1.1-gemini')
   })
 
   it('system contains "Return ONLY a JSON object"', () => {
