@@ -12,32 +12,46 @@ interface Dimension {
   glyph: string;
   description: string;
   example?: string;
+  /** Tailwind class for the left accent stripe (e.g. `border-dim-word-choice`). */
+  accentBorderClass: string;
+  /** Tailwind class for the glyph + label color (e.g. `text-dim-word-choice`). */
+  accentTextClass: string;
 }
 
+// Palette mirrors side-panel/layer2/dimension-breakdown.tsx so the explainer page
+// uses the same color language as the actual rubric readout.
 const DIMENSIONS: readonly Dimension[] = [
   {
     label: 'WORD CHOICE',
     glyph: '⚠',
     description: 'Does the writer pick loaded words where neutral ones would do?',
     example: '"Slammed" vs "criticized." "Regime" vs "government." Small swaps that steer how you feel.',
+    accentBorderClass: 'border-dim-word-choice',
+    accentTextClass: 'text-dim-word-choice',
   },
   {
     label: 'FRAMING',
     glyph: '◈',
     description: 'How are people\u2019s statements introduced?',
     example: '"She said..." lands very differently from "She admitted..." or "She claimed..." We read the verbs.',
+    accentBorderClass: 'border-dim-framing',
+    accentTextClass: 'text-dim-framing',
   },
   {
     label: 'HEADLINE SLANT',
     glyph: '✎',
     description: 'Does the headline match what the article actually says?',
     example: 'Or is it pumped up, toned down, or pointing somewhere the story never quite goes?',
+    accentBorderClass: 'border-primary-fixed',
+    accentTextClass: 'text-primary-fixed',
   },
   {
     label: 'SOURCE MIX',
     glyph: '\u201c',
     description: 'Does the article quote a range of voices, or lean on one side?',
     example: 'A one-source story reads differently from a five-source one, even when both sound confident.',
+    accentBorderClass: 'border-slate-chip',
+    accentTextClass: 'text-slate-chip',
   },
 ] as const;
 
@@ -101,10 +115,17 @@ const ACCURACY_ROWS: readonly AccuracyRow[] = [
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function DimensionCard({ label, glyph, description, example }: Dimension): React.JSX.Element {
+function DimensionCard({
+  label,
+  glyph,
+  description,
+  example,
+  accentBorderClass,
+  accentTextClass,
+}: Dimension): React.JSX.Element {
   return (
-    <div className="bg-surface rounded-lg px-4 py-3 mb-2">
-      <p className="text-sm font-semibold text-on-surface m-0">
+    <div className={`bg-surface rounded-lg border-l-4 ${accentBorderClass} px-4 py-3 mb-2`}>
+      <p className={`text-sm font-semibold ${accentTextClass} m-0`}>
         <span aria-hidden="true">{glyph} </span>{label}
       </p>
       <p className="text-xs text-on-surface-variant mt-1 mb-0">{description}</p>
@@ -120,8 +141,7 @@ function VerbRungCard({ rung, direction, examples }: VerbRung): React.JSX.Elemen
     <div className="bg-surface rounded-lg px-4 py-3 mb-2">
       <div className="flex items-start gap-3">
         <span
-          className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-on-primary"
-          style={{ background: 'linear-gradient(135deg, #1e293b, #334155)' }}
+          className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-on-primary bg-dim-framing"
           aria-hidden="true"
         >
           {rung}
@@ -235,7 +255,7 @@ function HowWeMeasurePage(): React.JSX.Element {
               3,663 sentences that media-bias researchers labeled by hand. Here's how we lined
               up, with each score translated into plain English.
             </p>
-            <div className="bg-surface-variant rounded-lg px-4 py-3">
+            <div className="bg-surface-variant rounded-lg border-l-4 border-primary-fixed px-4 py-3">
               <table className="w-full text-sm text-on-surface">
                 <thead>
                   <tr className="text-left border-b border-outline">
