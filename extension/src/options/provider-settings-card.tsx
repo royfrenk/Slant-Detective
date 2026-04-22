@@ -36,17 +36,6 @@ const PROVIDER_META: ProviderMeta[] = [
     ],
   },
   {
-    id: 'openai',
-    label: 'OpenAI',
-    placeholder: 'sk-...',
-    prefixLen: 3,
-    defaultModel: 'gpt-5-mini',
-    models: [
-      { id: 'gpt-5-mini', label: 'gpt-5-mini', descriptor: 'Faster, cheaper — recommended' },
-      { id: 'gpt-5', label: 'gpt-5', descriptor: 'Slower, higher quality' },
-    ],
-  },
-  {
     id: 'gemini',
     label: 'Gemini',
     placeholder: 'AIza...',
@@ -55,6 +44,17 @@ const PROVIDER_META: ProviderMeta[] = [
     models: [
       { id: 'gemini-2.5-flash', label: 'gemini-2.5-flash', descriptor: 'Faster, cheaper — recommended' },
       { id: 'gemini-2.5-pro', label: 'gemini-2.5-pro', descriptor: 'Slower, higher quality' },
+    ],
+  },
+  {
+    id: 'openai',
+    label: 'OpenAI',
+    placeholder: 'sk-...',
+    prefixLen: 3,
+    defaultModel: 'gpt-5-mini',
+    models: [
+      { id: 'gpt-5-mini', label: 'gpt-5-mini', descriptor: 'Faster, cheaper — recommended' },
+      { id: 'gpt-5', label: 'gpt-5', descriptor: 'Slower, higher quality' },
     ],
   },
 ]
