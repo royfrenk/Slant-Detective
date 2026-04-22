@@ -229,8 +229,8 @@ export default function ProviderSettingsCard(): React.JSX.Element {
       chrome.storage.local.get([PROVIDERS_KEY, ACTIVE_PROVIDER_KEY] as any, resolve)
     })
     const existingProviders = (existing[PROVIDERS_KEY] as ProvidersStorageMap | undefined) ?? {}
-    const updated: ProvidersStorageMap = { ...existingProviders }
-    delete updated[activeTab]
+    const { [activeTab]: _removed, ...updated } = existingProviders
+    void _removed
 
     // If we removed the active provider, pick another provider that still has a key.
     const storedActive = existing[ACTIVE_PROVIDER_KEY] as ProviderId | undefined
@@ -255,7 +255,12 @@ export default function ProviderSettingsCard(): React.JSX.Element {
     // If we cleared the active provider entirely, remove the storage key too.
     if (storedActive === activeTab && nextActive === null) {
       await new Promise<void>((resolve) => {
-        chrome.storage.local.remove(ACTIVE_PROVIDER_KEY, () => resolve())
+        chrome.storage.local.remove(ACTIVE_PROVIDER_KEY, () => {
+          if (chrome.runtime.lastError) {
+            setFeedbackState('error')
+          }
+          resolve()
+        })
       })
     }
 
