@@ -217,7 +217,7 @@ function isIpAddress(hostname: string): boolean {
  *   "https://www.nytimes.com/article" → "nytimes.com"
  *   "https://personal-blog.substack.com/p/post" → "substack.com"
  *   "https://www.bbc.co.uk/news" → "bbc.co.uk"
- *   "https://news.gov.au/story" → "gov.au"   (3-label: news.gov.au → gov.au is PSL → need 4th)
+ *   "https://news.gov.au/story" → "news.gov.au"   (gov.au is a PSL entry, so news.gov.au is the eTLD+1)
  *
  * Returns null for:
  *   - Unparseable URLs

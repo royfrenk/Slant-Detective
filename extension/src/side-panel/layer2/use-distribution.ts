@@ -91,7 +91,20 @@ export function useDistribution(
   provider: ProviderKey,
   domainEtld1?: string,
 ): DistributionData | null {
-  const [distribution, setDistribution] = useState<DistributionData | null>(null)
+  const [distribution, setDistribution] = useState<DistributionData | null>(() => {
+    // Warm-read: if the cache already has a result from a previous load, return it
+    // synchronously to avoid a loading flash. Priority matches loadDistribution.
+    if (domainEtld1) {
+      const slug = domainToSlug(domainEtld1)
+      const perSite = distributionCache.get(`${provider}-${slug}-empirical`)
+      if (perSite !== undefined && perSite !== null) return perSite
+    }
+    const empirical = distributionCache.get(`${provider}-empirical`)
+    if (empirical !== undefined && empirical !== null) return empirical
+    const staticKey = distributionCache.get(`${provider}`)
+    if (staticKey !== undefined && staticKey !== null) return staticKey
+    return null
+  })
 
   useEffect(() => {
     let cancelled = false

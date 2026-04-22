@@ -58,6 +58,8 @@ const SCORE_SAMPLE_NOT_SENT: readonly string[] = [
   'No user identifier, device ID, install ID, or session ID',
   'No IP address — read only for rate-limiting, never written',
   'No subdomains (e.g. personal-blog.substack.com → substack.com)',
+  'No timestamp finer than the day bucket',
+  'No span evidence or quoted text',
 ] as const;
 
 const BUG_REPORT_NOT_SENT: readonly string[] = [
