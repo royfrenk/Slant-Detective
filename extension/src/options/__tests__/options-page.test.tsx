@@ -112,7 +112,7 @@ describe('ProviderSettingsCard (options-page behavioral tests)', () => {
     await act(async () => { fireEvent.click(button) })
 
     await waitFor(() => {
-      expect(screen.getByText(/Key saved\. Layer 2 analysis is now active\./i)).toBeInTheDocument()
+      expect(screen.getByText(/Key saved\. In-depth analysis is now active\./i)).toBeInTheDocument()
     })
     // Written to new providers schema
     expect(storageMock.set).toHaveBeenCalledWith(

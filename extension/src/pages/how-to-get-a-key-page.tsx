@@ -83,7 +83,7 @@ const ANTHROPIC_STEPS: readonly Step[] = [
   },
   {
     number: 5,
-    text: 'Return to any article and click Analyze in the side panel. Layer 2 is now active.',
+    text: 'Return to any article and click Analyze in the side panel. The in-depth analysis is now active.',
   },
 ] as const;
 
@@ -135,7 +135,7 @@ const OPENAI_STEPS: readonly Step[] = [
   },
   {
     number: 5,
-    text: 'Return to any article and click Analyze in the side panel. Layer 2 is now active.',
+    text: 'Return to any article and click Analyze in the side panel. The in-depth analysis is now active.',
   },
 ] as const;
 
@@ -181,7 +181,7 @@ const GEMINI_STEPS: readonly Step[] = [
   },
   {
     number: 5,
-    text: 'Return to any article and click Analyze in the side panel. Layer 2 is now active.',
+    text: 'Return to any article and click Analyze in the side panel. The in-depth analysis is now active.',
   },
 ] as const;
 

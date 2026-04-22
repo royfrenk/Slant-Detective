@@ -125,8 +125,8 @@ export function PrivacyPage(): React.JSX.Element {
               in <code className="font-mono text-xs">chrome.storage.local</code>. Cache entries expire after 30 days.
             </p>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              Layer 1 signals run entirely in the browser. No network request is made
-              during a Layer 1 analysis.
+              Free mode runs entirely in the browser. No network request is made
+              during a free-mode analysis.
             </p>
           </section>
 
@@ -139,7 +139,7 @@ export function PrivacyPage(): React.JSX.Element {
               What Goes Directly to Your Provider
             </h2>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              When you trigger a Layer 2 analysis, the article title and body are sent
+              When you trigger an in-depth analysis, the article title and body are sent
               directly to your chosen provider's API — Anthropic (<code className="font-mono text-xs">api.anthropic.com</code>),
               OpenAI (<code className="font-mono text-xs">api.openai.com</code>), or Google (<code className="font-mono text-xs">generativelanguage.googleapis.com</code>) —
               using your own API key.
@@ -200,7 +200,7 @@ export function PrivacyPage(): React.JSX.Element {
               What Goes to Us (Score Samples — if telemetry enabled)
             </h2>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              After each Layer 2 analysis completes, the extension sends a single anonymised score
+              After each in-depth analysis completes, the extension sends a single anonymised score
               sample to our Cloudflare Worker. This uses the same telemetry toggle as the aggregate
               batch above — disabling telemetry stops both.
             </p>

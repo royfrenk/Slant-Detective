@@ -9,41 +9,43 @@ beforeEach(() => {
 
 // ─── Primary CTA ─────────────────────────────────────────────────────────────
 
-describe('Welcome — primary CTA (SD-043)', () => {
-  it('renders "Add API key" as the primary CTA button', () => {
+describe('Welcome — primary CTA (SD-050)', () => {
+  it('renders "Get in-depth analysis" as the primary CTA button', () => {
     render(<Welcome />);
     expect(
-      screen.getByRole('button', { name: /Add API key/i }),
+      screen.getByRole('button', { name: /Get in-depth analysis/i }),
     ).toBeInTheDocument();
   });
 
-  it('"Add API key" button calls chrome.runtime.openOptionsPage on click', async () => {
+  it('primary button calls chrome.runtime.openOptionsPage on click', async () => {
     const user = userEvent.setup();
     render(<Welcome />);
-    const btn = screen.getByRole('button', { name: /Add API key/i });
+    const btn = screen.getByRole('button', { name: /Get in-depth analysis/i });
     await user.click(btn);
     expect(chrome.runtime.openOptionsPage).toHaveBeenCalledOnce();
   });
 
-  it('"Add API key" button has correct aria-label', () => {
+  it('primary button has correct aria-label', () => {
     render(<Welcome />);
     expect(
-      screen.getByRole('button', { name: 'Add API key — open the Slant Detective options page' }),
+      screen.getByRole('button', {
+        name: 'Get in-depth analysis — open the Slant Detective options page to add an API key',
+      }),
     ).toBeInTheDocument();
   });
 });
 
 // ─── Secondary CTA ───────────────────────────────────────────────────────────
 
-describe('Welcome — secondary CTA (SD-043)', () => {
-  it('renders "Try it" as a secondary button', () => {
+describe('Welcome — secondary CTA (SD-050)', () => {
+  it('renders "Use free mode" as a secondary button', () => {
     render(<Welcome />);
     expect(
-      screen.getByRole('button', { name: /Try it/i }),
+      screen.getByRole('button', { name: /Use free mode/i }),
     ).toBeInTheDocument();
   });
 
-  it('"Try it" and "Add API key" both present — two buttons total', () => {
+  it('primary and secondary CTAs both present — two buttons total', () => {
     render(<Welcome />);
     const buttons = screen.getAllByRole('button');
     expect(buttons).toHaveLength(2);
@@ -100,34 +102,30 @@ describe('Welcome — dimension preview grid (SD-043)', () => {
   });
 });
 
-// ─── "Why bring your own key?" block ─────────────────────────────────────────
+// ─── "Why a key?" block ──────────────────────────────────────────────────────
 
-describe('Welcome — "Why bring your own key?" block (SD-043)', () => {
-  it('renders the "Why bring your own key?" heading', () => {
+describe('Welcome — "Why a key?" block (SD-050)', () => {
+  it('renders the "Why a key?" heading', () => {
     render(<Welcome />);
-    expect(screen.getByText('Why bring your own key?')).toBeInTheDocument();
+    expect(screen.getByText('Why a key?')).toBeInTheDocument();
   });
 
-  it('renders the approved explainer copy (design spec §6)', () => {
+  it('does NOT render the old "Why bring your own key?" heading', () => {
+    render(<Welcome />);
+    expect(screen.queryByText('Why bring your own key?')).toBeNull();
+  });
+
+  it('renders the rewritten explainer copy (marketing plan §2.6)', () => {
     render(<Welcome />);
     expect(
-      screen.getByText(/Unlocking full analysis capabilities requires an API key/),
+      screen.getByText(/The in-depth analysis — overall lean, four-dimension breakdown/),
     ).toBeInTheDocument();
   });
 
-  it('does NOT name Anthropic on the welcome page (design spec §6)', () => {
+  it('names Anthropic, OpenAI, and Google in the "Why a key?" body (marketing plan §2.6)', () => {
     render(<Welcome />);
-    expect(screen.queryByText(/Anthropic/)).toBeNull();
-  });
-
-  it('does NOT name OpenAI on the welcome page (design spec §6)', () => {
-    render(<Welcome />);
-    expect(screen.queryByText(/OpenAI/)).toBeNull();
-  });
-
-  it('does NOT name Gemini on the welcome page (design spec §6)', () => {
-    render(<Welcome />);
-    expect(screen.queryByText(/Gemini/)).toBeNull();
+    // These now appear intentionally in the "Why a key?" block per SD-050.
+    expect(screen.getByText(/Anthropic, OpenAI, or Google/)).toBeInTheDocument();
   });
 
   it('does not contain a hardcoded dollar-per-hundred figure', () => {
@@ -140,34 +138,60 @@ describe('Welcome — "Why bring your own key?" block (SD-043)', () => {
 
 // ─── Privacy microcopy ────────────────────────────────────────────────────────
 
-describe('Welcome — privacy microcopy (SD-043)', () => {
-  it('renders the lock-icon privacy microcopy', () => {
+describe('Welcome — privacy microcopy (SD-050)', () => {
+  it('renders the rewritten lock-icon privacy microcopy', () => {
     render(<Welcome />);
     expect(
-      screen.getByText('Nothing is uploaded without your key. No account. No tracking.'),
+      screen.getByText('Nothing leaves your browser without your key. No account. No tracking.'),
     ).toBeInTheDocument();
   });
 
-  it('renders the CTA caption about Try it running locally', () => {
+  it('does NOT render the old "Nothing is uploaded" lock microcopy', () => {
     render(<Welcome />);
-    expect(screen.getByText(/runs locally, reduced signals/)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Nothing is uploaded without your key/),
+    ).toBeNull();
+  });
+
+  it('renders the rewritten CTA caption about free mode', () => {
+    render(<Welcome />);
+    expect(
+      screen.getByText(/Free mode runs entirely in your browser/),
+    ).toBeInTheDocument();
+  });
+
+  it('does NOT render the old "reduced signals" caption', () => {
+    render(<Welcome />);
+    expect(screen.queryByText(/reduced signals/)).toBeNull();
   });
 });
 
 // ─── Headline and structure ───────────────────────────────────────────────────
 
-describe('Welcome — headline and page structure (SD-043)', () => {
-  it('renders "Welcome to Slant Detective" as the H1', () => {
+describe('Welcome — headline and page structure (SD-050)', () => {
+  it('renders the rewritten H1 ("You\'re in. Here\'s what happens next.")', () => {
     render(<Welcome />);
     expect(
-      screen.getByRole('heading', { name: 'Welcome to Slant Detective', level: 1 }),
+      screen.getByRole('heading', {
+        name: "You're in. Here's what happens next.",
+        level: 1,
+      }),
     ).toBeInTheDocument();
   });
 
-  it('renders the sub-headline', () => {
+  it('does NOT render the old "Welcome to Slant Detective" H1', () => {
     render(<Welcome />);
     expect(
-      screen.getByText('Per-article bias analysis — four dimensions, evidence-backed, privacy-first.'),
+      screen.queryByRole('heading', { name: 'Welcome to Slant Detective', level: 1 }),
+    ).toBeNull();
+  });
+
+  it('renders the rewritten sub-headline', () => {
+    render(<Welcome />);
+    expect(
+      screen.getByText(
+        'Click the toolbar icon on any news article. A side panel will open with the bias readout. No key needed to start.',
+      ),
     ).toBeInTheDocument();
   });
 
@@ -211,21 +235,30 @@ describe('Welcome — footer nav quad unchanged (SD-043)', () => {
 
 // ─── Deprecated copy check ───────────────────────────────────────────────────
 
-describe('Welcome — deprecated copy removed (SD-043)', () => {
-  it('does not render old "Add an API key later" bullet text', () => {
+describe('Welcome — deprecated copy removed (SD-050)', () => {
+  it('does not render the old "Add API key" button label', () => {
     render(<Welcome />);
-    expect(
-      screen.queryByText('Add an API key later — Anthropic, OpenAI, or Gemini'),
-    ).not.toBeInTheDocument();
+    // Previous primary button was "Add API key" — replaced by "Get in-depth analysis"
+    expect(screen.queryByRole('button', { name: /^Add API key$/ })).toBeNull();
   });
 
-  it('does not render old "Try it" as the only/primary button in old structure', () => {
-    // "Try it" is still present but as a secondary, not a primary isolated button
+  it('does not render the old "Try it" button label', () => {
+    render(<Welcome />);
+    // Previous secondary button was "Try it" — replaced by "Use free mode"
+    expect(screen.queryByRole('button', { name: /^Try it$/ })).toBeNull();
+  });
+
+  it('has exactly two buttons: primary and secondary', () => {
     render(<Welcome />);
     const buttons = screen.getAllByRole('button');
-    // There must be exactly 2 buttons: primary + secondary
     expect(buttons).toHaveLength(2);
-    // Primary must be "Add API key"
-    expect(buttons[0]).toHaveAttribute('aria-label', 'Add API key — open the Slant Detective options page');
+    expect(buttons[0]).toHaveAttribute(
+      'aria-label',
+      'Get in-depth analysis — open the Slant Detective options page to add an API key',
+    );
+    expect(buttons[1]).toHaveAttribute(
+      'aria-label',
+      'Use free mode — close this tab and start using Slant Detective',
+    );
   });
 });

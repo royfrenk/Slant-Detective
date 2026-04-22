@@ -126,12 +126,12 @@ export default function Welcome(): React.JSX.Element {
 
             {/* Headline */}
             <h1 className="text-on-surface font-semibold text-[24px] md:text-[28px] leading-[1.3] mb-3 mt-0">
-              Welcome to Slant Detective
+              You&apos;re in. Here&apos;s what happens next.
             </h1>
 
             {/* Sub-headline */}
             <p className="text-on-surface-variant font-normal text-[14px] leading-relaxed mb-8 mt-0">
-              Per-article bias analysis — four dimensions, evidence-backed, privacy-first.
+              Click the toolbar icon on any news article. A side panel will open with the bias readout. No key needed to start.
             </p>
 
             {/* Dimension preview grid (2x2) */}
@@ -146,13 +146,13 @@ export default function Welcome(): React.JSX.Element {
           <div className="bg-surface-variant px-8 py-6 md:px-12">
             <div className="md:flex md:items-start md:gap-8">
 
-              {/* "Why bring your own key?" explainer */}
+              {/* "Why a key?" explainer */}
               <div className="flex-1 mb-6 md:mb-0">
                 <p className="text-on-surface font-semibold text-[15px] mb-2 mt-0">
-                  Why bring your own key?
+                  Why a key?
                 </p>
                 <p className="text-on-surface-variant font-normal text-[14px] leading-relaxed m-0">
-                  Unlocking full analysis capabilities requires an API key. This lets you choose your preferred provider, pay them directly for usage, and ensures we process no data ourselves.
+                  The in-depth analysis — overall lean, four-dimension breakdown, inline highlights — uses a language model. You pay your provider (Anthropic, OpenAI, or Google) directly, about $0.006 an article. We never see the article or the key.
                 </p>
               </div>
 
@@ -163,7 +163,7 @@ export default function Welcome(): React.JSX.Element {
                   <button
                     type="button"
                     onClick={handleAddApiKey}
-                    aria-label="Add API key — open the Slant Detective options page"
+                    aria-label="Get in-depth analysis — open the Slant Detective options page to add an API key"
                     className={[
                       "bg-gradient-to-br from-primary to-primary-container",
                       "text-on-primary font-medium text-sm",
@@ -173,14 +173,14 @@ export default function Welcome(): React.JSX.Element {
                       "active:scale-[0.98] transition-transform duration-75",
                     ].join(" ")}
                   >
-                    Add API key
+                    Get in-depth analysis
                   </button>
 
                   {/* Secondary CTA */}
                   <button
                     type="button"
                     onClick={handleTryIt}
-                    aria-label="Try it — close this tab and start using Slant Detective"
+                    aria-label="Use free mode — close this tab and start using Slant Detective"
                     className={[
                       "bg-transparent text-primary font-medium text-sm",
                       "px-3 py-3 rounded-md border-0 cursor-pointer",
@@ -188,13 +188,13 @@ export default function Welcome(): React.JSX.Element {
                       "focus:outline focus:outline-2 focus:outline-primary focus:outline-offset-2",
                     ].join(" ")}
                   >
-                    Try it
+                    Use free mode
                   </button>
                 </div>
 
                 {/* Caption under CTAs */}
                 <p className="text-on-surface-variant font-normal text-[12px] mt-2 mb-0">
-                  No key needed for &apos;Try it&apos; — runs locally, reduced signals.
+                  Free mode runs entirely in your browser. No key, no network — but fewer checks than the in-depth analysis.
                 </p>
               </div>
             </div>
@@ -214,7 +214,7 @@ export default function Welcome(): React.JSX.Element {
                 <path d="M3.5 5V3.5a2.5 2.5 0 0 1 5 0V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
               </svg>
               <p className="text-on-surface-variant text-[12px] m-0">
-                Nothing is uploaded without your key. No account. No tracking.
+                Nothing leaves your browser without your key. No account. No tracking.
               </p>
             </div>
           </div>

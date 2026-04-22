@@ -220,7 +220,7 @@ export default function ProviderSettingsCard(): React.JSX.Element {
     if (!current.hasStoredKey) return
     const meta = getProviderMeta(activeTab)
     const confirmed = window.confirm(
-      `Remove your ${meta.label} API key? This cannot be undone — you'll need to paste it again to use Layer 2 analysis with ${meta.label}.`,
+      `Remove your ${meta.label} API key? This cannot be undone — you'll need to paste it again to use the in-depth analysis with ${meta.label}.`,
     )
     if (!confirmed) return
 
@@ -416,7 +416,7 @@ export default function ProviderSettingsCard(): React.JSX.Element {
         text: 'NOT RECOMMENDED',
         variant: 'warning',
         tooltip:
-          'Lower accuracy in our parity eval (κ 0.32 vs 0.58 baseline). Use Anthropic or Gemini for more reliable Layer 2 analysis.',
+          'Lower accuracy in our parity eval (κ 0.32 vs 0.58 baseline). Use Anthropic or Gemini for a more reliable in-depth analysis.',
       } as const,
     }),
   }))
@@ -453,7 +453,7 @@ export default function ProviderSettingsCard(): React.JSX.Element {
           <span aria-hidden="true" className="text-[1.5rem] leading-none mt-[1px] text-on-tertiary-container">⚠</span>
           <p className="m-0 text-[1.125rem] leading-snug text-on-surface">
             <span className="font-semibold">OpenAI scored low on accuracy</span> in our model parity test.
-            For more reliable Layer 2 analysis, use Anthropic or Gemini.
+            For a more reliable in-depth analysis, use Anthropic or Gemini.
           </p>
         </div>
       )}
