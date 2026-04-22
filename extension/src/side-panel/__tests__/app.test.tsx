@@ -137,4 +137,81 @@ describe('App — Layer 2 state machine integration', () => {
     // Without an API key, Layer1SkeletonView loads (not Layer2SkeletonView)
     expect(screen.queryByTestId('layer2-skeleton')).not.toBeInTheDocument();
   });
+
+  // ─── SD-047: non_english routing (Layer 2 path — API key present) ────────
+
+  it('shows NonEnglishCard on analysis_failed with reason non_english (API key present)', async () => {
+    render(<App />);
+    const listener = getMessageListener();
+
+    await act(async () => {
+      listener({ action: 'analysis_failed', reason: 'non_english' });
+    });
+
+    expect(screen.getByRole('alert', { name: 'Language not supported' })).toBeInTheDocument();
+    expect(screen.getByText(/Slant Detective only works in English/i)).toBeInTheDocument();
+  });
+
+  it('shows NotANewsPageCard on analysis_failed with reason not_a_news_page (API key present)', async () => {
+    render(<App />);
+    const listener = getMessageListener();
+
+    await act(async () => {
+      listener({ action: 'analysis_failed', reason: 'not_a_news_page' });
+    });
+
+    expect(screen.getByRole('alert', { name: 'No news article detected' })).toBeInTheDocument();
+    expect(screen.getByText(/No News Detected/i)).toBeInTheDocument();
+  });
+
+  it('shows ExtractionFailedCard (regression) on analysis_failed with reason extraction_failed', async () => {
+    render(<App />);
+    const listener = getMessageListener();
+
+    await act(async () => {
+      listener({ action: 'analysis_failed', reason: 'extraction_failed' });
+    });
+
+    expect(screen.getByText(/Couldn't read this page/i)).toBeInTheDocument();
+  });
+});
+
+// ─── SD-047: Layer 1 path (no API key) ──────────────────────────────────────
+
+describe('App — SD-047 error routing (Layer 1 path, no API key)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // No API key
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
+      (_keys: unknown, cb: (r: Record<string, unknown>) => void) => {
+        cb({});
+      },
+    );
+  });
+
+  it('shows NonEnglishCard on analysis_failed with reason non_english (no API key)', async () => {
+    render(<App />);
+    const calls = (chrome.runtime.onMessage.addListener as ReturnType<typeof vi.fn>).mock.calls;
+    const listener = calls[calls.length - 1][0] as (msg: { action: string; reason?: string }) => void;
+
+    await act(async () => {
+      listener({ action: 'analysis_failed', reason: 'non_english' });
+    });
+
+    expect(screen.getByRole('alert', { name: 'Language not supported' })).toBeInTheDocument();
+    expect(screen.getByText(/Slant Detective only works in English/i)).toBeInTheDocument();
+  });
+
+  it('shows NotANewsPageCard on analysis_failed with reason not_a_news_page (no API key)', async () => {
+    render(<App />);
+    const calls = (chrome.runtime.onMessage.addListener as ReturnType<typeof vi.fn>).mock.calls;
+    const listener = calls[calls.length - 1][0] as (msg: { action: string; reason?: string }) => void;
+
+    await act(async () => {
+      listener({ action: 'analysis_failed', reason: 'not_a_news_page' });
+    });
+
+    expect(screen.getByRole('alert', { name: 'No news article detected' })).toBeInTheDocument();
+    expect(screen.getByText(/No News Detected/i)).toBeInTheDocument();
+  });
 });

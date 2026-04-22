@@ -1,6 +1,8 @@
 export type ExtractionResult =
   | { ok: true; title: string; body: string; word_count: number; offsets: { start: number; end: number }[] }
-  | { ok: false; error: 'extraction_failed' };
+  | { ok: false; error: 'extraction_failed' }
+  | { ok: false; error: 'non_english' }
+  | { ok: false; error: 'not_a_news_page' };
 
 // --- Layer 1 signal types ---
 

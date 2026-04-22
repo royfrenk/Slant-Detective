@@ -10,6 +10,8 @@ export type OutboundMessage =
 // Content script analysis result — extraction result extended with Layer 1 signals.
 export type ContentScriptResult =
   | { ok: false; error: 'extraction_failed' }
+  | { ok: false; error: 'non_english' }
+  | { ok: false; error: 'not_a_news_page' }
   | {
       ok: true
       title: string
