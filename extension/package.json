@@ -1,7 +1,7 @@
 {
   "name": "slant-detective-extension",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.1.0",
   "description": "Chrome MV3 extension for per-article media-bias analysis",
   "type": "module",
   "scripts": {
