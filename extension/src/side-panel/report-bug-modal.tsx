@@ -268,37 +268,35 @@ export default function ReportBugModal({
             </p>
           </div>
 
-        </div>
-      </div>
+          {/* Inline error */}
+          {inlineError !== null && (
+            <p className="text-[11px] text-red-600">{inlineError}</p>
+          )}
 
-      {/* Inline error */}
-      {inlineError !== null && (
-        <div className="px-4 pb-1">
-          <p className="text-[11px] text-red-600">{inlineError}</p>
-        </div>
-      )}
+          {/* Action row — sits flush with the form fields rather than pinned to the viewport bottom */}
+          <div className="flex justify-end gap-3 pt-1">
+            <button
+              className="px-4 py-2 rounded-lg bg-white border border-[#e8ebed] text-[#091426] text-[12px] font-semibold hover:bg-gray-50 transition-colors"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              aria-disabled={isSendDisabled || sendState === 'sending'}
+              aria-label={sendState === 'sending' ? 'Sending bug report' : undefined}
+              aria-busy={sendState === 'sending'}
+              disabled={isSendDisabled || sendState === 'sending' || sendState === 'success'}
+              className={[
+                'px-5 py-2 rounded-lg bg-gradient-to-br from-[#1e293b] to-[#334155] text-white text-[12px] font-bold active:scale-95 transition-all shadow-[0_4px_12px_rgba(30,41,59,0.2)] flex items-center',
+                isSendDisabled ? 'opacity-50 cursor-not-allowed' : '',
+              ].join(' ')}
+              onClick={() => void handleSend()}
+            >
+              {renderSendLabel()}
+            </button>
+          </div>
 
-      {/* Action row */}
-      <div className="px-4 py-4 bg-[#f7f9fb] border-t border-gray-100 flex justify-end gap-3 z-30">
-        <button
-          className="px-4 py-2 rounded-lg bg-white border border-[#e8ebed] text-[#091426] text-[12px] font-semibold hover:bg-gray-50 transition-colors"
-          onClick={onClose}
-        >
-          Cancel
-        </button>
-        <button
-          aria-disabled={isSendDisabled || sendState === 'sending'}
-          aria-label={sendState === 'sending' ? 'Sending bug report' : undefined}
-          aria-busy={sendState === 'sending'}
-          disabled={isSendDisabled || sendState === 'sending' || sendState === 'success'}
-          className={[
-            'px-5 py-2 rounded-lg bg-gradient-to-br from-[#1e293b] to-[#334155] text-white text-[12px] font-bold active:scale-95 transition-all shadow-[0_4px_12px_rgba(30,41,59,0.2)] flex items-center',
-            isSendDisabled ? 'opacity-50 cursor-not-allowed' : '',
-          ].join(' ')}
-          onClick={() => void handleSend()}
-        >
-          {renderSendLabel()}
-        </button>
+        </div>
       </div>
     </div>
   );
