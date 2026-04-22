@@ -251,8 +251,17 @@ function HowWeMeasurePage(): React.JSX.Element {
               How well it works
             </h2>
             <p className="text-sm text-on-surface leading-relaxed mb-3">
-              We tested our rubric against a research dataset called <strong>BABE</strong> —
-              3,663 sentences that media-bias researchers labeled by hand. Here's how we lined
+              We tested our rubric against a research dataset called{' '}
+              <a
+                href="https://github.com/Media-Bias-Group/Neural-Media-Bias-Detection-Using-Distant-Supervision-With-BABE"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="BABE dataset repository (opens in new tab)"
+                className="text-primary-fixed no-underline hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:rounded-sm"
+              >
+                <strong>BABE</strong>
+              </a>{' '}
+              — 3,663 sentences that media-bias researchers labeled by hand. Here's how we lined
               up, with each score translated into plain English.
             </p>
             <div className="bg-surface-variant rounded-lg border-l-4 border-primary-fixed px-4 py-3">
