@@ -57,7 +57,7 @@ export default function Layer2View({
         </>
       )}
 
-      <FooterNav />
+      <FooterNav showChangeModel />
     </div>
   );
 }

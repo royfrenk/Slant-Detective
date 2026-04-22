@@ -113,7 +113,7 @@ function DimensionRow({ config, score, direction, rationale }: DimensionRowProps
         onClick={rationale != null && rationale.trim() !== '' ? handleToggle : undefined}
       >
         <div className="flex items-center gap-1">
-          <span className="text-[0.75rem] font-semibold text-primary uppercase">
+          <span className="text-[1.125rem] font-semibold text-primary uppercase">
             {config.label}
           </span>
           {dimensionCopy != null && (
