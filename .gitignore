@@ -6,6 +6,7 @@
 
 # Internal docs (not for public repo)
 docs/
+CLAUDE.md
 
 # Stitch mock downloads (reference material, re-fetchable via MCP)
 stitch_chrome_extension_blueprint/
