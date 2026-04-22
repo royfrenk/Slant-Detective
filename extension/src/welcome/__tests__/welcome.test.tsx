@@ -108,19 +108,26 @@ describe('Welcome — "Why bring your own key?" block (SD-043)', () => {
     expect(screen.getByText('Why bring your own key?')).toBeInTheDocument();
   });
 
-  it('mentions Anthropic in the explainer', () => {
+  it('renders the approved explainer copy (design spec §6)', () => {
     render(<Welcome />);
-    expect(screen.getByText(/Anthropic/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Unlocking full analysis capabilities requires an API key/),
+    ).toBeInTheDocument();
   });
 
-  it('mentions OpenAI in the explainer', () => {
+  it('does NOT name Anthropic on the welcome page (design spec §6)', () => {
     render(<Welcome />);
-    expect(screen.getByText(/OpenAI/)).toBeInTheDocument();
+    expect(screen.queryByText(/Anthropic/)).toBeNull();
   });
 
-  it('mentions Gemini in the explainer', () => {
+  it('does NOT name OpenAI on the welcome page (design spec §6)', () => {
     render(<Welcome />);
-    expect(screen.getByText(/Gemini/)).toBeInTheDocument();
+    expect(screen.queryByText(/OpenAI/)).toBeNull();
+  });
+
+  it('does NOT name Gemini on the welcome page (design spec §6)', () => {
+    render(<Welcome />);
+    expect(screen.queryByText(/Gemini/)).toBeNull();
   });
 
   it('does not contain a hardcoded dollar-per-hundred figure', () => {

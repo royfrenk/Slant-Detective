@@ -33,7 +33,7 @@ function DimensionChip({ label, glyph, description }: DimensionCopy): React.JSX.
         <span aria-hidden="true" className="mr-2">{glyph}</span>
         {label}
       </p>
-      <p className="text-[#334155] font-normal text-[13px] leading-snug mt-1 mb-0">
+      <p className="text-primary-container font-normal text-[13px] leading-snug mt-1 mb-0">
         {description}
       </p>
     </div>
@@ -152,9 +152,7 @@ export default function Welcome(): React.JSX.Element {
                   Why bring your own key?
                 </p>
                 <p className="text-on-surface-variant font-normal text-[14px] leading-relaxed m-0">
-                  Unlocking full analysis requires an API key. Choose your preferred provider —
-                  Anthropic, OpenAI, or Gemini — pay them directly for usage, and ensure we
-                  process no data ourselves.
+                  Unlocking full analysis capabilities requires an API key. This lets you choose your preferred provider, pay them directly for usage, and ensures we process no data ourselves.
                 </p>
               </div>
 
