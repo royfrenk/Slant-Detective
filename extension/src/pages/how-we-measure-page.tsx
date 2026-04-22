@@ -2,58 +2,8 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './page.css';
 import PageFooterNav from './page-footer-nav';
-
-// ---------------------------------------------------------------------------
-// Rubric dimensions
-// ---------------------------------------------------------------------------
-
-interface Dimension {
-  label: string;
-  glyph: string;
-  description: string;
-  example?: string;
-  /** Tailwind class for the left accent stripe (e.g. `border-dim-word-choice`). */
-  accentBorderClass: string;
-  /** Tailwind class for the glyph + label color (e.g. `text-dim-word-choice`). */
-  accentTextClass: string;
-}
-
-// Palette mirrors side-panel/layer2/dimension-breakdown.tsx so the explainer page
-// uses the same color language as the actual rubric readout.
-const DIMENSIONS: readonly Dimension[] = [
-  {
-    label: 'WORD CHOICE',
-    glyph: '⚠',
-    description: 'Does the writer pick loaded words where neutral ones would do?',
-    example: '"Slammed" vs "criticized." "Regime" vs "government." Small swaps that steer how you feel.',
-    accentBorderClass: 'border-dim-word-choice',
-    accentTextClass: 'text-dim-word-choice',
-  },
-  {
-    label: 'FRAMING',
-    glyph: '◈',
-    description: 'How are people\u2019s statements introduced?',
-    example: '"She said..." lands very differently from "She admitted..." or "She claimed..." We read the verbs.',
-    accentBorderClass: 'border-dim-framing',
-    accentTextClass: 'text-dim-framing',
-  },
-  {
-    label: 'HEADLINE SLANT',
-    glyph: '✎',
-    description: 'Does the headline match what the article actually says?',
-    example: 'Or is it pumped up, toned down, or pointing somewhere the story never quite goes?',
-    accentBorderClass: 'border-primary-fixed',
-    accentTextClass: 'text-primary-fixed',
-  },
-  {
-    label: 'SOURCE MIX',
-    glyph: '\u201c',
-    description: 'Does the article quote a range of voices, or lean on one side?',
-    example: 'A one-source story reads differently from a five-source one, even when both sound confident.',
-    accentBorderClass: 'border-slate-chip',
-    accentTextClass: 'text-slate-chip',
-  },
-] as const;
+import { DIMENSIONS } from '../shared/dimension-copy';
+import type { DimensionCopy } from '../shared/dimension-copy';
 
 // ---------------------------------------------------------------------------
 // Reporting-verb rungs
@@ -92,7 +42,7 @@ const ACCURACY_ROWS: readonly AccuracyRow[] = [
   {
     metric: 'Precision',
     score: '0.76',
-    plainEnglish: 'When we flag a sentence as biased, we\u2019re right about 3 times out of 4.',
+    plainEnglish: 'When we flag a sentence as biased, we’re right about 3 times out of 4.',
   },
   {
     metric: 'Recall',
@@ -122,7 +72,7 @@ function DimensionCard({
   example,
   accentBorderClass,
   accentTextClass,
-}: Dimension): React.JSX.Element {
+}: DimensionCopy): React.JSX.Element {
   return (
     <div className={`bg-surface rounded-lg border-l-4 ${accentBorderClass} px-4 py-3 mb-2`}>
       <p className={`text-sm font-semibold ${accentTextClass} m-0`}>

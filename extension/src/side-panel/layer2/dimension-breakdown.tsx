@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import type { RubricDimensions, RubricDirection } from '../../shared/types';
+import { DIMENSIONS } from '../../shared/dimension-copy';
 import DirectionChip from './direction-chip';
+import InfoIcon from '../info-icon';
+import InfoTooltip, { useInfoTooltip } from '../info-tooltip';
 
 const TOTAL_BLOCKS = 10;
 
@@ -79,11 +82,54 @@ function DimensionRow({ config, score, direction }: DimensionRowProps): React.JS
     ? `${config.label}: score ${score.toFixed(0)} out of 10, ${direction}`
     : `${config.label}: score ${score.toFixed(0)} out of 10`;
 
+  const iconRef = useRef<HTMLSpanElement>(null);
+  const tooltip = useInfoTooltip();
+  const tooltipId = `sd-info-tooltip-${config.key}`;
+
+  const dimensionCopy = DIMENSIONS.find((d) => d.key === config.key);
+
+  function getIconRect(): DOMRect | null {
+    return iconRef.current?.getBoundingClientRect() ?? null;
+  }
+
   return (
     <div role="group" aria-label={ariaLabel} className="flex flex-col gap-[6px]">
-      <span className="text-[0.75rem] font-semibold text-primary uppercase">
-        {config.label}
-      </span>
+      <div className="flex items-center gap-1">
+        <span className="text-[0.75rem] font-semibold text-primary uppercase">
+          {config.label}
+        </span>
+        {dimensionCopy != null && (
+          <span ref={iconRef}>
+            <InfoIcon
+              dimensionKey={config.key}
+              ariaLabel={`${config.label} — what this means`}
+              onMouseEnter={() => {
+                const rect = getIconRect();
+                if (rect != null) tooltip.handleIconMouseEnter(rect);
+              }}
+              onMouseLeave={tooltip.handleIconMouseLeave}
+              onFocus={() => {
+                const rect = getIconRect();
+                if (rect != null) tooltip.handleIconFocus(rect);
+              }}
+              onBlur={tooltip.handleIconBlur}
+              tooltipVisible={tooltip.tooltipVisible}
+            />
+          </span>
+        )}
+      </div>
+      {tooltip.tooltipVisible && dimensionCopy != null && (
+        <InfoTooltip
+          id={tooltipId}
+          description={dimensionCopy.description}
+          example={dimensionCopy.example}
+          anchorRect={tooltip.anchorRect}
+          visible={tooltip.tooltipVisible}
+          onMouseEnter={tooltip.handleTooltipMouseEnter}
+          onMouseLeave={tooltip.handleTooltipMouseLeave}
+          onDismiss={tooltip.handleDismiss}
+        />
+      )}
       <div className="flex items-center gap-2">
         <span aria-hidden="true" className={`text-[0.75rem] ${config.glyphClass}`}>
           {config.glyph}

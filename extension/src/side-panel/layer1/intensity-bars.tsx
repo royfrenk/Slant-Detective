@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import type { Layer1Signals } from '../../shared/types';
+import { LAYER1_SIGNALS } from '../../shared/dimension-copy';
+import InfoIcon from '../info-icon';
+import InfoTooltip, { useInfoTooltip } from '../info-tooltip';
 
 const TOTAL_BLOCKS = 10;
 
@@ -7,6 +10,7 @@ const TOTAL_BLOCKS = 10;
 // primary-fixed) to keep the palette centralized in tailwind.config.ts.
 
 interface SignalBarConfig {
+  readonly key: string;
   readonly label: string;
   readonly glyph: string;
   readonly fillClass: string;  // Tailwind class for filled blocks
@@ -15,18 +19,21 @@ interface SignalBarConfig {
 
 const SIGNAL_BARS: readonly SignalBarConfig[] = [
   {
+    key: 'language_intensity',
     label: 'Language intensity',
     glyph: '⚠',
     fillClass: 'bg-dim-word-choice',
     glyphClass: 'text-dim-word-choice',
   },
   {
+    key: 'headline_drift',
     label: 'Headline drift',
     glyph: '✎',
     fillClass: 'bg-dim-framing',
     glyphClass: 'text-dim-framing',
   },
   {
+    key: 'attribution_skew',
     label: 'Attribution skew',
     glyph: '"',
     fillClass: 'bg-primary-fixed',
@@ -102,6 +109,15 @@ interface BarGroupProps {
 
 function BarGroup({ config, score }: BarGroupProps): React.JSX.Element {
   const ariaLabel = `${config.label}: ${score.toFixed(0)} out of 10`;
+  const iconRef = useRef<HTMLSpanElement>(null);
+  const tooltip = useInfoTooltip();
+  const tooltipId = `sd-info-tooltip-${config.key}`;
+
+  const signalCopy = LAYER1_SIGNALS.find((s) => s.key === config.key);
+
+  function getIconRect(): DOMRect | null {
+    return iconRef.current?.getBoundingClientRect() ?? null;
+  }
 
   return (
     <div role="group" aria-label={ariaLabel} className="flex flex-col gap-[6px]">
@@ -112,7 +128,37 @@ function BarGroup({ config, score }: BarGroupProps): React.JSX.Element {
         <span className="text-[0.75rem] text-on-surface">
           {config.label}
         </span>
+        {signalCopy != null && (
+          <span ref={iconRef}>
+            <InfoIcon
+              dimensionKey={config.key}
+              ariaLabel={`${config.label} — what this means`}
+              onMouseEnter={() => {
+                const rect = getIconRect();
+                if (rect != null) tooltip.handleIconMouseEnter(rect);
+              }}
+              onMouseLeave={tooltip.handleIconMouseLeave}
+              onFocus={() => {
+                const rect = getIconRect();
+                if (rect != null) tooltip.handleIconFocus(rect);
+              }}
+              onBlur={tooltip.handleIconBlur}
+              tooltipVisible={tooltip.tooltipVisible}
+            />
+          </span>
+        )}
       </div>
+      {tooltip.tooltipVisible && signalCopy != null && (
+        <InfoTooltip
+          id={tooltipId}
+          description={signalCopy.definition}
+          anchorRect={tooltip.anchorRect}
+          visible={tooltip.tooltipVisible}
+          onMouseEnter={tooltip.handleTooltipMouseEnter}
+          onMouseLeave={tooltip.handleTooltipMouseLeave}
+          onDismiss={tooltip.handleDismiss}
+        />
+      )}
       <BlockRow
         score={score}
         filledClass={config.fillClass}
