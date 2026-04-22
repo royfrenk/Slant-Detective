@@ -29,34 +29,34 @@ const VERB_RUNGS: readonly VerbRung[] = [
 
 interface AccuracyRow {
   metric: string;
-  score: string;
+  scores: { haiku: string; gemini: string; openai: string };
   plainEnglish: string;
 }
 
 const ACCURACY_ROWS: readonly AccuracyRow[] = [
   {
     metric: 'Agreement with experts',
-    score: '0.58',
+    scores: { haiku: '0.58', gemini: '0.57', openai: '0.32' },
     plainEnglish: 'We agree with the human labelers about as often as two experts agree with each other.',
   },
   {
     metric: 'Precision',
-    score: '0.76',
+    scores: { haiku: '0.76', gemini: '0.73', openai: '0.60' },
     plainEnglish: 'When we flag a sentence as biased, we’re right about 3 times out of 4.',
   },
   {
     metric: 'Recall',
-    score: '0.84',
+    scores: { haiku: '0.84', gemini: '0.90', openai: '0.94' },
     plainEnglish: 'We catch about 5 out of every 6 sentences the experts flagged.',
   },
   {
     metric: 'Combined accuracy',
-    score: '0.80',
+    scores: { haiku: '0.80', gemini: '0.81', openai: '0.74' },
     plainEnglish: 'A single number that balances precision and recall. In line with published research.',
   },
   {
     metric: 'Highlighted-word accuracy',
-    score: '0.65',
+    scores: { haiku: '0.65', gemini: '0.70', openai: '0.52' },
     plainEnglish: 'When we highlight specific loaded words, about 2 out of 3 match what a human would highlight.',
   },
 ] as const;
@@ -193,7 +193,7 @@ function HowWeMeasurePage(): React.JSX.Element {
           </section>
 
           {/* Section 4 — Accuracy */}
-          <section aria-labelledby="accuracy-heading" className="mt-10">
+          <section id="per-model-accuracy" aria-labelledby="accuracy-heading" className="mt-10">
             <h2
               id="accuracy-heading"
               className="text-xs font-semibold tracking-wider uppercase text-on-surface-variant mb-3"
@@ -211,15 +211,32 @@ function HowWeMeasurePage(): React.JSX.Element {
               >
                 <strong>BABE</strong>
               </a>{' '}
-              — 3,663 sentences that media-bias researchers labeled by hand. Here's how we lined
-              up, with each score translated into plain English.
+              — 3,663 sentences that media-bias researchers labeled by hand. Here's how the three
+              supported models compare, with each score translated into plain English.
             </p>
             <div className="bg-surface-variant rounded-lg border-l-4 border-primary-fixed px-4 py-3">
               <table className="w-full text-sm text-on-surface">
                 <thead>
-                  <tr className="text-left border-b border-outline">
+                  <tr className="text-left border-b border-outline align-bottom">
                     <th className="py-1 pr-4 font-semibold">What we measured</th>
-                    <th className="py-1 pr-4 font-semibold">Score</th>
+                    <th className="py-1 pr-4 font-semibold text-right">
+                      <span className="block">Claude Haiku</span>
+                      <span className="block text-[0.625rem] font-normal text-on-surface-variant">
+                        baseline
+                      </span>
+                    </th>
+                    <th className="py-1 pr-4 font-semibold text-right">
+                      <span className="block">Gemini 2.5 Flash</span>
+                      <span className="block text-[0.625rem] font-normal text-primary-fixed">
+                        ✓ parity
+                      </span>
+                    </th>
+                    <th className="py-1 pr-4 font-semibold text-right">
+                      <span className="block">GPT-4o-mini</span>
+                      <span className="block text-[0.625rem] font-normal text-tertiary">
+                        ✗ below parity
+                      </span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -227,22 +244,33 @@ function HowWeMeasurePage(): React.JSX.Element {
                     <React.Fragment key={row.metric}>
                       <tr>
                         <td className="pt-2 pr-4 align-top">{row.metric}</td>
-                        <td className="pt-2 pr-4 font-mono align-top">{row.score}</td>
+                        <td className="pt-2 pr-4 font-mono align-top text-right">{row.scores.haiku}</td>
+                        <td className="pt-2 pr-4 font-mono align-top text-right">{row.scores.gemini}</td>
+                        <td className="pt-2 pr-4 font-mono align-top text-right">{row.scores.openai}</td>
                       </tr>
                       <tr>
-                        <td colSpan={2} className="pb-2 pt-0 text-xs text-on-surface-variant italic">
+                        <td colSpan={4} className="pb-2 pt-0 text-xs text-on-surface-variant italic">
                           {row.plainEnglish}
                         </td>
                       </tr>
                     </React.Fragment>
                   ))}
+                  <tr className="border-t border-outline">
+                    <td className="pt-2 pr-4 text-xs text-on-surface-variant">Sentences evaluated</td>
+                    <td className="pt-2 pr-4 font-mono text-xs text-on-surface-variant text-right">3,663</td>
+                    <td className="pt-2 pr-4 font-mono text-xs text-on-surface-variant text-right">487</td>
+                    <td className="pt-2 pr-4 font-mono text-xs text-on-surface-variant text-right">500</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
             <p className="text-xs text-on-surface-variant italic mt-2">
-              Baseline run 2026-04-20, rubric v1.0. If a future prompt change drops these scores,
-              our own build gate blocks the release. The testing code lives in the public repo
-              (<code>eval/</code>) — you can re-run it.
+              Baseline run 2026-04-20, rubric v1.0. Non-baseline models evaluated on BABE-SG2
+              (~500 sentences), a held-out subset — smaller than the full 3,663-sentence baseline.
+              Parity gate: κ within ±0.05 and F1 within ±0.03 of the Claude Haiku baseline.
+              GPT-4o-mini did not pass (κ 0.32 vs baseline 0.58). If a future prompt change drops
+              these scores, the build gate blocks the release. Testing code lives in{' '}
+              <code>eval/</code> — you can re-run it.
             </p>
           </section>
 
