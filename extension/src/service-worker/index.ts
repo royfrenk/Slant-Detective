@@ -82,6 +82,15 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
   chrome.runtime.sendMessage(msg).catch(() => {});
 });
 
+// Auto-re-analyze when the user switches to another already-loaded tab.
+// onUpdated only fires for new navigations, so tab switches between tabs that
+// already finished loading previously would otherwise leave the panel showing
+// the old article's analysis.
+chrome.tabs.onActivated.addListener(() => {
+  const msg: InboundMessage = { action: 'tab_navigated' };
+  chrome.runtime.sendMessage(msg).catch(() => {});
+});
+
 // Read the compiled content-script path from the installed manifest (path is hashed by Vite).
 async function getContentScriptFile(): Promise<string> {
   const resp = await fetch(chrome.runtime.getURL('manifest.json'));
