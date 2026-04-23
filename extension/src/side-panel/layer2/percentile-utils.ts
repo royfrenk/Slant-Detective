@@ -133,3 +133,34 @@ export function getLayer1NeutralityLabel(score: number): Layer1NeutralityLabel {
     percentage: Math.min(EXTREME_PERCENTAGE_CAP, rounded * 10),
   }
 }
+
+/**
+ * SD-056 (Layer 2): Direct score-to-tilt mapping for Layer 2's BIAS SCORE card.
+ *
+ * Mirrors getLayer1NeutralityLabel with inverted emphasis semantics:
+ *   - score 0–4 → "less tilted than (10 - score) × 10 % of articles"
+ *   - score 5   → median tilt for news articles
+ *   - score 6–10 → "more tilted than score × 10 % of articles"
+ *
+ * Extremes (0 and 10) capped at 95% for the same reason as Layer 1.
+ */
+export type Layer2TiltLabel =
+  | { kind: 'comparative'; emphasis: 'more' | 'less'; percentage: number }
+  | { kind: 'median' }
+
+export function getLayer2TiltLabel(score: number): Layer2TiltLabel {
+  const rounded = Math.round(score)
+  if (rounded === 5) return { kind: 'median' }
+  if (rounded < 5) {
+    return {
+      kind: 'comparative',
+      emphasis: 'less',
+      percentage: Math.min(EXTREME_PERCENTAGE_CAP, (10 - rounded) * 10),
+    }
+  }
+  return {
+    kind: 'comparative',
+    emphasis: 'more',
+    percentage: Math.min(EXTREME_PERCENTAGE_CAP, rounded * 10),
+  }
+}

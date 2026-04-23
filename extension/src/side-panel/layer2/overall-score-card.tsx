@@ -2,6 +2,7 @@ import React from 'react';
 import type { RubricDirection } from '../../shared/types';
 import DirectionChip from './direction-chip';
 import RationalePanel from './rationale-panel';
+import type { Layer2TiltLabel } from './percentile-utils';
 
 function formatScore(score: number): string {
   const rounded = Math.round(score * 10) / 10;
@@ -12,8 +13,8 @@ interface OverallScoreCardProps {
   score: number;
   direction: RubricDirection;
   confidence: number;
-  /** SD-040: percentile label text, e.g. "more tilted than most". Omitted when undefined. */
-  percentileLabel?: string;
+  /** SD-056: structured tilt label; bolds the direction word ("more"/"less"/"median"). */
+  tiltLabel?: Layer2TiltLabel;
   /** SD-040: rationale text. Always visible inline (no chevron). Omitted when undefined. */
   rationale?: string;
 }
@@ -22,7 +23,7 @@ export default function OverallScoreCard({
   score,
   direction,
   confidence,
-  percentileLabel,
+  tiltLabel,
   rationale,
 }: OverallScoreCardProps): React.JSX.Element {
   const scoreLabel = formatScore(score);
@@ -52,9 +53,19 @@ export default function OverallScoreCard({
           {confidencePct}% confident
         </span>
       </div>
-      {percentileLabel != null && (
+      {tiltLabel != null && (
         <p className="text-[0.75rem] font-normal text-on-surface-variant leading-tight m-0">
-          {percentileLabel}
+          {tiltLabel.kind === 'median' ? (
+            <>
+              <strong className="font-semibold text-on-surface">median</strong>{' '}
+              tilt for news articles
+            </>
+          ) : (
+            <>
+              <strong className="font-semibold text-on-surface">{tiltLabel.emphasis}</strong>{' '}
+              tilted than {tiltLabel.percentage}% of articles
+            </>
+          )}
         </p>
       )}
       <RationalePanel

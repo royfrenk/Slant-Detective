@@ -4,6 +4,7 @@ import {
   percentileToLabel,
   getPercentileLabel,
   getLayer1NeutralityLabel,
+  getLayer2TiltLabel,
 } from '../percentile-utils'
 
 // ─── scoreToPercentile ───────────────────────────────────────────────────────
@@ -208,6 +209,90 @@ describe('getLayer1NeutralityLabel', () => {
     expect(getLayer1NeutralityLabel(4.49)).toEqual({
       kind: 'comparative',
       emphasis: 'more',
+      percentage: 60,
+    })
+  })
+})
+
+// ─── getLayer2TiltLabel (SD-056) ─────────────────────────────────────────────
+
+describe('getLayer2TiltLabel', () => {
+  it('score 5 → median', () => {
+    expect(getLayer2TiltLabel(5)).toEqual({ kind: 'median' })
+  })
+
+  it('score 4 → less tilted than 60%', () => {
+    expect(getLayer2TiltLabel(4)).toEqual({
+      kind: 'comparative',
+      emphasis: 'less',
+      percentage: 60,
+    })
+  })
+
+  it('score 3 → less tilted than 70%', () => {
+    expect(getLayer2TiltLabel(3)).toEqual({
+      kind: 'comparative',
+      emphasis: 'less',
+      percentage: 70,
+    })
+  })
+
+  it('score 1 → less tilted than 90%', () => {
+    expect(getLayer2TiltLabel(1)).toEqual({
+      kind: 'comparative',
+      emphasis: 'less',
+      percentage: 90,
+    })
+  })
+
+  it('score 6 → more tilted than 60%', () => {
+    expect(getLayer2TiltLabel(6)).toEqual({
+      kind: 'comparative',
+      emphasis: 'more',
+      percentage: 60,
+    })
+  })
+
+  it('score 9 → more tilted than 90%', () => {
+    expect(getLayer2TiltLabel(9)).toEqual({
+      kind: 'comparative',
+      emphasis: 'more',
+      percentage: 90,
+    })
+  })
+
+  it('score 0 → less tilted than 95% (capped)', () => {
+    expect(getLayer2TiltLabel(0)).toEqual({
+      kind: 'comparative',
+      emphasis: 'less',
+      percentage: 95,
+    })
+  })
+
+  it('score 10 → more tilted than 95% (capped)', () => {
+    expect(getLayer2TiltLabel(10)).toEqual({
+      kind: 'comparative',
+      emphasis: 'more',
+      percentage: 95,
+    })
+  })
+
+  it('rounds fractional scores (5.4 → median)', () => {
+    expect(getLayer2TiltLabel(5.4)).toEqual({ kind: 'median' })
+  })
+
+  it('rounds fractional scores (5.5 → more tilted than 60%)', () => {
+    expect(getLayer2TiltLabel(5.5)).toEqual({
+      kind: 'comparative',
+      emphasis: 'more',
+      percentage: 60,
+    })
+  })
+
+  it('rounds fractional scores (4.49 → less tilted than 60%)', () => {
+    expect(getLayer2TiltLabel(4.49)).toEqual({
+      kind: 'comparative',
+      emphasis: 'less',
       percentage: 60,
     })
   })
