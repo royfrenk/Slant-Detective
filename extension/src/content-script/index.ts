@@ -269,8 +269,30 @@ export function isNewsPage(doc: Document, wordCount: number, url?: string): bool
 
 const LANG_CONFIDENCE_THRESHOLD = 0.5;
 
+// SD-047 follow-up: franc-min's script detection only ships expressions for
+// Latin, Cyrillic, Arabic, Devanagari, and a handful of language-specific
+// scripts — Hebrew is notably absent, and mixed-script articles with any
+// Latin embeds (English names, numerals, URLs) make Latin win franc's
+// script vote, after which trigram matching picks 'eng' as the closest
+// Latin language and the article sails through the non-English gate.
+//
+// This regex covers the scripts that are unambiguously non-English when
+// present at any meaningful ratio: Greek, Cyrillic, Hebrew, Arabic,
+// Devanagari, Thai, Hiragana, Katakana, CJK Unified Ideographs, Hangul.
+// 5% coverage is well above incidental quotes (a single proper noun in a
+// 2000-char English sample is < 1%) and catches predominantly non-Latin
+// bodies even when English names dominate their first chars.
+const NON_LATIN_SCRIPT_RE =
+  /[Ͱ-ϿЀ-ӿ֐-׿؀-ۿऀ-ॿ฀-๿぀-ゟ゠-ヿ一-鿿가-힯]/g;
+const NON_LATIN_SCRIPT_RATIO_THRESHOLD = 0.05;
+
 export function isNonEnglish(body: string): boolean {
   const sample = body.slice(0, 2000);
+  if (sample.length > 0) {
+    const scriptMatches = sample.match(NON_LATIN_SCRIPT_RE);
+    const scriptRatio = (scriptMatches?.length ?? 0) / sample.length;
+    if (scriptRatio >= NON_LATIN_SCRIPT_RATIO_THRESHOLD) return true;
+  }
   const results = francAll(sample);
   if (results.length === 0) return false;
   const [topLang, topScore] = results[0];

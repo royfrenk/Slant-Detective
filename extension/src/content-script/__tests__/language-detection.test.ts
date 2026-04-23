@@ -82,4 +82,75 @@ describe('isNonEnglish()', () => {
       'not alter the overall tone of the carefully prepared statement released to the press.';
     expect(isNonEnglish(text)).toBe(false);
   });
+
+  // SD-047 follow-up: franc-min has no script expression for Hebrew. Without
+  // the Unicode script-ratio fast path, mixed Hebrew/English articles (names,
+  // years, quoted phrases in Latin script) made Latin win franc's script vote
+  // and the Latin-only trigrams picked 'eng' — the Haaretz regression from
+  // 2026-04-23 passed the non-English gate and ran full Layer 2 analysis.
+  it('detects Hebrew body text as non-English (regression: Haaretz)', () => {
+    const text =
+      'הנשיא הודיע היום כי צעדי הביטחון יוגברו בכל ערי המדינה. הממשלה סבורה כי יש לפעול ' +
+      'באופן מיידי לנוכח המצב הנוכחי. מומחים ציינו כי המשבר מחייב תגובה מתואמת בין המשרדים ' +
+      'השונים והרשויות המקומיות. האופוזיציה מתחה ביקורת חריפה על ההחלטות שהתקבלו עד כה ודרשה ' +
+      'כינוס דחוף של הפרלמנט לדיון בצעדים המוצעים על ידי הממשלה.';
+    expect(isNonEnglish(text)).toBe(true);
+  });
+
+  it('detects Hebrew body text with embedded English names as non-English', () => {
+    const text =
+      'ראש הממשלה Netanyahu נפגש אתמול עם Donald Trump בוושינגטון. הפגישה נערכה בבית הלבן ' +
+      'ועסקה בנושאים מדיניים וביטחוניים. בכירים בשתי הממשלות ציינו כי השיחה הייתה פורה. ' +
+      'הנושאים שעלו כללו את איראן, חמאס, ואת ההסכמים עם מדינות המפרץ. שני המנהיגים הדגישו ' +
+      'את החשיבות של שיתוף הפעולה האסטרטגי בין המדינות.';
+    expect(isNonEnglish(text)).toBe(true);
+  });
+
+  it('detects Chinese body text as non-English', () => {
+    const text =
+      '总统今天宣布将在全国各城市加强安全措施。政府认为面对当前形势必须立即采取行动。' +
+      '专家指出,这场危机需要各部委和地方当局之间的协调反应。反对派强烈批评迄今为止所作的决定,' +
+      '并要求紧急召开议会会议讨论政府提出的措施。经济学家表示当前的政策可能会影响市场稳定。';
+    expect(isNonEnglish(text)).toBe(true);
+  });
+
+  it('detects Japanese body text as non-English', () => {
+    const text =
+      '大統領は本日、全国の都市で治安対策を強化すると発表した。政府は現状を踏まえ、即座に行動する' +
+      '必要があると考えている。専門家は、危機には各省庁と地方自治体の間の協調した対応が必要だと' +
+      '指摘した。野党はこれまでに下された決定を厳しく批判し、提案された措置を議論するため、議会の' +
+      '緊急会議を要求した。';
+    expect(isNonEnglish(text)).toBe(true);
+  });
+
+  it('detects Russian body text as non-English', () => {
+    const text =
+      'Президент сегодня объявил, что меры безопасности будут усилены во всех городах страны. ' +
+      'Правительство считает, что необходимо действовать немедленно в связи с текущей ситуацией. ' +
+      'Эксперты отметили, что кризис требует скоординированного реагирования между различными ' +
+      'министерствами и местными властями. Оппозиция резко раскритиковала принятые до сих пор решения.';
+    expect(isNonEnglish(text)).toBe(true);
+  });
+
+  it('detects Arabic body text as non-English', () => {
+    const text =
+      'أعلن الرئيس اليوم أن التدابير الأمنية ستعزز في جميع مدن البلاد. تعتقد الحكومة أنه ' +
+      'من الضروري التصرف على الفور في ضوء الوضع الحالي. أشار الخبراء إلى أن الأزمة تتطلب ' +
+      'استجابة منسقة بين مختلف الوزارات والسلطات المحلية. انتقدت المعارضة بشدة القرارات ' +
+      'المتخذة حتى الآن ودعت إلى عقد جلسة برلمانية عاجلة لمناقشة التدابير المقترحة.';
+    expect(isNonEnglish(text)).toBe(true);
+  });
+
+  it('returns false for English text with a single quoted Hebrew name', () => {
+    const text =
+      'The Israeli prime minister, known to his supporters as "ביבי", met with American ' +
+      'officials yesterday to discuss the ongoing negotiations. The meeting covered a range ' +
+      'of topics including regional security, trade agreements, and humanitarian aid to the ' +
+      'neighboring territories. Both delegations emphasized the importance of continued ' +
+      'dialogue and cooperation in addressing the complex challenges facing the region. ' +
+      'Analysts noted that the tone of the talks was markedly more constructive than in ' +
+      'previous rounds, with officials from both sides expressing cautious optimism about ' +
+      'reaching a framework agreement in the coming weeks.';
+    expect(isNonEnglish(text)).toBe(false);
+  });
 });
