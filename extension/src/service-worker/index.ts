@@ -279,7 +279,7 @@ async function runAnalysis(): Promise<void> {
       spans: rubricResponse.spans,
     }).catch(() => {});
   } catch (err) {
-    let errorType: 'invalid_key' | 'quota_exceeded' | 'network_error' | 'timeout' | 'unknown' | 'content_filtered' = 'unknown';
+    let errorType: 'invalid_key' | 'quota_exceeded' | 'network_error' | 'timeout' | 'invalid_response' | 'unknown' | 'content_filtered' = 'unknown';
     if (err instanceof GeminiSafetyError) {
       errorType = 'content_filtered';
     } else if (err instanceof ProviderApiError && (err.statusCode === 400 || err.statusCode === 401 || err.statusCode === 403)) {
@@ -293,7 +293,9 @@ async function runAnalysis(): Promise<void> {
       void bump('analyze_llm_timeout');
       errorType = 'timeout';
     } else if (err instanceof RubricValidationError) {
-      errorType = 'unknown';
+      // Model returned (possibly after retry) but payload failed schema validation.
+      // Distinguished from 'timeout' so the panel can show accurate copy.
+      errorType = 'invalid_response';
     } else {
       errorType = 'network_error';
     }

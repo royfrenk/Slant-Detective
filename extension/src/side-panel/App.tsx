@@ -11,6 +11,7 @@ import Layer2SkeletonView from './layer2/layer2-skeleton-view';
 import Layer2View from './layer2/layer2-view';
 import InvalidKeyCard from './layer2/invalid-key-card';
 import LLMTimeoutCard from './layer2/llm-timeout-card';
+import ModelInvalidResponseCard from './layer2/model-invalid-response-card';
 import RateLimitCard from './layer2/rate-limit-card';
 import ContentFilteredCard from './layer2/content-filtered-card';
 import type { InboundMessage } from '../shared/messages';
@@ -19,17 +20,17 @@ import { PROVIDERS_KEY, ACTIVE_PROVIDER_KEY } from '../shared/storage-keys';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 type Layer2Status = 'idle' | 'loading' | 'done' | 'error';
-type Layer2ErrorType = 'timeout' | 'invalid_key' | 'rate_limit' | 'parse_error' | 'content_filtered' | null;
+type Layer2ErrorType = 'timeout' | 'invalid_key' | 'rate_limit' | 'invalid_response' | 'content_filtered' | null;
 type ExtractionErrorType = 'extraction_failed' | 'non_english' | 'not_a_news_page' | null;
 
 
 // Extended to 40s to accommodate AMP pages (SW budget 21.8s + CS ready-wait 14s).
 const ANALYSIS_TIMEOUT_MS = 40_000;
-// Layer 2 watchdog. Provider-side fetch has a 30s AbortSignal; pipeline retries
-// once on validation failure, so worst-case provider flow is ~60s. Add headroom
+// Layer 2 watchdog. Provider-side fetch has a 45s AbortSignal; pipeline retries
+// once on validation failure, so worst-case provider flow is ~90s. Add headroom
 // over that so the skeleton can't spin forever if the service worker is
 // terminated mid-request or drops its message.
-const LAYER2_TIMEOUT_MS = 70_000;
+const LAYER2_TIMEOUT_MS = 100_000;
 
 export default function App(): React.JSX.Element {
   const [status, setStatus] = useState<Status>('idle');
@@ -155,6 +156,7 @@ export default function App(): React.JSX.Element {
           timeout: 'timeout',
           quota_exceeded: 'rate_limit',
           network_error: 'timeout',
+          invalid_response: 'invalid_response',
           unknown: null,
           content_filtered: 'content_filtered',
         };
@@ -269,9 +271,10 @@ export default function App(): React.JSX.Element {
           {layer2ErrorType === 'timeout' && <LLMTimeoutCard onRetry={handleRetryLayer2} />}
           {layer2ErrorType === 'rate_limit' && <RateLimitCard onRetry={handleRetryLayer2} />}
           {layer2ErrorType === 'content_filtered' && <ContentFilteredCard />}
-          {(layer2ErrorType == null || layer2ErrorType === 'parse_error') && (
-            <LLMTimeoutCard onRetry={handleRetryLayer2} />
+          {layer2ErrorType === 'invalid_response' && (
+            <ModelInvalidResponseCard onRetry={handleRetryLayer2} />
           )}
+          {layer2ErrorType == null && <LLMTimeoutCard onRetry={handleRetryLayer2} />}
           <div className="mt-4">
             <FooterNav />
           </div>

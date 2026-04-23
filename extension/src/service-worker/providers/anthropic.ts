@@ -19,7 +19,7 @@ export class AnthropicProvider implements LLMProvider {
     try {
       const response = await fetch(ANTHROPIC_MESSAGES_URL, {
         method: 'POST',
-        signal: AbortSignal.timeout(30_000),
+        signal: AbortSignal.timeout(45_000),
         headers: {
           'x-api-key': key,
           'anthropic-version': ANTHROPIC_VERSION_HEADER,
@@ -65,7 +65,7 @@ export class AnthropicProvider implements LLMProvider {
         system: input.system,
         messages: [{ role: 'user', content: input.user }],
       }),
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(45_000),
     })
 
     if (!response.ok) {

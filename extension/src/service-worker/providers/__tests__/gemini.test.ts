@@ -219,7 +219,7 @@ describe('GeminiProvider.complete', () => {
     expect(caught?.statusCode).toBe(429)
   })
 
-  it('has AbortSignal.timeout(30_000) on the fetch call', async () => {
+  it('has AbortSignal.timeout(45_000) on the fetch call', async () => {
     const fetchSpy = vi.fn().mockResolvedValue(makeResponse(200, VALID_GEMINI_RESPONSE))
     vi.stubGlobal('fetch', fetchSpy)
     const timeoutSpy = vi.spyOn(AbortSignal, 'timeout')
@@ -229,7 +229,7 @@ describe('GeminiProvider.complete', () => {
       'AIzaTest',
     )
 
-    expect(timeoutSpy).toHaveBeenCalledWith(30_000)
+    expect(timeoutSpy).toHaveBeenCalledWith(45_000)
   })
 })
 

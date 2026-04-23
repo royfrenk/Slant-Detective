@@ -179,7 +179,7 @@ describe('OpenAIProvider.complete', () => {
     expect(caught?.statusCode).toBe(429)
   })
 
-  it('has AbortSignal.timeout(30_000) on the fetch call', async () => {
+  it('has AbortSignal.timeout(45_000) on the fetch call', async () => {
     const fetchSpy = vi.fn().mockResolvedValue(makeResponse(200, VALID_OPENAI_RESPONSE))
     vi.stubGlobal('fetch', fetchSpy)
     const timeoutSpy = vi.spyOn(AbortSignal, 'timeout')
@@ -189,7 +189,7 @@ describe('OpenAIProvider.complete', () => {
       'sk-proj-test',
     )
 
-    expect(timeoutSpy).toHaveBeenCalledWith(30_000)
+    expect(timeoutSpy).toHaveBeenCalledWith(45_000)
   })
 
   it('propagates network errors (TypeError) without wrapping', async () => {

@@ -26,7 +26,7 @@ export class OpenAIProvider implements LLMProvider {
     try {
       const response = await fetch(OPENAI_CHAT_URL, {
         method: 'POST',
-        signal: AbortSignal.timeout(30_000),
+        signal: AbortSignal.timeout(45_000),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${key}`,
@@ -75,7 +75,7 @@ export class OpenAIProvider implements LLMProvider {
           { role: 'user', content: input.user },
         ],
       }),
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(45_000),
     })
 
     if (!response.ok) {

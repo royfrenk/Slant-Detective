@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import InvalidKeyCard from '../invalid-key-card';
 import LLMTimeoutCard from '../llm-timeout-card';
+import ModelInvalidResponseCard from '../model-invalid-response-card';
 import RateLimitCard from '../rate-limit-card';
 import TooShortCardL2 from '../too-short-card-l2';
 import NonEnglishCard from '../../non-english-card';
@@ -125,6 +126,52 @@ describe('LLMTimeoutCard', () => {
     const user = userEvent.setup();
     const onRetry = vi.fn();
     render(<LLMTimeoutCard onRetry={onRetry} />);
+    const button = screen.getByRole('button', { name: 'Try again — retry analysis' });
+    await user.click(button);
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ModelInvalidResponseCard
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('ModelInvalidResponseCard', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('renders the correct title', () => {
+    render(<ModelInvalidResponseCard onRetry={vi.fn()} />);
+    expect(
+      screen.getByRole('heading', { name: "Couldn't parse the analysis" }),
+    ).toBeInTheDocument();
+  });
+
+  it('renders body with Gemini label when active provider is gemini', async () => {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
+      (_keys: unknown, cb?: (result: Record<string, unknown>) => void) => {
+        cb?.({ activeProvider: 'gemini' });
+        return undefined;
+      },
+    );
+    render(<ModelInvalidResponseCard onRetry={vi.fn()} />);
+    expect(
+      await screen.findByText(
+        "Gemini returned a response we couldn't read. This usually clears up on a retry.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('has role="alert"', () => {
+    render(<ModelInvalidResponseCard onRetry={vi.fn()} />);
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+  });
+
+  it('"Try again" button calls onRetry', async () => {
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+    render(<ModelInvalidResponseCard onRetry={onRetry} />);
     const button = screen.getByRole('button', { name: 'Try again — retry analysis' });
     await user.click(button);
     expect(onRetry).toHaveBeenCalledOnce();

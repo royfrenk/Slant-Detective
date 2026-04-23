@@ -55,7 +55,7 @@ export class GeminiProvider implements LLMProvider {
       const url = `${GEMINI_BASE_URL}/${DEFAULT_MODEL}:generateContent`
       const response = await fetch(url, {
         method: 'POST',
-        signal: AbortSignal.timeout(30_000),
+        signal: AbortSignal.timeout(45_000),
         headers: {
           'Content-Type': 'application/json',
           'x-goog-api-key': key,
@@ -114,7 +114,7 @@ export class GeminiProvider implements LLMProvider {
           thinkingConfig: { thinkingBudget: 0 },
         },
       }),
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(45_000),
     })
 
     if (!response.ok) {
