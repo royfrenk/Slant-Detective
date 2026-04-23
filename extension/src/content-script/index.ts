@@ -19,10 +19,42 @@ import { anchorSpans } from './anchor'
 import { injectHighlights, cleanupHighlights } from './highlight-injector'
 import { initTooltip, wireTooltipEvents, destroyTooltip } from './tooltip'
 import { wireHighlightSync, unwireHighlightSync } from './highlight-sync'
+import { showReloadBanner } from './reload-banner'
 import biasPhraseData from '../../public/assets/bias-phrases.json'
 
 const BIAS_PHRASES: string[] = (biasPhraseData as { phrases: string[] }).phrases
 
+// ---------------------------------------------------------------------------
+// SD-058: Runtime-alive guard + lifecycle teardown
+// ---------------------------------------------------------------------------
+
+// Returns false when the extension context has been invalidated (e.g. after a
+// dev reload or CWS auto-update). Accessing chrome.runtime.id throws in some
+// edge cases, so the try/catch is intentional.
+export function isRuntimeAlive(): boolean {
+  try { return typeof chrome?.runtime?.id === 'string'; }
+  catch { return false; }
+}
+
+// Aborts the waitForReadyState load listener if teardown fires while mid-wait.
+const lifecycleController = new AbortController();
+
+// Idempotency flag — prevents re-entry if multiple rapid events each see a
+// dead runtime before teardown has finished.
+let tornDown = false;
+
+export function teardownContentScript(): void {
+  if (tornDown) return;
+  tornDown = true;
+  chrome.runtime.onMessage.removeListener(onMessageHandler);
+  lifecycleController.abort();
+  unwireHighlightSync();
+  destroyTooltip();
+  cleanupHighlights();
+  showReloadBanner();
+}
+
+// ---------------------------------------------------------------------------
 // Adapts RubricSpan (LLM output schema) to EvidenceSpan (DOM/anchor schema).
 // Maps field renames: offset_start→start, offset_end→end, loaded_language→word_choice.
 function rubricSpanToEvidence(s: RubricSpan): EvidenceSpan {
@@ -46,7 +78,14 @@ function rubricSpanToEvidence(s: RubricSpan): EvidenceSpan {
 // Tooltip init is deferred until after the listener is registered.
 // ---------------------------------------------------------------------------
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+function onMessageHandler(
+  message: Record<string, unknown>,
+  _sender: chrome.runtime.MessageSender,
+  sendResponse: (response: unknown) => void,
+): boolean {
+  // SD-058: Detect invalidated extension context on first post-reload message.
+  if (!isRuntimeAlive()) { teardownContentScript(); return false; }
+
   if (message?.action === 'apply_highlights') {
     // Remove any prior session's highlights and tooltip, then re-anchor and inject.
     destroyTooltip()
@@ -76,7 +115,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   // Return true to keep the message channel open for the async sendResponse.
   return true;
-});
+}
+
+chrome.runtime.onMessage.addListener(onMessageHandler);
 
 // Initialize the tooltip host once on content script startup (runs once per page load).
 // Deferred until after the onMessage listener is registered so the listener is
@@ -90,6 +131,8 @@ initTooltip()
 let lexiconCache: ReturnType<typeof buildStemmedLexicon> | null = null;
 
 async function getLexicon(): Promise<ReturnType<typeof buildStemmedLexicon>> {
+  // SD-058: Degrade gracefully when the runtime is dead mid-flight.
+  if (!isRuntimeAlive()) return lexiconCache ?? buildStemmedLexicon([]);
   if (lexiconCache !== null) return lexiconCache;
 
   const url = chrome.runtime.getURL('assets/babe-lexicon.json');
@@ -277,7 +320,7 @@ function waitForReadyState(doc: Document): Promise<void> {
         return;
       }
     };
-    window.addEventListener('load', check, { once: true });
+    window.addEventListener('load', check, { once: true, signal: lifecycleController.signal });
     // Belt-and-braces timeout in case `load` already fired between the
     // readyState check and the listener being attached.
     setTimeout(check, timeoutMs);
