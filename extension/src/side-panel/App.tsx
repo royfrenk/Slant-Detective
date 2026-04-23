@@ -285,7 +285,7 @@ export default function App(): React.JSX.Element {
 
   return (
     <div className="relative flex flex-col h-full bg-background overflow-x-hidden">
-      <PanelChrome />
+      <PanelChrome onReload={startFreshAnalysis} />
       <main className="flex-1 overflow-y-auto overflow-x-hidden">
         <div className="max-w-[560px] mx-auto w-full px-4 pt-4 pb-4">
           {hasApiKey ? renderLayer2Path() : renderLayer1Path()}
