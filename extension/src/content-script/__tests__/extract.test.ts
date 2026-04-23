@@ -74,6 +74,55 @@ describe('extract()', () => {
     }
   })
 
+  // SD-054: heavy-tracker sites may render article copy in custom <div>
+  // containers with styled spans — no <article>, no common class hook, no
+  // substantial <p> tags. Last-resort body-text fallback should still recover.
+  it('SD-054: falls back to body textContent when Readability + selectors + <p>-walker all miss', () => {
+    const sentence = 'This is a substantive article sentence with plenty of prose weight. '
+    const doc = makeDoc(`
+      <html><head><title>Heavy Tracker News</title></head>
+      <body>
+        <nav>Subscribe Account Upgrade</nav>
+        <header>The Publication</header>
+        <div class="custom-story-shell">
+          <h1>Headline That Is Custom</h1>
+          <div class="byline">By Jane Doe</div>
+          <div class="post-body-custom">
+            <span>${sentence.repeat(8)}</span>
+            <span>${sentence.repeat(8)}</span>
+            <span>${sentence.repeat(8)}</span>
+          </div>
+        </div>
+        <footer>Footer links</footer>
+        <aside>Related content</aside>
+      </body></html>
+    `)
+    const result = extract(doc)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.body.length).toBeGreaterThan(200)
+      // Nav / header / footer / aside noise must be stripped.
+      expect(result.body).not.toContain('Subscribe Account Upgrade')
+      expect(result.body).not.toContain('Footer links')
+      expect(result.body).not.toContain('Related content')
+    }
+  })
+
+  // SD-054: negative control — truly empty pages still fail even with the new
+  // body-level fallback, so the news-page gate upstream can still route to
+  // NotANewsPageCard instead of showing content for nothing.
+  it('SD-054: body-text fallback still returns extraction_failed for empty shells', () => {
+    const doc = makeDoc(`
+      <html><head><title>Shell</title></head>
+      <body>
+        <nav>Nav</nav>
+        <footer>Footer</footer>
+      </body></html>
+    `)
+    const result = extract(doc)
+    expect(result.ok).toBe(false)
+  })
+
   it('returns offsets covering the full body', () => {
     const doc = makeDoc(`
       <html><head><title>Article</title></head>

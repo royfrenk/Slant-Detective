@@ -238,7 +238,38 @@ export function isNonEnglish(body: string): boolean {
 // Main analysis
 // ---------------------------------------------------------------------------
 
+// SD-054: Heavy-tracker sites (Mother Jones, The Free Press/Substack) ship
+// large third-party bundles (Datadog RUM, Coral, pub.network, TrueAnthem)
+// that keep the page busy past `document_idle` — when the panel fires
+// `analyze`, extraction can run against a DOM where the article body hasn't
+// been hydrated yet, so Readability + all selector fallbacks miss. Waiting
+// for `document.readyState === 'complete'` before extracting fixes this
+// with no cost on well-behaved sites (they're already 'complete' when the
+// user opens the panel). Capped at 8s so pages that never fire `load` (rare
+// broken sites) still surface a real error instead of hanging.
+const READY_STATE_TIMEOUT_MS = 8_000;
+
+function waitForReadyState(doc: Document): Promise<void> {
+  if (doc.readyState === 'complete') return Promise.resolve();
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const check = (): void => {
+      if (doc.readyState === 'complete' || Date.now() - start >= READY_STATE_TIMEOUT_MS) {
+        window.removeEventListener('load', check);
+        resolve();
+        return;
+      }
+    };
+    window.addEventListener('load', check, { once: true });
+    // Belt-and-braces timeout in case `load` already fired between the
+    // readyState check and the listener being attached.
+    setTimeout(check, READY_STATE_TIMEOUT_MS);
+  });
+}
+
 async function runAnalysis(): Promise<ContentScriptResult> {
+  await waitForReadyState(document);
+
   const extraction = extract(document);
 
   const pageUrl = window.location.href;

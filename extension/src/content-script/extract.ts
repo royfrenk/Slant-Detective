@@ -152,6 +152,18 @@ function tryFallback(doc: Document): ExtractionResult {
   const whole = makeResult(title, allParas, signals);
   if (whole.ok) return whole;
 
+  // SD-054: absolute last resort. Some news sites (Mother Jones, The Free
+  // Press on Substack) render articles inside custom containers AND split
+  // body copy across non-<p> elements (<div>, styled spans), so the <p>
+  // walker yields < 50 chars. Strip known noise from the whole body and use
+  // raw textContent. Lower quality than a targeted selector hit, but better
+  // than telling the user "Couldn't read this page" on a real article.
+  if (doc.body) {
+    const bodyText = extractTextFromElement(doc.body);
+    const bodyResult = makeResult(title, bodyText, signals);
+    if (bodyResult.ok) return bodyResult;
+  }
+
   return { ok: false, error: 'extraction_failed' };
 }
 
