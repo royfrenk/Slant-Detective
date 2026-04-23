@@ -95,3 +95,41 @@ export function getPercentileLabelForDomain(
 
   return percentileToLabel(percentile)
 }
+
+/**
+ * SD-056: Direct score-to-neutrality mapping for Layer 1's signal summary card.
+ *
+ * The corpus-based percentile lookup produced counterintuitive labels (a
+ * displayed "7" paired with "on the neutral end"). Replaced with a linear
+ * mapping that the user can read off the 0–10 score directly:
+ *
+ *   - score 0–4 → "more neutral than (10 - score) × 10 % of articles"
+ *   - score 5   → median neutrality
+ *   - score 6–10 → "less neutral than score × 10 % of articles"
+ *
+ * Extremes (0 and 10) are capped at 95% so the label never reads "100% of
+ * articles," which is mathematically accurate under the linear model but
+ * feels absolute in a way that a 0–10 score can't actually claim.
+ */
+export type Layer1NeutralityLabel =
+  | { kind: 'comparative'; emphasis: 'more' | 'less'; percentage: number }
+  | { kind: 'median' }
+
+const EXTREME_PERCENTAGE_CAP = 95
+
+export function getLayer1NeutralityLabel(score: number): Layer1NeutralityLabel {
+  const rounded = Math.round(score)
+  if (rounded === 5) return { kind: 'median' }
+  if (rounded < 5) {
+    return {
+      kind: 'comparative',
+      emphasis: 'more',
+      percentage: Math.min(EXTREME_PERCENTAGE_CAP, (10 - rounded) * 10),
+    }
+  }
+  return {
+    kind: 'comparative',
+    emphasis: 'less',
+    percentage: Math.min(EXTREME_PERCENTAGE_CAP, rounded * 10),
+  }
+}

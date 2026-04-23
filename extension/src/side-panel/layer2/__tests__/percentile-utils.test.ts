@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { scoreToPercentile, percentileToLabel, getPercentileLabel } from '../percentile-utils'
+import {
+  scoreToPercentile,
+  percentileToLabel,
+  getPercentileLabel,
+  getLayer1NeutralityLabel,
+} from '../percentile-utils'
 
 // ─── scoreToPercentile ───────────────────────────────────────────────────────
 
@@ -121,5 +126,89 @@ describe('getPercentileLabel', () => {
     // Distribution all low: [0,1,2,3,4,5,6,7,8,9] — score=10 hits 100th percentile
     const dist = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     expect(getPercentileLabel(10, dist)).toBe('more tilted than 9 in 10 articles')
+  })
+})
+
+// ─── getLayer1NeutralityLabel (SD-056) ───────────────────────────────────────
+
+describe('getLayer1NeutralityLabel', () => {
+  it('score 5 → median', () => {
+    expect(getLayer1NeutralityLabel(5)).toEqual({ kind: 'median' })
+  })
+
+  it('score 4 → more neutral than 60%', () => {
+    expect(getLayer1NeutralityLabel(4)).toEqual({
+      kind: 'comparative',
+      emphasis: 'more',
+      percentage: 60,
+    })
+  })
+
+  it('score 3 → more neutral than 70%', () => {
+    expect(getLayer1NeutralityLabel(3)).toEqual({
+      kind: 'comparative',
+      emphasis: 'more',
+      percentage: 70,
+    })
+  })
+
+  it('score 1 → more neutral than 90%', () => {
+    expect(getLayer1NeutralityLabel(1)).toEqual({
+      kind: 'comparative',
+      emphasis: 'more',
+      percentage: 90,
+    })
+  })
+
+  it('score 6 → less neutral than 60%', () => {
+    expect(getLayer1NeutralityLabel(6)).toEqual({
+      kind: 'comparative',
+      emphasis: 'less',
+      percentage: 60,
+    })
+  })
+
+  it('score 9 → less neutral than 90%', () => {
+    expect(getLayer1NeutralityLabel(9)).toEqual({
+      kind: 'comparative',
+      emphasis: 'less',
+      percentage: 90,
+    })
+  })
+
+  it('score 0 → more neutral than 95% (capped)', () => {
+    expect(getLayer1NeutralityLabel(0)).toEqual({
+      kind: 'comparative',
+      emphasis: 'more',
+      percentage: 95,
+    })
+  })
+
+  it('score 10 → less neutral than 95% (capped)', () => {
+    expect(getLayer1NeutralityLabel(10)).toEqual({
+      kind: 'comparative',
+      emphasis: 'less',
+      percentage: 95,
+    })
+  })
+
+  it('rounds fractional scores (5.4 → median)', () => {
+    expect(getLayer1NeutralityLabel(5.4)).toEqual({ kind: 'median' })
+  })
+
+  it('rounds fractional scores (5.5 → less neutral than 60%)', () => {
+    expect(getLayer1NeutralityLabel(5.5)).toEqual({
+      kind: 'comparative',
+      emphasis: 'less',
+      percentage: 60,
+    })
+  })
+
+  it('rounds fractional scores (4.49 → more neutral than 60%)', () => {
+    expect(getLayer1NeutralityLabel(4.49)).toEqual({
+      kind: 'comparative',
+      emphasis: 'more',
+      percentage: 60,
+    })
   })
 })

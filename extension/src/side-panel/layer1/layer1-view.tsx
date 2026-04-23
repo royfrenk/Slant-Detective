@@ -8,8 +8,7 @@ import UpsellRow from './upsell-row';
 import FooterNav from '../footer-nav';
 import RationalePanel from '../layer2/rationale-panel';
 import { getLayer1OverallRationale } from '../layer2/layer1-rationale';
-import { useDistribution } from '../layer2/use-distribution';
-import { getPercentileLabel } from '../layer2/percentile-utils';
+import { getLayer1NeutralityLabel } from '../layer2/percentile-utils';
 
 const MIN_WORDS_FOR_ANALYSIS = 400;
 
@@ -18,12 +17,26 @@ interface Layer1OverallCardProps {
 }
 
 function Layer1OverallCard({ signals }: Layer1OverallCardProps): React.JSX.Element {
-  const distribution = useDistribution('layer1');
-  // Use language intensity as a proxy score for percentile lookup in Layer 1
+  // Use language intensity as the Layer 1 score (proxied to a 0–10 integer).
   const score = signals.languageIntensity;
   const scoreLabel = Math.round(score).toString();
-  const percentileLabel = getPercentileLabel(score, distribution?.overall ?? null);
+  const neutralityLabel = getLayer1NeutralityLabel(score);
   const rationale = getLayer1OverallRationale(signals);
+
+  // SD-056: Bold the comparative word ("more" / "less") or "median" for
+  // at-a-glance direction cueing.
+  const neutralityCopy =
+    neutralityLabel.kind === 'median' ? (
+      <>
+        <strong className="font-semibold text-on-surface">median</strong>{' '}
+        neutrality for news articles
+      </>
+    ) : (
+      <>
+        <strong className="font-semibold text-on-surface">{neutralityLabel.emphasis}</strong>{' '}
+        neutral than {neutralityLabel.percentage}% of articles
+      </>
+    );
 
   return (
     <div
@@ -40,11 +53,9 @@ function Layer1OverallCard({ signals }: Layer1OverallCardProps): React.JSX.Eleme
       >
         {scoreLabel}
       </span>
-      {percentileLabel != null && (
-        <p className="text-[0.75rem] font-normal text-on-surface-variant leading-tight m-0">
-          {percentileLabel}
-        </p>
-      )}
+      <p className="text-[0.75rem] font-normal text-on-surface-variant leading-tight m-0">
+        {neutralityCopy}
+      </p>
       <RationalePanel
         text={rationale}
         id="layer1-overall-rationale-panel"
