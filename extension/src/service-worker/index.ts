@@ -113,15 +113,26 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// SD-051/SD-054: The content script's `onMessage` listener registers during
-// page load, but `chrome.tabs.sendMessage` can fire before that listener is
-// live — e.g. when the user clicks the toolbar icon while the page is still
-// parsing. Heavy-tracker news sites (Mother Jones, The Free Press) don't hit
-// `document_idle` for several seconds because of Datadog/Coral/pub.network
-// bundles, so the original 2.3s budget was too tight. Extended to ~7.3s
-// across 7 attempts (50/150/300/600/1200/2000/3000ms) — still well under the
-// panel's 30s watchdog.
-const SEND_ANALYZE_BACKOFF_MS = [50, 150, 300, 600, 1200, 2000, 3000] as const;
+// SD-051/SD-054/SD-055: The content script's `onMessage` listener registers
+// during page load, but `chrome.tabs.sendMessage` can fire before that listener
+// is live — e.g. when the user clicks the toolbar icon while the page is still
+// parsing. Two compounding factors push thefp.com past the budget:
+//
+//   1. Heavy-tracker news sites (Mother Jones, The Free Press/Substack) don't
+//      hit `document_idle` for several seconds because of Datadog/Coral/
+//      pub.network/TrueAnthem bundles.
+//   2. The CRX loader pattern (@crxjs/vite-plugin) splits the CS into a tiny
+//      IIFE loader that does `await import(chrome.runtime.getURL(...))` for
+//      the 538KB main module. The listener only registers AFTER that dynamic
+//      import resolves + the module top-level evaluates. On a bogged-down
+//      page that can stretch to >10s.
+//
+// Extended to ~15.3s across 8 attempts. The post-injection retry loop after
+// the `executeScript` fallback now also waits generously (500/1000/2000/3000ms
+// = 6.5s) instead of a single 100ms wait, giving the freshly-injected CS room
+// to complete its dynamic import. Panel watchdog is 30s, so total budget fits.
+const SEND_ANALYZE_BACKOFF_MS = [50, 150, 300, 600, 1200, 2000, 3000, 8000] as const;
+const POST_INJECT_RETRY_MS = [500, 1000, 2000, 3000] as const;
 
 async function sendAnalyze(tabId: number): Promise<ContentScriptResult> {
   let lastErr: unknown = null;
@@ -135,18 +146,28 @@ async function sendAnalyze(tabId: number): Promise<ContentScriptResult> {
     }
   }
 
-  // Tab was open before the extension was installed/reloaded, or the page
-  // loaded without the declarative content script (rare SPA edge cases). Inject
-  // manually, wait briefly for the listener to register, then retry once.
+  // Tab was open before the extension was installed/reloaded, or the declarative
+  // CS loader is still resolving its dynamic import. Inject manually, then
+  // retry with backoff to let the freshly-injected module finish parsing.
   try {
     const file = await getContentScriptFile();
     await chrome.scripting.executeScript({ target: { tabId }, files: [file] });
-    await sleep(100);
-    return await chrome.tabs.sendMessage(tabId, { action: 'analyze' });
   } catch (err) {
-    lastErr = err;
-    throw lastErr;
+    // executeScript itself failed (CSP, permission, about:blank race). Nothing
+    // else to try — surface the original "Receiving end" error, not this one.
+    throw lastErr ?? err;
   }
+
+  for (const delay of POST_INJECT_RETRY_MS) {
+    await sleep(delay);
+    try {
+      return await chrome.tabs.sendMessage(tabId, { action: 'analyze' });
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+
+  throw lastErr;
 }
 
 async function runAnalysis(): Promise<void> {
