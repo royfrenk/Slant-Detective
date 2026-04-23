@@ -38,7 +38,49 @@ function rubricSpanToEvidence(s: RubricSpan): EvidenceSpan {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Register onMessage listener FIRST (before any other async work). The service
+// worker may send {action:'analyze'} the moment it opens the side panel, and a
+// race where the CS has loaded but its listener isn't registered yet surfaces
+// as "Could not establish connection. Receiving end does not exist." See SD-051.
+// Tooltip init is deferred until after the listener is registered.
+// ---------------------------------------------------------------------------
+
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.action === 'apply_highlights') {
+    // Remove any prior session's highlights and tooltip, then re-anchor and inject.
+    destroyTooltip()
+    unwireHighlightSync()
+    cleanupHighlights()
+    // Re-initialize tooltip host (destroyTooltip removed it) before wiring events.
+    initTooltip()
+    const evidence: EvidenceSpan[] = (message.spans as RubricSpan[]).map(rubricSpanToEvidence)
+    const anchored = anchorSpans(evidence, document)
+    injectHighlights(anchored)
+    wireTooltipEvents(anchored)
+    wireHighlightSync()
+    return false
+  }
+
+  if (message?.action !== 'analyze') {
+    return false;
+  }
+
+  runAnalysis().then(sendResponse).catch(() => {
+    const fallback: ContentScriptResult = {
+      ok: false,
+      error: 'extraction_failed',
+    };
+    sendResponse(fallback);
+  });
+
+  // Return true to keep the message channel open for the async sendResponse.
+  return true;
+});
+
 // Initialize the tooltip host once on content script startup (runs once per page load).
+// Deferred until after the onMessage listener is registered so the listener is
+// live the moment the CS finishes parsing.
 initTooltip()
 
 // ---------------------------------------------------------------------------
@@ -129,42 +171,17 @@ export function isNonEnglish(body: string): boolean {
 // Main analysis
 // ---------------------------------------------------------------------------
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.action === 'apply_highlights') {
-    // Remove any prior session's highlights and tooltip, then re-anchor and inject.
-    destroyTooltip()
-    unwireHighlightSync()
-    cleanupHighlights()
-    // Re-initialize tooltip host (destroyTooltip removed it) before wiring events.
-    initTooltip()
-    const evidence: EvidenceSpan[] = (message.spans as RubricSpan[]).map(rubricSpanToEvidence)
-    const anchored = anchorSpans(evidence, document)
-    injectHighlights(anchored)
-    wireTooltipEvents(anchored)
-    wireHighlightSync()
-    return false
-  }
-
-  if (message?.action !== 'analyze') {
-    return false;
-  }
-
-  runAnalysis().then(sendResponse).catch(() => {
-    const fallback: ContentScriptResult = {
-      ok: false,
-      error: 'extraction_failed',
-    };
-    sendResponse(fallback);
-  });
-
-  // Return true to keep the message channel open for the async sendResponse.
-  return true;
-});
-
 async function runAnalysis(): Promise<ContentScriptResult> {
   const extraction = extract(document);
 
+  // SD-052: When extraction fails, still check the news-page gate before
+  // surfacing `extraction_failed`. Many non-news pages (login walls, dashboards,
+  // SPA shells) fail Readability but are not articles — those should route to
+  // the "not a news page" card, not the generic extraction-failed error.
   if (!extraction.ok) {
+    if (!isNewsPage(document, 0)) {
+      return { ok: false, error: 'not_a_news_page' };
+    }
     return extraction;
   }
 
