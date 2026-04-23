@@ -67,12 +67,50 @@ describe('LLMTimeoutCard', () => {
     expect(screen.getByRole('heading', { name: 'Analysis is taking too long' })).toBeInTheDocument();
   });
 
-  it('renders the correct body text', () => {
+  it('renders body text with Anthropic label when active provider is anthropic', async () => {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
+      (_keys: unknown, cb?: (result: Record<string, unknown>) => void) => {
+        cb?.({ activeProvider: 'anthropic' });
+        return undefined;
+      },
+    );
     const onRetry = vi.fn();
     render(<LLMTimeoutCard onRetry={onRetry} />);
     expect(
-      screen.getByText(
+      await screen.findByText(
         'The request to Claude timed out. This is usually a temporary network issue. Your API key is fine.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('renders body text with Gemini label when active provider is gemini', async () => {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
+      (_keys: unknown, cb?: (result: Record<string, unknown>) => void) => {
+        cb?.({ activeProvider: 'gemini' });
+        return undefined;
+      },
+    );
+    const onRetry = vi.fn();
+    render(<LLMTimeoutCard onRetry={onRetry} />);
+    expect(
+      await screen.findByText(
+        'The request to Gemini timed out. This is usually a temporary network issue. Your API key is fine.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('renders body text with OpenAI label when active provider is openai', async () => {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
+      (_keys: unknown, cb?: (result: Record<string, unknown>) => void) => {
+        cb?.({ activeProvider: 'openai' });
+        return undefined;
+      },
+    );
+    const onRetry = vi.fn();
+    render(<LLMTimeoutCard onRetry={onRetry} />);
+    expect(
+      await screen.findByText(
+        'The request to OpenAI timed out. This is usually a temporary network issue. Your API key is fine.',
       ),
     ).toBeInTheDocument();
   });
