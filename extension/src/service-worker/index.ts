@@ -113,13 +113,15 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// SD-051: The content script's `onMessage` listener registers during page load,
-// but `chrome.tabs.sendMessage` can fire before that listener is live — e.g.
-// when the user clicks the toolbar icon while the page is still parsing. A
-// single retry isn't enough on slower pages; retry with backoff before giving
-// up. Budget is ~2.3s across 5 attempts (50/150/300/600/1200ms) which covers
-// all but the slowest pages and still fails before the panel's 30s watchdog.
-const SEND_ANALYZE_BACKOFF_MS = [50, 150, 300, 600, 1200] as const;
+// SD-051/SD-054: The content script's `onMessage` listener registers during
+// page load, but `chrome.tabs.sendMessage` can fire before that listener is
+// live — e.g. when the user clicks the toolbar icon while the page is still
+// parsing. Heavy-tracker news sites (Mother Jones, The Free Press) don't hit
+// `document_idle` for several seconds because of Datadog/Coral/pub.network
+// bundles, so the original 2.3s budget was too tight. Extended to ~7.3s
+// across 7 attempts (50/150/300/600/1200/2000/3000ms) — still well under the
+// panel's 30s watchdog.
+const SEND_ANALYZE_BACKOFF_MS = [50, 150, 300, 600, 1200, 2000, 3000] as const;
 
 async function sendAnalyze(tabId: number): Promise<ContentScriptResult> {
   let lastErr: unknown = null;
