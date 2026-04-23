@@ -206,42 +206,46 @@ describe('NonEnglishCard', () => {
   });
 
   it('renders the ⊘ glyph', () => {
-    render(<NonEnglishCard />);
+    render(<NonEnglishCard onRetry={vi.fn()} />);
     expect(screen.getByText('⊘')).toBeInTheDocument();
   });
 
   it('renders title "Slant Detective only works in English"', () => {
-    render(<NonEnglishCard />);
+    render(<NonEnglishCard onRetry={vi.fn()} />);
     expect(
       screen.getByRole('heading', { name: 'Slant Detective only works in English' }),
     ).toBeInTheDocument();
   });
 
   it('renders body text mentioning "another language"', () => {
-    render(<NonEnglishCard />);
+    render(<NonEnglishCard onRetry={vi.fn()} />);
     expect(screen.getByText(/another language/)).toBeInTheDocument();
   });
 
   it('renders "How we measure →" link with correct aria-label', () => {
-    render(<NonEnglishCard />);
+    render(<NonEnglishCard onRetry={vi.fn()} />);
     expect(
       screen.getByRole('link', { name: 'How we measure (opens in new tab)' }),
     ).toBeInTheDocument();
   });
 
   it('has role="alert" and aria-label="Language not supported"', () => {
-    render(<NonEnglishCard />);
+    render(<NonEnglishCard onRetry={vi.fn()} />);
     expect(screen.getByRole('alert', { name: 'Language not supported' })).toBeInTheDocument();
   });
 
-  it('does not render a CTA button', () => {
-    render(<NonEnglishCard />);
-    expect(screen.queryByRole('button')).toBeNull();
+  it('"Try again" button calls onRetry', async () => {
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+    render(<NonEnglishCard onRetry={onRetry} />);
+    const button = screen.getByRole('button', { name: 'Try again — re-analyze this page' });
+    await user.click(button);
+    expect(onRetry).toHaveBeenCalledOnce();
   });
 
   it('"How we measure →" link click calls chrome.tabs.create', async () => {
     const user = userEvent.setup();
-    render(<NonEnglishCard />);
+    render(<NonEnglishCard onRetry={vi.fn()} />);
     const link = screen.getByRole('link', { name: 'How we measure (opens in new tab)' });
     await user.click(link);
     expect(chrome.tabs.create).toHaveBeenCalledOnce();
@@ -253,30 +257,38 @@ describe('NonEnglishCard', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('NotANewsPageCard', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('renders the ⊘ glyph', () => {
-    render(<NotANewsPageCard />);
+    render(<NotANewsPageCard onRetry={vi.fn()} />);
     expect(screen.getByText('⊘')).toBeInTheDocument();
   });
 
   it('renders title "No News Detected"', () => {
-    render(<NotANewsPageCard />);
+    render(<NotANewsPageCard onRetry={vi.fn()} />);
     expect(
       screen.getByRole('heading', { name: 'No News Detected' }),
     ).toBeInTheDocument();
   });
 
   it('has role="alert" and aria-label="No news article detected"', () => {
-    render(<NotANewsPageCard />);
+    render(<NotANewsPageCard onRetry={vi.fn()} />);
     expect(screen.getByRole('alert', { name: 'No news article detected' })).toBeInTheDocument();
   });
 
-  it('does not render a CTA button', () => {
-    render(<NotANewsPageCard />);
-    expect(screen.queryByRole('button')).toBeNull();
+  it('"Try again" button calls onRetry', async () => {
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+    render(<NotANewsPageCard onRetry={onRetry} />);
+    const button = screen.getByRole('button', { name: 'Try again — re-analyze this page' });
+    await user.click(button);
+    expect(onRetry).toHaveBeenCalledOnce();
   });
 
   it('does not render any link', () => {
-    render(<NotANewsPageCard />);
+    render(<NotANewsPageCard onRetry={vi.fn()} />);
     expect(screen.queryByRole('link')).toBeNull();
   });
 });

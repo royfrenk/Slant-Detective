@@ -1,7 +1,11 @@
 import React from 'react';
 import ErrorStateCard from './error-state-card';
 
-export default function NonEnglishCard(): React.JSX.Element {
+interface NonEnglishCardProps {
+  onRetry: () => void;
+}
+
+export default function NonEnglishCard({ onRetry }: NonEnglishCardProps): React.JSX.Element {
   function openHowWeMeasure(e: React.MouseEvent): void {
     e.preventDefault();
     chrome.tabs.create({ url: chrome.runtime.getURL('src/pages/how-we-measure.html') }).catch(() => {});
@@ -31,6 +35,12 @@ export default function NonEnglishCard(): React.JSX.Element {
       glyphColorClass="text-on-surface-variant"
       title="Slant Detective only works in English"
       body={body}
+      cta={{
+        label: 'Try again',
+        variant: 'secondary',
+        onClick: onRetry,
+        ariaLabel: 'Try again — re-analyze this page',
+      }}
       role="alert"
       ariaLabel="Language not supported"
     />

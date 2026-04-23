@@ -192,7 +192,7 @@ export default function App(): React.JSX.Element {
       if (extractionErrorType === 'non_english') {
         return (
           <>
-            <NonEnglishCard />
+            <NonEnglishCard onRetry={handleRetry} />
             <div className="mt-4"><FooterNav /></div>
           </>
         );
@@ -200,7 +200,7 @@ export default function App(): React.JSX.Element {
       if (extractionErrorType === 'not_a_news_page') {
         return (
           <>
-            <NotANewsPageCard />
+            <NotANewsPageCard onRetry={handleRetry} />
             <div className="mt-4"><FooterNav /></div>
           </>
         );
@@ -228,7 +228,7 @@ export default function App(): React.JSX.Element {
       if (extractionErrorType === 'non_english') {
         return (
           <>
-            <NonEnglishCard />
+            <NonEnglishCard onRetry={handleRetry} />
             <div className="mt-4"><FooterNav /></div>
           </>
         );
@@ -236,7 +236,7 @@ export default function App(): React.JSX.Element {
       if (extractionErrorType === 'not_a_news_page') {
         return (
           <>
-            <NotANewsPageCard />
+            <NotANewsPageCard onRetry={handleRetry} />
             <div className="mt-4"><FooterNav /></div>
           </>
         );
