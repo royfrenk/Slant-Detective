@@ -7,7 +7,7 @@ import type { EvidenceSpan, AnchoredSpan } from '../shared/types'
 // ---------------------------------------------------------------------------
 
 const CATEGORY_ACCENT: Record<EvidenceSpan['category'], string> = {
-  word_choice: '#ba1a1a',
+  word_choice: '#6d28d9',
   framing: '#d97706',
   headline_slant: '#2563eb',
   source_mix: '#475569',
@@ -21,7 +21,7 @@ const CATEGORY_GLYPH: Record<EvidenceSpan['category'], string> = {
 }
 
 const CATEGORY_DISPLAY: Record<EvidenceSpan['category'], string> = {
-  word_choice: 'Loaded Language',
+  word_choice: 'Word Choice',
   framing: 'Framing',
   headline_slant: 'Headline Slant',
   source_mix: 'Source Mix',
@@ -63,6 +63,10 @@ function buildTooltipCSS(): string {
   --category-framing: #d97706;
   --category-headline: #2563eb;
   --category-source: #475569;
+  /* Base font-size: set from the anchored span's computed size in showTooltip,
+     clamped to [14px, 20px]. All inner text uses em so the tooltip visually
+     matches the article's body text rather than feeling like a tiny badge. */
+  font-size: 15px;
 }
 
 .tooltip {
@@ -106,7 +110,7 @@ function buildTooltipCSS(): string {
 }
 
 .phrase-row {
-  font-size: 13px;
+  font-size: 1em;
   font-weight: 600;
   color: var(--on-surface);
   border-left: 3px solid currentColor;
@@ -125,28 +129,28 @@ function buildTooltipCSS(): string {
 }
 
 .chip-icon {
-  font-size: 0.75rem;
+  font-size: 0.9em;
 }
 
 .chip-label {
-  font-size: 0.75rem;
+  font-size: 0.9em;
   font-weight: 500;
 }
 
 .chip-sep {
   color: var(--on-surface-variant);
   padding: 0 2px;
-  font-size: 0.75rem;
+  font-size: 0.9em;
 }
 
 .chip-severity {
-  font-size: 0.75rem;
+  font-size: 0.9em;
   font-weight: 400;
   color: var(--on-surface-variant);
 }
 
 .tilt-row {
-  font-size: 0.75rem;
+  font-size: 0.9em;
   font-weight: 400;
   color: var(--on-surface-variant);
   margin-bottom: 8px;
@@ -161,7 +165,7 @@ function buildTooltipCSS(): string {
 }
 
 .reason {
-  font-size: 0.75rem;
+  font-size: 0.95em;
   font-weight: 400;
   color: var(--on-surface);
   line-height: 1.5;
@@ -183,7 +187,7 @@ function buildTooltipCSS(): string {
 }
 
 .hw-link {
-  font-size: 0.6875rem;
+  font-size: 0.8em;
   font-weight: 400;
   color: var(--primary-fixed);
   text-decoration: none;
@@ -214,6 +218,7 @@ function buildTooltipCSS(): string {
 // We store it here at module level.
 let shadowRoot: ShadowRoot | null = null
 
+let hostEl: HTMLElement | null = null
 let tooltipEl: HTMLElement | null = null
 let phraseEl: HTMLElement | null = null
 let chipIconEl: HTMLElement | null = null
@@ -412,7 +417,7 @@ export function initTooltip(options: InitTooltipOptions = {}): void {
     return
   }
 
-  const hostEl = document.createElement('div')
+  hostEl = document.createElement('div')
   hostEl.id = 'sd-tooltip-host'
   hostEl.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;pointer-events:none;z-index:2147483646;'
 
@@ -558,6 +563,7 @@ export function destroyTooltip(): void {
 
   // Reset module-level state
   shadowRoot = null
+  hostEl = null
   tooltipEl = null
   phraseEl = null
   chipIconEl = null
@@ -663,11 +669,24 @@ function showTooltip(span: EvidenceSpan, anchorEl: HTMLElement): void {
   if (tooltipEl === null) return
 
   populateTooltip(span)
+  syncFontSizeToAnchor(anchorEl)
   tooltipEl.style.display = 'block'
   tooltipEl.classList.remove('hiding')
   positionTooltip(anchorEl)
   anchorEl.setAttribute('aria-describedby', tooltipEl.id)
   currentAnchorEl = anchorEl
+}
+
+// Match the tooltip's base font-size to the article's body text so the tooltip
+// doesn't feel like a tiny badge on sites with large serif body text (NYT,
+// Medium, etc). Clamped so the tooltip stays usable on unusually small or
+// large article fonts.
+function syncFontSizeToAnchor(anchorEl: HTMLElement): void {
+  if (hostEl === null) return
+  const computed = parseFloat(getComputedStyle(anchorEl).fontSize)
+  if (!Number.isFinite(computed) || computed <= 0) return
+  const clamped = Math.max(14, Math.min(20, computed))
+  hostEl.style.fontSize = `${clamped}px`
 }
 
 function hideTooltip(immediate = false): void {

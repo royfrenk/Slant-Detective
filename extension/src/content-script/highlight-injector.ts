@@ -60,8 +60,8 @@ function getArticleRoot(): Element {
 function buildStylesheet(): string {
   return `
 [data-sd-injected] [data-sd-category="loaded-language"] {
-  color: #ba1a1a;
-  background-color: rgba(186, 26, 26, 0.07);
+  color: #6d28d9;
+  background-color: rgba(109, 40, 217, 0.07);
   text-decoration: underline dotted;
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
@@ -70,7 +70,7 @@ function buildStylesheet(): string {
   cursor: default;
 }
 [data-sd-injected] [data-sd-category="loaded-language"][data-sd-severity="high"] {
-  background-color: rgba(186, 26, 26, 0.20);
+  background-color: rgba(109, 40, 217, 0.20);
 }
 [data-sd-injected] [data-sd-category="framing"] {
   color: #e96666;

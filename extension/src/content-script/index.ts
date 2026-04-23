@@ -93,7 +93,8 @@ function onMessageHandler(
     cleanupHighlights()
     // Re-initialize tooltip host (destroyTooltip removed it) before wiring events.
     initTooltip()
-    const evidence: EvidenceSpan[] = (message.spans as RubricSpan[]).map(rubricSpanToEvidence)
+    const incomingSpans = message.spans as RubricSpan[]
+    const evidence: EvidenceSpan[] = incomingSpans.map(rubricSpanToEvidence)
     const anchored = anchorSpans(evidence, document)
     injectHighlights(anchored)
     wireTooltipEvents(anchored)

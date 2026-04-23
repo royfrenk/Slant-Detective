@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Slant Detective",
-  "version": "1.1",
+  "version": "1.1.1",
   "description": "See how any news article is slanted — the lean, the loaded words, the phrases doing the work. In the article itself.",
   "minimum_chrome_version": "114",
   "action": {
