@@ -23,11 +23,47 @@ describe('InvalidKeyCard', () => {
     expect(screen.getByRole('heading', { name: 'API key not recognized' })).toBeInTheDocument();
   });
 
-  it('renders the correct body text', () => {
+  it('renders body text with Anthropic label when active provider is anthropic', async () => {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
+      (_keys: unknown, cb?: (result: Record<string, unknown>) => void) => {
+        cb?.({ activeProvider: 'anthropic' });
+        return undefined;
+      },
+    );
     render(<InvalidKeyCard />);
     expect(
-      screen.getByText(
+      await screen.findByText(
         "Your Anthropic API key wasn't accepted. It may have been revoked or entered incorrectly. Open Settings to update it.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('renders body text with Gemini label when active provider is gemini', async () => {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
+      (_keys: unknown, cb?: (result: Record<string, unknown>) => void) => {
+        cb?.({ activeProvider: 'gemini' });
+        return undefined;
+      },
+    );
+    render(<InvalidKeyCard />);
+    expect(
+      await screen.findByText(
+        "Your Gemini API key wasn't accepted. It may have been revoked or entered incorrectly. Open Settings to update it.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('renders body text with OpenAI label when active provider is openai', async () => {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
+      (_keys: unknown, cb?: (result: Record<string, unknown>) => void) => {
+        cb?.({ activeProvider: 'openai' });
+        return undefined;
+      },
+    );
+    render(<InvalidKeyCard />);
+    expect(
+      await screen.findByText(
+        "Your OpenAI API key wasn't accepted. It may have been revoked or entered incorrectly. Open Settings to update it.",
       ),
     ).toBeInTheDocument();
   });
@@ -214,21 +250,100 @@ describe('RateLimitCard', () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
-  it('"Anthropic Console" inline link has correct aria-label', () => {
+  it('inline console link labels match active provider — anthropic', async () => {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
+      (_keys: unknown, cb?: (result: Record<string, unknown>) => void) => {
+        cb?.({ activeProvider: 'anthropic' });
+        return undefined;
+      },
+    );
     const onRetry = vi.fn();
     render(<RateLimitCard onRetry={onRetry} />);
     expect(
-      screen.getByRole('link', { name: 'Anthropic Console — opens in new tab' }),
+      await screen.findByRole('link', { name: 'Anthropic Console — opens in new tab' }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Anthropic's API has rate-limited this key/),
     ).toBeInTheDocument();
   });
 
-  it('"Anthropic Console" click calls chrome.tabs.create with correct URL', async () => {
+  it('inline console link labels match active provider — gemini', async () => {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
+      (_keys: unknown, cb?: (result: Record<string, unknown>) => void) => {
+        cb?.({ activeProvider: 'gemini' });
+        return undefined;
+      },
+    );
+    const onRetry = vi.fn();
+    render(<RateLimitCard onRetry={onRetry} />);
+    expect(
+      await screen.findByRole('link', { name: 'Google AI Studio — opens in new tab' }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Gemini's API has rate-limited this key/),
+    ).toBeInTheDocument();
+  });
+
+  it('inline console link labels match active provider — openai', async () => {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
+      (_keys: unknown, cb?: (result: Record<string, unknown>) => void) => {
+        cb?.({ activeProvider: 'openai' });
+        return undefined;
+      },
+    );
+    const onRetry = vi.fn();
+    render(<RateLimitCard onRetry={onRetry} />);
+    expect(
+      await screen.findByRole('link', { name: 'OpenAI dashboard — opens in new tab' }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(/OpenAI's API has rate-limited this key/),
+    ).toBeInTheDocument();
+  });
+
+  it('click on provider console link calls chrome.tabs.create with correct URL — anthropic', async () => {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
+      (_keys: unknown, cb?: (result: Record<string, unknown>) => void) => {
+        cb?.({ activeProvider: 'anthropic' });
+        return undefined;
+      },
+    );
     const user = userEvent.setup();
     const onRetry = vi.fn();
     render(<RateLimitCard onRetry={onRetry} />);
-    const link = screen.getByRole('link', { name: 'Anthropic Console — opens in new tab' });
+    const link = await screen.findByRole('link', { name: 'Anthropic Console — opens in new tab' });
     await user.click(link);
     expect(chrome.tabs.create).toHaveBeenCalledWith({ url: 'https://console.anthropic.com' });
+  });
+
+  it('click on provider console link calls chrome.tabs.create with correct URL — gemini', async () => {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
+      (_keys: unknown, cb?: (result: Record<string, unknown>) => void) => {
+        cb?.({ activeProvider: 'gemini' });
+        return undefined;
+      },
+    );
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+    render(<RateLimitCard onRetry={onRetry} />);
+    const link = await screen.findByRole('link', { name: 'Google AI Studio — opens in new tab' });
+    await user.click(link);
+    expect(chrome.tabs.create).toHaveBeenCalledWith({ url: 'https://aistudio.google.com/app/apikey' });
+  });
+
+  it('click on provider console link calls chrome.tabs.create with correct URL — openai', async () => {
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockImplementation(
+      (_keys: unknown, cb?: (result: Record<string, unknown>) => void) => {
+        cb?.({ activeProvider: 'openai' });
+        return undefined;
+      },
+    );
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+    render(<RateLimitCard onRetry={onRetry} />);
+    const link = await screen.findByRole('link', { name: 'OpenAI dashboard — opens in new tab' });
+    await user.click(link);
+    expect(chrome.tabs.create).toHaveBeenCalledWith({ url: 'https://platform.openai.com/account/usage' });
   });
 });
 
