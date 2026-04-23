@@ -98,14 +98,52 @@ async function getContentScriptFile(): Promise<string> {
   return m.content_scripts[0].js[0];
 }
 
+// SD-052: URL schemes where content scripts cannot run at all. Short-circuit to
+// `not_a_news_page` so the panel shows the friendly label instead of a generic
+// error ("Couldn't read this page"). Covers internal extension pages, chrome
+// settings, about: pages, and devtools.
+const NON_INJECTABLE_URL_RE = /^(chrome|chrome-extension|edge|brave|opera|about|devtools|view-source|chrome-search|chrome-untrusted):/i;
+
+function isNonInjectableUrl(url: string | undefined): boolean {
+  if (!url) return true;
+  return NON_INJECTABLE_URL_RE.test(url) || url === 'about:blank';
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// SD-051: The content script's `onMessage` listener registers during page load,
+// but `chrome.tabs.sendMessage` can fire before that listener is live — e.g.
+// when the user clicks the toolbar icon while the page is still parsing. A
+// single retry isn't enough on slower pages; retry with backoff before giving
+// up. Budget is ~2.3s across 5 attempts (50/150/300/600/1200ms) which covers
+// all but the slowest pages and still fails before the panel's 30s watchdog.
+const SEND_ANALYZE_BACKOFF_MS = [50, 150, 300, 600, 1200] as const;
+
 async function sendAnalyze(tabId: number): Promise<ContentScriptResult> {
+  let lastErr: unknown = null;
+
+  for (const delay of SEND_ANALYZE_BACKOFF_MS) {
+    try {
+      return await chrome.tabs.sendMessage(tabId, { action: 'analyze' });
+    } catch (err) {
+      lastErr = err;
+      await sleep(delay);
+    }
+  }
+
+  // Tab was open before the extension was installed/reloaded, or the page
+  // loaded without the declarative content script (rare SPA edge cases). Inject
+  // manually, wait briefly for the listener to register, then retry once.
   try {
-    return await chrome.tabs.sendMessage(tabId, { action: 'analyze' });
-  } catch {
-    // Tab was open before the extension was installed/reloaded — inject now and retry.
     const file = await getContentScriptFile();
     await chrome.scripting.executeScript({ target: { tabId }, files: [file] });
+    await sleep(100);
     return await chrome.tabs.sendMessage(tabId, { action: 'analyze' });
+  } catch (err) {
+    lastErr = err;
+    throw lastErr;
   }
 }
 
@@ -115,6 +153,15 @@ async function runAnalysis(): Promise<void> {
 
   if (!tabId) {
     const msg: InboundMessage = { action: 'analysis_failed', reason: 'no_active_tab' };
+    chrome.runtime.sendMessage(msg).catch(() => {});
+    return;
+  }
+
+  // SD-052: Internal/extension URLs can't host a content script. Treat them as
+  // "not a news page" rather than letting sendAnalyze fail and route to the
+  // generic extraction-failed card.
+  if (isNonInjectableUrl(tab.url)) {
+    const msg: InboundMessage = { action: 'analysis_failed', reason: 'not_a_news_page' };
     chrome.runtime.sendMessage(msg).catch(() => {});
     return;
   }
