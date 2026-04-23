@@ -162,4 +162,104 @@ describe('isNewsPage()', () => {
     `);
     expect(isNewsPage(doc, 100)).toBe(true);
   });
+
+  // SD-053: AP News live blogs use LiveBlogPosting JSON-LD — must be treated as news.
+  it('returns true for JSON-LD with LiveBlogPosting type (AP News live blog)', () => {
+    const doc = makeDoc(`
+      <html>
+        <head>
+          <title>Live Blog — AP News</title>
+          <script type="application/ld+json">
+            {"@context":"https://schema.org","@type":"LiveBlogPosting","headline":"Live coverage"}
+          </script>
+        </head>
+        <body><div>Timeline of updates</div></body>
+      </html>
+    `);
+    expect(isNewsPage(doc, 50)).toBe(true);
+  });
+
+  // SD-053: NewsArticle subtypes (ReportageNewsArticle, OpinionNewsArticle, etc.)
+  it('returns true for JSON-LD with ReportageNewsArticle type', () => {
+    const doc = makeDoc(`
+      <html>
+        <head>
+          <script type="application/ld+json">
+            {"@context":"https://schema.org","@type":"ReportageNewsArticle","headline":"Report"}
+          </script>
+        </head>
+        <body><p>Content</p></body>
+      </html>
+    `);
+    expect(isNewsPage(doc, 100)).toBe(true);
+  });
+
+  it('returns true for JSON-LD with OpinionNewsArticle type', () => {
+    const doc = makeDoc(`
+      <html>
+        <head>
+          <script type="application/ld+json">
+            {"@context":"https://schema.org","@type":"OpinionNewsArticle","headline":"Op-ed"}
+          </script>
+        </head>
+        <body><p>Content</p></body>
+      </html>
+    `);
+    expect(isNewsPage(doc, 100)).toBe(true);
+  });
+
+  // SD-053: URL-path heuristic recognises /article/ and /live/ conventions.
+  it('returns true when URL contains /article/ path segment (AP News article)', () => {
+    const doc = makeDoc(`
+      <html>
+        <head><title>Page</title></head>
+        <body><div>Content</div></body>
+      </html>
+    `);
+    expect(
+      isNewsPage(doc, 50, 'https://apnews.com/article/pentagon-navy-secretary'),
+    ).toBe(true);
+  });
+
+  it('returns true when URL contains /live/ path segment (AP News live blog)', () => {
+    const doc = makeDoc(`
+      <html>
+        <head><title>Page</title></head>
+        <body><div>Content</div></body>
+      </html>
+    `);
+    expect(
+      isNewsPage(doc, 50, 'https://apnews.com/live/iran-war-israel-trump-04-22-2026'),
+    ).toBe(true);
+  });
+
+  it('returns true when URL contains /news/ path segment', () => {
+    const doc = makeDoc('<html><head><title>Page</title></head><body><p>Hi</p></body></html>');
+    expect(isNewsPage(doc, 50, 'https://bbc.com/news/world-us-canada-12345678')).toBe(true);
+  });
+
+  // SD-053: lowered floor from 400 → 150 so short hard-news briefs pass.
+  it('returns true for a 200-word page with no article signals (short hard-news brief)', () => {
+    const doc = makeDoc('<html><head><title>Brief</title></head><body><p>Content</p></body></html>');
+    expect(isNewsPage(doc, 200)).toBe(true);
+  });
+
+  it('still returns false for truly thin pages with no article signals (< 150 words)', () => {
+    const doc = makeDoc('<html><head><title>Shell</title></head><body><p>hi</p></body></html>');
+    expect(isNewsPage(doc, 80)).toBe(false);
+  });
+
+  it('still returns false for product pages even with /article/ pattern absent', () => {
+    const doc = makeDoc(`
+      <html>
+        <head>
+          <meta property="og:type" content="product" />
+        </head>
+        <body><div>Product listing</div></body>
+      </html>
+    `);
+    expect(
+      isNewsPage(doc, 80, 'https://shop.example.com/products/widget-pro'),
+    ).toBe(false);
+  });
 });

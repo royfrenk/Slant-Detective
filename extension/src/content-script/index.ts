@@ -136,14 +136,69 @@ function computeLanguageIntensity(loadedWordCount: number, wordCount: number): n
 
 // ---------------------------------------------------------------------------
 // SD-047: News-page heuristic + language detection
+// SD-053: Extended to cover NewsArticle subtypes (LiveBlogPosting, etc.),
+// broader og:type values, URL-path signals, and a lower word-count floor so
+// short legitimate articles aren't rejected.
 // ---------------------------------------------------------------------------
 
-const NEWS_JSONLD_TYPES = new Set(['NewsArticle', 'Article', 'BlogPosting']);
+// schema.org NewsArticle subtypes + common Article variants. LiveBlogPosting
+// covers AP/Reuters/Guardian live coverage; the News*Article subtypes cover
+// the explicit typings major outlets emit.
+const NEWS_JSONLD_TYPES = new Set([
+  'NewsArticle',
+  'Article',
+  'BlogPosting',
+  'LiveBlogPosting',
+  'ReportageNewsArticle',
+  'AnalysisNewsArticle',
+  'BackgroundNewsArticle',
+  'OpinionNewsArticle',
+  'ReviewNewsArticle',
+  'Report',
+]);
 
-export function isNewsPage(doc: Document, wordCount: number): boolean {
+const NEWS_OG_TYPES = new Set(['article', 'article.live', 'news']);
+
+// Explicit negative og:type signals — if a page declares itself as product,
+// video, profile, etc., trust that declaration and reject immediately. Without
+// this, the lowered word-count floor would let 150+ word product pages through.
+const NON_NEWS_OG_TYPES = new Set([
+  'product',
+  'product.item',
+  'product.group',
+  'video',
+  'video.movie',
+  'video.episode',
+  'video.tv_show',
+  'video.other',
+  'music',
+  'music.song',
+  'music.album',
+  'music.playlist',
+  'music.radio_station',
+  'profile',
+  'book',
+  'website',
+]);
+
+// URL path segments that very strongly signal news coverage. Matches
+// `/article/…`, `/live/…`, `/story/…`, `/news/…`, etc. — the conventions used
+// across AP, Reuters, BBC, NYT, WaPo, Guardian.
+const NEWS_URL_PATH_RE = /\/(article|articles|live|story|stories|news|blog|post|posts|opinion|opinions|editorial|feature|features)\//i;
+
+// Significantly lower than the original 400-word floor. Short hard-news briefs
+// (breaking alerts, wire updates) are legitimately < 400 words. 150 still
+// filters out navigation shells, product pages, and SPA error states while
+// accepting short articles.
+const WORD_COUNT_FLOOR = 150;
+
+export function isNewsPage(doc: Document, wordCount: number, url?: string): boolean {
+  // Positive signals — any one is enough on its own.
   if (doc.querySelector('article') !== null) return true;
+
   const ogType = doc.querySelector('meta[property="og:type"]')?.getAttribute('content');
-  if (ogType === 'article') return true;
+  if (ogType !== null && ogType !== undefined && NEWS_OG_TYPES.has(ogType)) return true;
+
   for (const script of doc.querySelectorAll('script[type="application/ld+json"]')) {
     try {
       const parsed = JSON.parse(script.textContent ?? '') as Record<string, unknown>;
@@ -154,7 +209,19 @@ export function isNewsPage(doc: Document, wordCount: number): boolean {
       // Malformed JSON-LD — skip this block
     }
   }
-  return wordCount >= 400;
+
+  // URL-path heuristic: `/article/…`, `/live/…`, etc. Strong enough by itself
+  // because these paths are only used by outlets for actual editorial content.
+  const href = url ?? doc.location?.href ?? '';
+  if (href !== '' && NEWS_URL_PATH_RE.test(href)) return true;
+
+  // Negative signal: if the page explicitly declares itself as product/video/
+  // profile/etc. and none of the positive signals fired, trust the declaration
+  // and reject — prevents the word-count floor from accepting long e-commerce
+  // pages that happen to cross 150 words.
+  if (ogType !== null && ogType !== undefined && NON_NEWS_OG_TYPES.has(ogType)) return false;
+
+  return wordCount >= WORD_COUNT_FLOOR;
 }
 
 const LANG_CONFIDENCE_THRESHOLD = 0.5;
@@ -174,19 +241,21 @@ export function isNonEnglish(body: string): boolean {
 async function runAnalysis(): Promise<ContentScriptResult> {
   const extraction = extract(document);
 
+  const pageUrl = window.location.href;
+
   // SD-052: When extraction fails, still check the news-page gate before
   // surfacing `extraction_failed`. Many non-news pages (login walls, dashboards,
   // SPA shells) fail Readability but are not articles — those should route to
   // the "not a news page" card, not the generic extraction-failed error.
   if (!extraction.ok) {
-    if (!isNewsPage(document, 0)) {
+    if (!isNewsPage(document, 0, pageUrl)) {
       return { ok: false, error: 'not_a_news_page' };
     }
     return extraction;
   }
 
-  // SD-047: news-page gate (synchronous DOM check + word count)
-  if (!isNewsPage(document, extraction.word_count)) {
+  // SD-047: news-page gate (synchronous DOM check + word count + URL path)
+  if (!isNewsPage(document, extraction.word_count, pageUrl)) {
     return { ok: false, error: 'not_a_news_page' };
   }
 
