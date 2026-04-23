@@ -91,9 +91,22 @@ function makeResult(title: string, body: string, canonicalSignals: CanonicalSign
   return { ok: true, title, body, word_count: countWords(body), offsets: [{ start: 0, end: body.length }], canonicalSignals };
 }
 
+// SD-057: AMP runtime elements to strip from the Readability clone before
+// scoring. These are the same elements in NOISE_SELECTORS but subset to the
+// AMP-specific tags — class-pattern selectors are too broad to strip before
+// Readability (they may match editorial containers on non-AMP sites).
+const AMP_NOISE_SELECTORS =
+  'amp-ad,amp-analytics,amp-inabox,amp-sidebar,amp-carousel,amp-story-page,amp-auto-ads,amp-sticky-ad'
+
 function tryReadability(doc: Document): ExtractionResult {
   try {
     const cloned = doc.cloneNode(true) as Document;
+    // Strip AMP noise elements before Readability scores the clone. Readability
+    // does not know about custom elements and treats their inline text
+    // (tracker config JSON, ad slot attributes) as content-bearing nodes.
+    for (const el of cloned.querySelectorAll(AMP_NOISE_SELECTORS)) {
+      el.parentNode?.removeChild(el);
+    }
     const reader = new Readability(cloned, { charThreshold: 0 });
     const article = reader.parse();
     if (article === null) return { ok: false, error: 'extraction_failed' };
@@ -103,7 +116,36 @@ function tryReadability(doc: Document): ExtractionResult {
   }
 }
 
-const NOISE_SELECTORS = 'nav,header,footer,aside,form,button,[aria-hidden="true"],[role="complementary"]'
+// Standard noise elements + AMP runtime elements (amp-ad, amp-analytics, etc.) that
+// contribute tracker pixel text, ad config JSON, and attribute noise to raw textContent.
+// Class-pattern selectors strip newsletter CTAs, related-content modules, and ad slots
+// that compound on AMP pages but appear on non-AMP sites too.
+const NOISE_SELECTORS = [
+  'nav',
+  'header',
+  'footer',
+  'aside',
+  'form',
+  'button',
+  '[aria-hidden="true"]',
+  '[role="complementary"]',
+  // AMP runtime elements — SD-057
+  'amp-ad',
+  'amp-analytics',
+  'amp-inabox',
+  'amp-sidebar',
+  'amp-carousel',
+  'amp-story-page',
+  'amp-auto-ads',
+  'amp-sticky-ad',
+  // Class-pattern noise — SD-057
+  '[class*="newsletter"]',
+  '[class*="related-"]',
+  '[class*="recommended"]',
+  '[class*="sticky"]',
+  '[class*="ad-slot"]',
+  '[class*="advertisement"]',
+].join(',')
 
 // Extract readable text from an element. Tries <p> tags first (precise);
 // falls back to raw textContent after stripping known noise elements.

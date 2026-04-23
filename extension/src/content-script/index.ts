@@ -248,13 +248,30 @@ export function isNonEnglish(body: string): boolean {
 // user opens the panel). Capped at 8s so pages that never fire `load` (rare
 // broken sites) still surface a real error instead of hanging.
 const READY_STATE_TIMEOUT_MS = 8_000;
+// SD-057: AMP pages (menshealth.com/Hearst) hydrate much later than non-AMP
+// pages due to the AMP runtime + heavy tracker load. Raise the cap to 14s for
+// AMP pages only so extraction runs against a populated DOM.
+const AMP_READY_STATE_TIMEOUT_MS = 14_000;
+
+// SD-057: Detect AMP pages via the three cheapest O(1) DOM-attribute signals.
+// Covers canonical AMP (html[amp]), emoji-AMP (html[⚡]), and AMP-to-web
+// transformations that link to the canonical AMP URL.
+export function isAmpPage(doc: Document): boolean {
+  const html = doc.documentElement;
+  return (
+    html.hasAttribute('amp') ||
+    html.hasAttribute('⚡') ||
+    !!doc.querySelector('link[rel="amphtml"]')
+  );
+}
 
 function waitForReadyState(doc: Document): Promise<void> {
   if (doc.readyState === 'complete') return Promise.resolve();
+  const timeoutMs = isAmpPage(doc) ? AMP_READY_STATE_TIMEOUT_MS : READY_STATE_TIMEOUT_MS;
   return new Promise((resolve) => {
     const start = Date.now();
     const check = (): void => {
-      if (doc.readyState === 'complete' || Date.now() - start >= READY_STATE_TIMEOUT_MS) {
+      if (doc.readyState === 'complete' || Date.now() - start >= timeoutMs) {
         window.removeEventListener('load', check);
         resolve();
         return;
@@ -263,7 +280,7 @@ function waitForReadyState(doc: Document): Promise<void> {
     window.addEventListener('load', check, { once: true });
     // Belt-and-braces timeout in case `load` already fired between the
     // readyState check and the listener being attached.
-    setTimeout(check, READY_STATE_TIMEOUT_MS);
+    setTimeout(check, timeoutMs);
   });
 }
 

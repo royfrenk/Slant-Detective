@@ -23,8 +23,8 @@ type Layer2ErrorType = 'timeout' | 'invalid_key' | 'rate_limit' | 'parse_error' 
 type ExtractionErrorType = 'extraction_failed' | 'non_english' | 'not_a_news_page' | null;
 
 
-// 30s: first-run ONNX model load from HuggingFace can take 5–30s.
-const ANALYSIS_TIMEOUT_MS = 30_000;
+// Extended to 40s to accommodate AMP pages (SW budget 21.8s + CS ready-wait 14s).
+const ANALYSIS_TIMEOUT_MS = 40_000;
 // Layer 2 watchdog. Provider-side fetch has a 30s AbortSignal; pipeline retries
 // once on validation failure, so worst-case provider flow is ~60s. Add headroom
 // over that so the skeleton can't spin forever if the service worker is

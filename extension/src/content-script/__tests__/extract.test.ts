@@ -187,6 +187,52 @@ describe('extract()', () => {
       expect(result.canonicalSignals.twitterUrl).toBeNull()
     }
   })
+
+  // SD-057: AMP pages (menshealth.com/Hearst) embed amp-ad and amp-analytics
+  // elements that contribute tracker config JSON and pixel URLs to raw
+  // textContent. NOISE_SELECTORS must strip them so the body-text fallback
+  // doesn't return garbage.
+  it('SD-057: strips amp-ad and amp-analytics noise from AMP article body', () => {
+    const sentence = 'This is a substantive fitness article sentence with real editorial content. '
+    const doc = makeDoc(`
+      <html amp><head><title>Best Weighted Vests — Men's Health</title></head>
+      <body>
+        <amp-ad>tracker config JSON {"slot":"12345","network":"ad-network"}</amp-ad>
+        <amp-analytics>{"requests":{"pageview":"https://pixel.example.com"}}</amp-analytics>
+        <article>
+          <h1>Best Weighted Vests for Workouts</h1>
+          ${Array.from({ length: 8 }, () => `<p>${sentence}</p>`).join('')}
+        </article>
+      </body></html>
+    `)
+    const result = extract(doc)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.body).toContain('substantive fitness article sentence')
+      expect(result.body).not.toContain('tracker config JSON')
+      expect(result.body).not.toContain('"pageview"')
+    }
+  })
+
+  // SD-057: partially hydrated AMP body (no <article>, only AMP custom elements
+  // and a <p> with article text) — body-text fallback must strip AMP noise and
+  // return the article paragraph without hanging or returning garbage.
+  it('SD-057: partially hydrated AMP body falls back without noise', () => {
+    const sentence = 'This is a real editorial paragraph from the article body text. '
+    const doc = makeDoc(`
+      <html amp><body>
+        <amp-ad>AD SLOT DATA</amp-ad>
+        <amp-analytics>PIXEL DATA</amp-analytics>
+        <p>${sentence.repeat(8)}</p>
+      </body></html>
+    `)
+    const result = extract(doc)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.body).not.toContain('AD SLOT DATA')
+      expect(result.body).not.toContain('PIXEL DATA')
+    }
+  })
 })
 
 // ─── extractCanonicalSignals() ───────────────────────────────────────────────

@@ -262,4 +262,28 @@ describe('isNewsPage()', () => {
       isNewsPage(doc, 80, 'https://shop.example.com/products/widget-pro'),
     ).toBe(false);
   });
+
+  // SD-057: menshealth.com /fitness/ URLs don't match NEWS_URL_PATH_RE but the
+  // page emits <article> — isNewsPage must return true via the article-element
+  // positive signal (first check, short-circuit).
+  it('isNewsPage: menshealth fitness URL with article element returns true', () => {
+    const doc = makeDoc(`
+      <html>
+        <head><title>Best Weighted Vests for Workouts — Men's Health</title></head>
+        <body>
+          <article>
+            <h1>Best Weighted Vests for Workouts</h1>
+            <p>Weighted vests add resistance to your training and build strength over time.</p>
+          </article>
+        </body>
+      </html>
+    `);
+    expect(
+      isNewsPage(
+        doc,
+        200,
+        'https://www.menshealth.com/fitness/a22115800/best-weighted-vests-for-workouts/',
+      ),
+    ).toBe(true);
+  });
 });
