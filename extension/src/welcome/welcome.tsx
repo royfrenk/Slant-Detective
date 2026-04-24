@@ -151,7 +151,7 @@ export default function Welcome(): React.JSX.Element {
             <div className="md:flex md:items-start md:gap-8">
 
               {/* "Why a key?" explainer */}
-              <div className="flex-1 mb-6 md:mb-0">
+              <div className="flex-1 min-w-0 mb-6 md:mb-0">
                 <p className="text-on-surface font-semibold text-[15px] mb-2 mt-0">
                   Why a key?
                 </p>
@@ -161,7 +161,7 @@ export default function Welcome(): React.JSX.Element {
               </div>
 
               {/* CTA column */}
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 md:w-[300px]">
                 {/* Primary CTA */}
                 <div className="flex items-center gap-3">
                   <button
