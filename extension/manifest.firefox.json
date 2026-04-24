@@ -44,26 +44,8 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": [
-        "src/pages/how-we-measure.html",
-        "src/pages/privacy.html",
-        "src/pages/credits.html",
-        "src/pages/how-to-get-a-key.html"
-      ],
-      "matches": ["moz-extension://*/*"]
-    },
-    {
       "resources": ["assets/babe-lexicon.json"],
       "matches": ["http://*/*", "https://*/*"]
-    },
-    {
-      "resources": [
-        "assets/reference-distribution-anthropic.json",
-        "assets/reference-distribution-openai.json",
-        "assets/reference-distribution-gemini.json",
-        "assets/reference-distribution-layer1.json"
-      ],
-      "matches": ["moz-extension://*/*"]
     }
   ],
   "browser_specific_settings": {
