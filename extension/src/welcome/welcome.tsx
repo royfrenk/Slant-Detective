@@ -102,6 +102,8 @@ function FooterNav(): React.JSX.Element {
 // ---------------------------------------------------------------------------
 
 export default function Welcome(): React.JSX.Element {
+  const isFirefox = typeof (chrome as unknown as Record<string, unknown>).sidebarAction !== 'undefined';
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-[720px]">
@@ -131,7 +133,9 @@ export default function Welcome(): React.JSX.Element {
 
             {/* Sub-headline */}
             <p className="text-on-surface-variant font-normal text-[14px] leading-relaxed mb-8 mt-0">
-              Click the toolbar icon on any news article. A side panel will open with the bias readout. No key needed to start.
+              {isFirefox
+                ? "On first install, right-click the Slant Detective icon → 'Pin to toolbar', then click it to toggle the sidebar."
+                : "Click the toolbar icon on any news article. A side panel will open with the bias readout. No key needed to start."}
             </p>
 
             {/* Dimension preview grid (2x2) */}

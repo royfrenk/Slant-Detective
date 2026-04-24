@@ -262,3 +262,30 @@ describe('Welcome — deprecated copy removed (SD-050)', () => {
     );
   });
 });
+
+// ─── Firefox conditional sub-headline (SD-059) ────────────────────────────────
+
+describe('Welcome — Firefox conditional sub-headline (SD-059)', () => {
+  it('renders the Chrome sub-headline when sidebarAction is not defined (default mock)', () => {
+    render(<Welcome />);
+    expect(
+      screen.getByText(
+        'Click the toolbar icon on any news article. A side panel will open with the bias readout. No key needed to start.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('renders the Firefox sub-headline when sidebarAction is defined', () => {
+    // Simulate Firefox environment by injecting sidebarAction onto the chrome mock.
+    (globalThis.chrome as unknown as Record<string, unknown>).sidebarAction = {};
+    render(<Welcome />);
+    expect(
+      screen.getByText(
+        "On first install, right-click the Slant Detective icon → 'Pin to toolbar', then click it to toggle the sidebar.",
+      ),
+    ).toBeInTheDocument();
+
+    // Clean up so other tests are unaffected.
+    delete (globalThis.chrome as unknown as Record<string, unknown>).sidebarAction;
+  });
+});
