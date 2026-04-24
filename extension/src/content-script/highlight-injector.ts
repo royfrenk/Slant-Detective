@@ -45,12 +45,17 @@ let articleRoot: Element | null = null
 // ---------------------------------------------------------------------------
 
 function getArticleRoot(): Element {
-  return (
-    document.querySelector('article') ??
-    document.querySelector('[role="main"]') ??
-    document.querySelector('main') ??
-    document.body
-  )
+  // Among <article> elements, prefer the one with the most text content —
+  // guards against sites (AP News) that wrap each comment in its own
+  // <article>, where querySelector('article') would otherwise return the
+  // first comment rather than the story body. Mirrors anchor.ts's logic.
+  const articles = Array.from(document.querySelectorAll('article'))
+  if (articles.length > 0) {
+    return articles.reduce((best, curr) =>
+      (curr.textContent ?? '').length > (best.textContent ?? '').length ? curr : best,
+    )
+  }
+  return document.querySelector('[role="main"]') ?? document.querySelector('main') ?? document.body
 }
 
 // ---------------------------------------------------------------------------

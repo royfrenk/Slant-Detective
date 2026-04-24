@@ -37,18 +37,28 @@ interface TextNodeEntry {
 // metadata chrome. Body-specific selectors narrow the corpus to the same
 // region Readability extracts for Layer 2.
 function getArticleRoot(doc: Document): Element {
-  return (
+  // Priority 1: explicit body containers (itemprop / data-testid / class hints).
+  const explicit =
     doc.querySelector('[itemprop="articleBody"]') ??
     doc.querySelector('[data-testid="article-body"]') ??
     doc.querySelector('article section[name="articleBody"]') ??
     doc.querySelector('[class*="article-body"]') ??
     doc.querySelector('[class*="story-body"]') ??
-    doc.querySelector('[class*="post-content"]') ??
-    doc.querySelector('article') ??
-    doc.querySelector('[role="main"]') ??
-    doc.querySelector('main') ??
-    doc.body
-  )
+    doc.querySelector('[class*="post-content"]')
+  if (explicit !== null) return explicit
+
+  // Priority 2: among <article> elements, pick the one with the most text
+  // content. Guards against sites (AP News) that wrap each comment in its
+  // own <article>, where querySelector('article') would otherwise return the
+  // first comment rather than the story body.
+  const articles = Array.from(doc.querySelectorAll('article'))
+  if (articles.length > 0) {
+    return articles.reduce((best, curr) =>
+      (curr.textContent ?? '').length > (best.textContent ?? '').length ? curr : best,
+    )
+  }
+
+  return doc.querySelector('[role="main"]') ?? doc.querySelector('main') ?? doc.body
 }
 
 // ---------------------------------------------------------------------------
