@@ -58,11 +58,27 @@ async function runStorageMigration(): Promise<void> {
 // Run migration before any message listeners register.
 void runStorageMigration();
 
+// Cross-browser panel opener. Uses chrome.sidePanel on Chrome/Edge; falls back
+// to sidebarAction on Firefox (global sidebar — tabId is accepted but ignored).
+async function openPanel(tabId: number): Promise<void> {
+  if (typeof chrome.sidePanel?.open === 'function') {
+    await chrome.sidePanel.open({ tabId });
+    return;
+  }
+  // Firefox fallback — sidebarAction.open() must be triggered from a user gesture
+  // (toolbar click handler qualifies). Throws if called outside that context.
+  // @ts-expect-error — sidebarAction only exists on Firefox
+  if (typeof chrome.sidebarAction?.open === 'function') {
+    // @ts-expect-error — see above
+    await chrome.sidebarAction.open();
+  }
+}
+
 // Open the panel on toolbar click. If the panel is already open, send
 // tab_navigated so it resets and re-analyzes the current page.
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab.id) return;
-  await chrome.sidePanel.open({ tabId: tab.id });
+  await openPanel(tab.id);
   // Sending after open ensures an already-open panel gets the signal.
   // A freshly-opened panel ignores this (listener not yet registered) and
   // triggers analysis via its own mount useEffect.
@@ -102,7 +118,7 @@ async function getContentScriptFile(): Promise<string> {
 // `not_a_news_page` so the panel shows the friendly label instead of a generic
 // error ("Couldn't read this page"). Covers internal extension pages, chrome
 // settings, about: pages, and devtools.
-const NON_INJECTABLE_URL_RE = /^(chrome|chrome-extension|edge|brave|opera|about|devtools|view-source|chrome-search|chrome-untrusted):/i;
+const NON_INJECTABLE_URL_RE = /^(chrome|chrome-extension|moz-extension|edge|brave|opera|about|devtools|view-source|chrome-search|chrome-untrusted):/i;
 
 function isNonInjectableUrl(url: string | undefined): boolean {
   if (!url) return true;
@@ -362,7 +378,7 @@ chrome.runtime.onMessage.addListener((message) => {
 
       if (typeof tabId === 'number') {
         try {
-          await chrome.sidePanel.open({ tabId });
+          await openPanel(tabId);
         } catch {
           // Panel may already be open — non-fatal.
         }
