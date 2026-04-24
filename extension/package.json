@@ -8,6 +8,7 @@
     "prebuild": "node ../scripts/build-credits.mjs",
     "prebuild:alpha": "node ../scripts/build-credits.mjs",
     "build": "vite build",
+    "build:firefox": "node ../scripts/build-credits.mjs && BROWSER_TARGET=firefox vite build",
     "build:alpha": "vite build --config vite.config.alpha.ts",
     "build:zip": "cd dist && zip -r ../dist-alpha.zip . && cd ..",
     "dev": "vite build --watch",
@@ -40,6 +41,7 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "vite": "^5.4.19",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.4",
+    "web-ext": "^8.0.0"
   }
 }
