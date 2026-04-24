@@ -36,29 +36,54 @@ interface TextNodeEntry {
 // text the LLM never saw, shifting every offset and dragging highlights onto
 // metadata chrome. Body-specific selectors narrow the corpus to the same
 // region Readability extracts for Layer 2.
-function getArticleRoot(doc: Document): Element {
-  // Priority 1: explicit body containers (itemprop / data-testid / class hints).
-  const explicit =
-    doc.querySelector('[itemprop="articleBody"]') ??
-    doc.querySelector('[data-testid="article-body"]') ??
-    doc.querySelector('article section[name="articleBody"]') ??
-    doc.querySelector('[class*="article-body"]') ??
-    doc.querySelector('[class*="story-body"]') ??
-    doc.querySelector('[class*="post-content"]')
-  if (explicit !== null) return explicit
+//
+// On sites that wrap both the story and each comment in <article> (AP News),
+// neither "first <article>" nor "largest <article>" alone is reliable: on
+// low-comment pages the largest is the story; on 600+ comment pages the
+// aggregate comments container wins. Pass the known span texts in and pick
+// the narrowest candidate whose textContent actually contains them all.
+function getArticleRoot(doc: Document, requiredPhrases: readonly string[] = []): Element {
+  const candidates: Element[] = []
+  const push = (el: Element | null): void => { if (el !== null) candidates.push(el) }
 
-  // Priority 2: among <article> elements, pick the one with the most text
-  // content. Guards against sites (AP News) that wrap each comment in its
-  // own <article>, where querySelector('article') would otherwise return the
-  // first comment rather than the story body.
-  const articles = Array.from(doc.querySelectorAll('article'))
-  if (articles.length > 0) {
-    return articles.reduce((best, curr) =>
-      (curr.textContent ?? '').length > (best.textContent ?? '').length ? curr : best,
-    )
+  push(doc.querySelector('[itemprop="articleBody"]'))
+  push(doc.querySelector('[data-testid="article-body"]'))
+  push(doc.querySelector('article section[name="articleBody"]'))
+  push(doc.querySelector('[class*="article-body"]'))
+  push(doc.querySelector('[class*="story-body"]'))
+  push(doc.querySelector('[class*="post-content"]'))
+  for (const art of Array.from(doc.querySelectorAll('article'))) candidates.push(art)
+  push(doc.querySelector('[role="main"]'))
+  push(doc.querySelector('main'))
+  candidates.push(doc.body)
+
+  // Score: containment of ALL required phrases wins. Ties broken by smaller
+  // textContent (narrower subtree → less metadata drift).
+  if (requiredPhrases.length > 0) {
+    const matches = candidates.filter((el) => {
+      const text = el.textContent ?? ''
+      return requiredPhrases.every((p) => text.includes(p))
+    })
+    if (matches.length > 0) {
+      return matches.reduce((best, curr) =>
+        (curr.textContent ?? '').length < (best.textContent ?? '').length ? curr : best,
+      )
+    }
   }
 
-  return doc.querySelector('[role="main"]') ?? doc.querySelector('main') ?? doc.body
+  // No required phrases (or none contained a full match) — fall back to the
+  // first explicit-hint candidate, or the <article> with the most direct
+  // paragraphs (best proxy for "story body" vs "comments wrapper").
+  if (candidates[0] !== doc.body) return candidates[0]
+  const articles = Array.from(doc.querySelectorAll('article'))
+  if (articles.length > 0) {
+    return articles.reduce((best, curr) => {
+      const bestPs = best.querySelectorAll(':scope > p, :scope > div > p').length
+      const currPs = curr.querySelectorAll(':scope > p, :scope > div > p').length
+      return currPs > bestPs ? curr : best
+    })
+  }
+  return doc.body
 }
 
 // ---------------------------------------------------------------------------
@@ -289,7 +314,8 @@ export function anchorSpans(spans: EvidenceSpan[], doc: Document): AnchoredSpan[
     return []
   }
 
-  const root = getArticleRoot(doc)
+  const phrases = spans.map((s) => s.text.trim()).filter((t) => t.length > 0)
+  const root = getArticleRoot(doc, phrases)
   const { corpus, map } = buildCorpus(root)
 
   return spans.map((span) => anchorOneSpan(span, corpus, map, doc))

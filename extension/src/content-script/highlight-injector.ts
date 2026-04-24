@@ -45,15 +45,26 @@ let articleRoot: Element | null = null
 // ---------------------------------------------------------------------------
 
 function getArticleRoot(): Element {
-  // Among <article> elements, prefer the one with the most text content —
-  // guards against sites (AP News) that wrap each comment in its own
-  // <article>, where querySelector('article') would otherwise return the
-  // first comment rather than the story body. Mirrors anchor.ts's logic.
+  // The [data-sd-injected] marker only needs to be a common ancestor of the
+  // injected highlight spans — the precise root doesn't affect correctness,
+  // only CSS scoping. Prefer explicit body containers, then the <article>
+  // with the most direct paragraphs (best proxy for "story body" over
+  // "comments wrapper" on sites like AP News that nest comments in <article>).
+  const explicit =
+    document.querySelector('[itemprop="articleBody"]') ??
+    document.querySelector('[data-testid="article-body"]') ??
+    document.querySelector('[class*="article-body"]') ??
+    document.querySelector('[class*="story-body"]') ??
+    document.querySelector('[class*="post-content"]')
+  if (explicit !== null) return explicit
+
   const articles = Array.from(document.querySelectorAll('article'))
   if (articles.length > 0) {
-    return articles.reduce((best, curr) =>
-      (curr.textContent ?? '').length > (best.textContent ?? '').length ? curr : best,
-    )
+    return articles.reduce((best, curr) => {
+      const bestPs = best.querySelectorAll(':scope > p, :scope > div > p').length
+      const currPs = curr.querySelectorAll(':scope > p, :scope > div > p').length
+      return currPs > bestPs ? curr : best
+    })
   }
   return document.querySelector('[role="main"]') ?? document.querySelector('main') ?? document.body
 }
