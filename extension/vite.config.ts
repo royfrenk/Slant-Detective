@@ -2,7 +2,6 @@ import { defineConfig, loadEnv, type Plugin } from "vite";
 import { resolve } from "path";
 import react from "@vitejs/plugin-react";
 import { crx } from "@crxjs/vite-plugin";
-import manifest from "./manifest.json";
 
 // Development reload workflow:
 // `npm run dev` rebuilds on every file save (Vite watch mode).
@@ -46,10 +45,15 @@ export default defineConfig(({ mode }) => {
     throw new Error('VITE_RUBRIC_VERSION must be set (see extension/.env.example)');
   }
 
+  const targetBrowser = (process.env['BROWSER_TARGET'] ?? 'chrome') as 'chrome' | 'firefox';
+  const manifestFile = targetBrowser === 'firefox' ? './manifest.firefox.json' : './manifest.json';
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const manifest = require(manifestFile);
+
   return {
   plugins: [
     react(),
-    crx({ manifest }),
+    crx({ manifest, browser: targetBrowser }),
     crxWorkerUrlFixPlugin(),
   ],
   define: {
@@ -71,7 +75,7 @@ export default defineConfig(({ mode }) => {
     },
   },
   build: {
-    outDir: "dist",
+    outDir: targetBrowser === 'firefox' ? 'dist-firefox' : 'dist',
     emptyOutDir: true,
     // Prevent Vite from inlining binary assets (e.g. the ONNX model) as data URLs.
     // Assets in publicDir are never inlined — this guards against any future import().
