@@ -20,7 +20,7 @@
     }
   },
   "background": {
-    "service_worker": "src/service-worker/index.ts",
+    "scripts": ["src/service-worker/index.ts"],
     "type": "module"
   },
   "content_scripts": [
