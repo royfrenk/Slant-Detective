@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv, type Plugin } from "vite";
-import { resolve } from "path";
+import { resolve, join } from "path";
+import { readFileSync } from "fs";
 import react from "@vitejs/plugin-react";
 import { crx } from "@crxjs/vite-plugin";
 
@@ -46,9 +47,9 @@ export default defineConfig(({ mode }) => {
   }
 
   const targetBrowser = (process.env['BROWSER_TARGET'] ?? 'chrome') as 'chrome' | 'firefox';
-  const manifestFile = targetBrowser === 'firefox' ? './manifest.firefox.json' : './manifest.json';
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const manifest = require(manifestFile);
+  const manifestFile = targetBrowser === 'firefox' ? 'manifest.firefox.json' : 'manifest.json';
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const manifest = JSON.parse(readFileSync(join(__dirname, manifestFile), 'utf-8')) as Record<string, unknown>;
 
   return {
   plugins: [
