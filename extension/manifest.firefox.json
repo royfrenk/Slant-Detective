@@ -1,0 +1,80 @@
+{
+  "manifest_version": 3,
+  "name": "Slant Detective",
+  "version": "1.1",
+  "description": "See how any news article is slanted — the lean, the loaded words, the phrases doing the work. In the article itself.",
+  "action": {
+    "default_icon": {
+      "16": "assets/icon-16.png",
+      "48": "assets/icon-48.png",
+      "128": "assets/icon-128.png"
+    },
+    "default_title": "Slant Detective"
+  },
+  "sidebar_action": {
+    "default_title": "Slant Detective",
+    "default_panel": "side-panel.html",
+    "default_icon": {
+      "16": "assets/icon-16.png",
+      "48": "assets/icon-48.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/service-worker/index.ts",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["src/content-script/index.ts"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "permissions": ["tabs", "activeTab", "storage", "scripting", "alarms"],
+  "host_permissions": [
+    "https://api.anthropic.com/*",
+    "https://api.openai.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://sd-telemetry.rabbit-factory.workers.dev/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/pages/how-we-measure.html",
+        "src/pages/privacy.html",
+        "src/pages/credits.html",
+        "src/pages/how-to-get-a-key.html"
+      ],
+      "matches": ["moz-extension://*/*"]
+    },
+    {
+      "resources": ["assets/babe-lexicon.json"],
+      "matches": ["http://*/*", "https://*/*"]
+    },
+    {
+      "resources": [
+        "assets/reference-distribution-anthropic.json",
+        "assets/reference-distribution-openai.json",
+        "assets/reference-distribution-gemini.json",
+        "assets/reference-distribution-layer1.json"
+      ],
+      "matches": ["moz-extension://*/*"]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "slant-detective@royfrenk.dev",
+      "strict_min_version": "121.0"
+    }
+  },
+  "icons": {
+    "16": "assets/icon-16.png",
+    "48": "assets/icon-48.png",
+    "128": "assets/icon-128.png"
+  }
+}
