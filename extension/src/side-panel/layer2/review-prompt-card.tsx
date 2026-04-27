@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LAYER2_SUCCESS_COUNT, REVIEW_PROMPT_SHOWN } from '../../shared/storage-keys';
-import { getReviewUrl } from '../../shared/urls';
+import { getReviewInfo } from '../../shared/urls';
 
 const REVIEW_THRESHOLD = 5;
 
@@ -25,11 +25,10 @@ const CLOSE_BUTTON_CLASSES =
   'focus-visible:outline-primary focus-visible:outline-offset-2';
 
 export default function ReviewPromptCard(): React.JSX.Element | null {
-  const reviewUrl = getReviewUrl();
+  const { url: reviewUrl, storeName, body } = getReviewInfo();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (reviewUrl === null) return;
     if (typeof chrome === 'undefined' || !chrome.storage?.local) return;
 
     chrome.storage.local.get([LAYER2_SUCCESS_COUNT, REVIEW_PROMPT_SHOWN], (result) => {
@@ -42,7 +41,7 @@ export default function ReviewPromptCard(): React.JSX.Element | null {
         setVisible(true);
       }
     });
-  }, [reviewUrl]);
+  }, []);
 
   function dismiss(): void {
     setVisible(false);
@@ -52,12 +51,11 @@ export default function ReviewPromptCard(): React.JSX.Element | null {
   }
 
   function handlePrimaryCta(): void {
-    // reviewUrl is guaranteed non-null here because visible is only true when reviewUrl != null
-    chrome.tabs.create({ url: reviewUrl as string });
+    chrome.tabs.create({ url: reviewUrl });
     dismiss();
   }
 
-  if (!visible || reviewUrl === null) return null;
+  if (!visible) return null;
 
   return (
     <article
@@ -70,13 +68,13 @@ export default function ReviewPromptCard(): React.JSX.Element | null {
       </h2>
 
       <p className="text-[0.75rem] text-on-surface-variant leading-[1.5] mt-1">
-        Leave a quick review on the Chrome Web Store &mdash; it really helps.
+        {body}
       </p>
 
       <div className="flex flex-wrap items-center gap-2 mt-3">
         <button
           type="button"
-          aria-label="Leave a review on the Chrome Web Store — opens in new tab"
+          aria-label={`Leave a review on ${storeName} — opens in new tab`}
           onClick={handlePrimaryCta}
           className={PRIMARY_BUTTON_CLASSES}
         >

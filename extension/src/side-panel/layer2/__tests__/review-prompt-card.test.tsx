@@ -25,7 +25,7 @@ describe('ReviewPromptCard', () => {
       ...(globalThis.chrome.runtime as object),
       id: 'test-extension-id',
     };
-    // Ensure sidebarAction is absent so getReviewUrl() returns a Chrome URL.
+    // Ensure sidebarAction is absent so getReviewInfo() returns the Chrome variant.
     delete (globalThis.chrome as unknown as Record<string, unknown>).sidebarAction;
   });
 
@@ -57,7 +57,7 @@ describe('ReviewPromptCard', () => {
     mockStorage(5, false);
     render(<ReviewPromptCard />);
 
-    const primaryBtn = await screen.findByRole('button', { name: /Leave a review on the Chrome Web Store/i });
+    const primaryBtn = await screen.findByRole('button', { name: /Leave a review on Chrome Web Store/i });
     await userEvent.click(primaryBtn);
 
     expect(chrome.tabs.create).toHaveBeenCalledWith({
@@ -92,15 +92,25 @@ describe('ReviewPromptCard', () => {
     expect(screen.queryByRole('region', { name: /Enjoying Slant Detective/i })).not.toBeInTheDocument();
   });
 
-  it('renders nothing on Firefox (sidebarAction present → URL is null)', () => {
-    // Simulate Firefox by adding sidebarAction to the chrome object.
+  it('renders Firefox variant when sidebarAction is present (AMO URL + Firefox Add-ons copy)', async () => {
     (globalThis.chrome as unknown as Record<string, unknown>).sidebarAction = {};
-    mockStorage(10, false);
+    mockStorage(5, false);
 
-    const { container } = render(<ReviewPromptCard />);
-    expect(container.firstChild).toBeNull();
+    render(<ReviewPromptCard />);
 
-    // Clean up Firefox simulation.
+    expect(await screen.findByRole('region', { name: /Enjoying Slant Detective/i })).toBeInTheDocument();
+    expect(screen.getByText(/Leave a quick review on Firefox Add-ons/i)).toBeInTheDocument();
+    // Chrome copy must NOT be present.
+    expect(screen.queryByText(/Chrome Web Store/i)).not.toBeInTheDocument();
+
+    const primaryBtn = screen.getByRole('button', { name: /Leave a review on Firefox Add-ons/i });
+    await userEvent.click(primaryBtn);
+
+    expect(chrome.tabs.create).toHaveBeenCalledWith({
+      url: 'https://addons.mozilla.org/en-US/firefox/addon/slant-detective/reviews/',
+    });
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({ [REVIEW_PROMPT_SHOWN]: true });
+
     delete (globalThis.chrome as unknown as Record<string, unknown>).sidebarAction;
   });
 
