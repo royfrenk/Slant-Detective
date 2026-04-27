@@ -148,60 +148,54 @@ export default function Welcome(): React.JSX.Element {
 
           {/* Bottom zone — tinted surface band with "Why" block + CTAs */}
           <div className="bg-surface-variant px-8 py-6 md:px-12">
-            <div className="md:flex md:items-start md:gap-8">
 
-              {/* "Why a key?" explainer */}
-              <div className="flex-1 min-w-0 mb-6 md:mb-0">
-                <p className="text-on-surface font-semibold text-[15px] mb-2 mt-0">
-                  Why a key?
-                </p>
-                <p className="text-on-surface-variant font-normal text-[14px] leading-relaxed m-0">
-                  The in-depth analysis — overall lean, four-dimension breakdown, inline highlights — uses a language model. You pay your provider (Anthropic, OpenAI, or Google) directly, about $0.006 an article. We never see the article or the key.
-                </p>
-              </div>
-
-              {/* CTA column */}
-              <div className="flex-shrink-0 md:w-[300px]">
-                {/* Primary CTA */}
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleAddApiKey}
-                    aria-label="Get in-depth analysis — open the Slant Detective options page to add an API key"
-                    className={[
-                      "bg-gradient-to-br from-primary to-primary-container",
-                      "text-on-primary font-medium text-sm",
-                      "px-6 py-3 rounded-md border-0 cursor-pointer",
-                      "hover:brightness-[0.96]",
-                      "focus:outline focus:outline-2 focus:outline-primary focus:outline-offset-2",
-                      "active:scale-[0.98] transition-transform duration-75",
-                    ].join(" ")}
-                  >
-                    Get in-depth analysis
-                  </button>
-
-                  {/* Secondary CTA */}
-                  <button
-                    type="button"
-                    onClick={handleTryIt}
-                    aria-label="Use free mode — close this tab and start using Slant Detective"
-                    className={[
-                      "bg-transparent text-primary font-medium text-sm",
-                      "px-3 py-3 rounded-md border-0 cursor-pointer",
-                      "hover:underline",
-                      "focus:outline focus:outline-2 focus:outline-primary focus:outline-offset-2",
-                    ].join(" ")}
-                  >
-                    Use free mode
-                  </button>
-                </div>
-
-                {/* Caption under CTAs */}
-                <p className="text-on-surface-variant font-normal text-[12px] mt-2 mb-0">
-                  Free mode runs entirely in your browser. No key, no network — but fewer checks than the in-depth analysis.
-                </p>
-              </div>
+            {/* "Why a key?" explainer */}
+            <div className="mb-5">
+              <p className="text-on-surface font-semibold text-[15px] mb-2 mt-0">
+                Why a key?
+              </p>
+              <p className="text-on-surface-variant font-normal text-[14px] leading-relaxed m-0">
+                The in-depth analysis — overall lean, four-dimension breakdown, inline highlights — uses a language model. You pay your provider (Anthropic, OpenAI, or Google) directly, about $0.006 an article. We never see the article or the key.
+              </p>
             </div>
+
+            {/* CTAs row */}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={handleAddApiKey}
+                aria-label="Get in-depth analysis — open the Slant Detective options page to add an API key"
+                className={[
+                  "bg-gradient-to-br from-primary to-primary-container",
+                  "text-on-primary font-medium text-sm",
+                  "px-6 py-3 rounded-md border-0 cursor-pointer",
+                  "hover:brightness-[0.96]",
+                  "focus:outline focus:outline-2 focus:outline-primary focus:outline-offset-2",
+                  "active:scale-[0.98] transition-transform duration-75",
+                ].join(" ")}
+              >
+                Get in-depth analysis
+              </button>
+
+              <button
+                type="button"
+                onClick={handleTryIt}
+                aria-label="Use free mode — close this tab and start using Slant Detective"
+                className={[
+                  "bg-transparent text-primary font-medium text-sm",
+                  "px-3 py-3 rounded-md border-0 cursor-pointer",
+                  "hover:underline",
+                  "focus:outline focus:outline-2 focus:outline-primary focus:outline-offset-2",
+                ].join(" ")}
+              >
+                Use free mode
+              </button>
+            </div>
+
+            {/* Caption under CTAs */}
+            <p className="text-on-surface-variant font-normal text-[12px] mt-2 mb-0">
+              Free mode runs entirely in your browser. No key, no network — but fewer checks than the in-depth analysis.
+            </p>
 
             {/* Lock-icon microcopy */}
             <div className="flex items-center gap-2 mt-4">
