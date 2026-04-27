@@ -16,7 +16,7 @@ import RateLimitCard from './layer2/rate-limit-card';
 import ContentFilteredCard from './layer2/content-filtered-card';
 import type { InboundMessage } from '../shared/messages';
 import type { Layer1Signals, RubricResponse } from '../shared/types';
-import { PROVIDERS_KEY, ACTIVE_PROVIDER_KEY } from '../shared/storage-keys';
+import { PROVIDERS_KEY, ACTIVE_PROVIDER_KEY, LAYER2_SUCCESS_COUNT } from '../shared/storage-keys';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 type Layer2Status = 'idle' | 'loading' | 'done' | 'error';
@@ -44,6 +44,8 @@ export default function App(): React.JSX.Element {
   const [reportBugData, setReportBugData] = useState<{ url: string; screenshotDataUrl: string | null } | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const layer2TimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Prevents double-counting a Layer 2 success within the same analysis run.
+  const hasIncrementedRef = useRef(false);
 
   // Check API key presence on mount and listen for changes.
   // Derive hasApiKey from providers[activeProvider].key in the new storage schema.
@@ -97,6 +99,8 @@ export default function App(): React.JSX.Element {
     setLayer2Status('idle');
     setLayer2Result(null);
     setLayer2ErrorType(null);
+    // Reset so the next Layer 2 success can increment the counter once.
+    hasIncrementedRef.current = false;
     chrome.runtime.sendMessage({ action: 'analyze' }).catch(() => {});
     timeoutRef.current = setTimeout(() => {
       setStatus((s) => (s === 'loading' ? 'error' : s));
@@ -110,6 +114,21 @@ export default function App(): React.JSX.Element {
     armLayer2Watchdog();
     chrome.runtime.sendMessage({ action: 'retry_layer2' }).catch(() => {});
   }, [armLayer2Watchdog]);
+
+  // Increment the Layer 2 success counter exactly once per completed analysis.
+  useEffect(() => {
+    if (layer2Status !== 'done' || layer2Result == null) return;
+    if (hasIncrementedRef.current) return;
+    hasIncrementedRef.current = true;
+    if (typeof chrome === 'undefined' || !chrome.storage?.local) return;
+    chrome.storage.local.get([LAYER2_SUCCESS_COUNT], (result) => {
+      const current =
+        typeof result[LAYER2_SUCCESS_COUNT] === 'number'
+          ? (result[LAYER2_SUCCESS_COUNT] as number)
+          : 0;
+      chrome.storage.local.set({ [LAYER2_SUCCESS_COUNT]: current + 1 });
+    });
+  }, [layer2Status, layer2Result]);
 
   useEffect(() => {
     startFreshAnalysis();

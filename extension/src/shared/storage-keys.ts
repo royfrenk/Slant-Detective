@@ -15,3 +15,7 @@ export const TELEMETRY_COUNTERS = 'telemetryCounters' as const
 export const TELEMETRY_LAST_EMIT = 'telemetryLastEmit' as const
 export const TELEMETRY_DAILY_SALT = 'telemetryDailySalt' as const
 export const TELEMETRY_SALT_DATE = 'telemetrySaltDate' as const
+
+// SD-060: Review prompt keys
+export const LAYER2_SUCCESS_COUNT = 'layer2SuccessCount' as const
+export const REVIEW_PROMPT_SHOWN = 'reviewPromptShown' as const
