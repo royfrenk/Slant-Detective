@@ -40,7 +40,7 @@ describe('ReviewPromptCard', () => {
     render(<ReviewPromptCard />);
 
     expect(await screen.findByRole('region', { name: /Enjoying Slant Detective/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Enjoying the readouts?' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Enjoying Slant Detective?' })).toBeInTheDocument();
     expect(screen.getByText(/Leave a quick review on the Chrome Web Store/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Leave a review/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Not now/i })).toBeInTheDocument();

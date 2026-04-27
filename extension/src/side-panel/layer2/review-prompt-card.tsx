@@ -66,7 +66,7 @@ export default function ReviewPromptCard(): React.JSX.Element | null {
       className="relative bg-surface-variant rounded-[10px] p-4"
     >
       <h2 className="text-[0.875rem] font-semibold text-primary leading-[1.4] pr-7">
-        Enjoying the readouts?
+        Enjoying Slant Detective?
       </h2>
 
       <p className="text-[0.75rem] text-on-surface-variant leading-[1.5] mt-1">
